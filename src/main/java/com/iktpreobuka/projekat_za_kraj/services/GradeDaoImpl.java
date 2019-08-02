@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.iktpreobuka.projekat_za_kraj.entities.GradeEntity;
+import com.iktpreobuka.projekat_za_kraj.entities.StudentEntity;
 import com.iktpreobuka.projekat_za_kraj.repositories.GradeRepository;
 
 @Service
@@ -15,8 +16,8 @@ public class GradeDaoImpl implements GradeDao {
    private GradeRepository gradeRepository;
    
    @Override
-   public List<GradeEntity> findGradeValueByStudentAndSubject(Integer studentId, Integer subjectId) {
-      return gradeRepository.findByStudentAndTeacherSubject(studentId, subjectId);
+   public List<GradeEntity> findGradeValueByStudentAndSubject(StudentEntity studentId, Integer subjectId) {
+      return gradeRepository.findByStudent(studentId);
    }
    
   /* @Override

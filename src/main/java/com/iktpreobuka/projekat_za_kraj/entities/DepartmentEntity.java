@@ -6,92 +6,91 @@ import java.util.List;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
-import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
-import javax.persistence.OneToOne;
 import javax.persistence.Table;
+import javax.persistence.UniqueConstraint;
 import javax.persistence.Version;
+import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 
-import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonView;
-import com.fasterxml.jackson.annotation.ObjectIdGenerators;
-import com.iktpreobuka.projekat_za_kraj.enumerations.ESemester;
 import com.iktpreobuka.projekat_za_kraj.security.Views;
 
 @Entity
-@Table(name = "department")
+@Table(name = "department", uniqueConstraints=@UniqueConstraint(name = "UniqueDepartments", columnNames= {"department_label", "enrollment_year"}))
 @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
-@JsonIdentityInfo(generator=ObjectIdGenerators.UUIDGenerator.class, property="id")
-//@JsonIdentityInfo(generator=ObjectIdGenerators.IntSequenceGenerator.class)
 public class DepartmentEntity {
 	
-	/*@JsonView(Views.Teacher.class)
-	@ManyToMany(cascade = CascadeType.REFRESH, fetch = FetchType.LAZY)
-    @JoinTable(name = "teacher_subject_department", joinColumns = { @JoinColumn(name = "department_id") }, inverseJoinColumns = { @JoinColumn(name = "teacher_id"), @JoinColumn(name = "subject_id") })
-	private List<TeacherSubjectEntity> teachers_subjects = new ArrayList<>();	
-	// @JsonBackReference
-	// private Set<TeacherSubjectEntity> teacher_subject = new HashSet<>();*/
-	//********************************************************************ZA SADA NE KORISTIM
+	private static final Integer STATUS_INACTIVE = 0;
+	private static final Integer STATUS_ACTIVE = 1;
+	private static final Integer STATUS_ARCHIVED = -1;
 	
-	@JsonView(Views.Student.class)
-	@ManyToOne(cascade = CascadeType.REFRESH, fetch = FetchType.LAZY)
-	@JoinColumn(name = "class_label")
-	@NotNull (message = "Class label must be provided.")
-	private ClassEntity class_label;
-
 	@JsonView(Views.Teacher.class)
 	@JsonIgnore
 	@OneToMany(mappedBy = "student_department", fetch = FetchType.LAZY, cascade = { CascadeType.REFRESH})
 	private List<StudentEntity> students = new ArrayList<>();
 	
 	@JsonView(Views.Student.class)
-	@OneToOne(cascade = CascadeType.REFRESH, fetch = FetchType.LAZY)
-	@JoinColumn(name = "primary_teacher")
-	//@NotNull (message = "Primary teacher must be provided.")
-	private TeacherEntity primary_teacher;
-
+	@JsonIgnore
+	@OneToMany(mappedBy = "primary_department", fetch = FetchType.LAZY, cascade = { CascadeType.REFRESH})
+	private List<PrimaryTeacherDepartmentEntity> teachers = new ArrayList<>();
 	
+	@JsonIgnore
+	@JsonView(Views.Student.class)
+	@ManyToOne(cascade = CascadeType.REFRESH, fetch = FetchType.LAZY)
+	@JoinColumn(name = "class_id")
+	@NotNull (message = "Class must be provided.")
+	private ClassEntity class_department;
+
+	@JsonView(Views.Admin.class)
+	@JsonIgnore
+	@OneToMany(mappedBy = "teachingDepartment", fetch = FetchType.LAZY, cascade = { CascadeType.REFRESH})
+	private List<TeacherSubjectDepartmentEntity> teachers_subjects = new ArrayList<>();
+
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	@JsonView(Views.Admin.class)
 	@Column(name="department_id")
 	private Integer id;
-	/* @JsonView(Views.Private.class)
-	@Column(name="class_number")
-	@NotNull (message = "Class number must be provided.")
-	@Min(value=1, message = "Class number must be {value} or higher!")
-	@Max(value=8, message = "Class number must be {value} or lower!")
-	private String classNumber; */
-	//@JsonView(Views.Public.class)
-	@Column(name="department_label")
+	@Column(name="department_label", nullable=false)
 	@JsonView(Views.Student.class)
-	@Min(value=1, message = "Department label must be {value} or higher!")
+	//@Min(value=1, message = "Department label must be {value} or higher!")
+	@Pattern(regexp = "^[A-Za-z0-9]{1,2}$", message="Department label is not valid, can contain only one letter.")
 	@NotNull (message = "Department label must be provided.")
+	//@NaturalId
 	private String departmentLabel;
 	@JsonView(Views.Student.class)
-	@Column(name="school_year")
-	@NotNull (message = "School year must be provided.")
-	@Pattern(regexp = "^(20|[3-9][0-9])\\d{2}\\/(20|[3-9][0-9])\\\\d{2}$", message="School year is not valid.")
-	private String schoolYear;
-	@JsonView(Views.Student.class)
+	@Column(name="enrollment_year", nullable=false)
+	@NotNull (message = "Enrollment year must be provided.")
+	@Pattern(regexp = "^(20|[3-9][0-9])\\d{2}$", message="Enrollment year is not valid, must be in format YYYY.")
+	private String enrollmentYear;
+	/*@JsonView(Views.Student.class)
 	@Column(name="semester")
 	@Enumerated(EnumType.STRING)
 	@NotNull (message = "Semester must be provided.")
-	private ESemester semester;
+	private ESemester semester;*/
+	@JsonView(Views.Admin.class)
+	@Max(1)
+    @Min(-1)
+    @Column(name = "status", nullable = false)
+	private Integer status;
+	@JsonView(Views.Admin.class)
+    @Column(name = "created_by", nullable = false, updatable = false)
+	private Integer createdById;
+    @JsonView(Views.Admin.class)
+    @Column(name = "updated_by")
+    private Integer updatedById;
 	@JsonIgnore
 	@Version
 	private Integer version;
@@ -100,38 +99,16 @@ public class DepartmentEntity {
 		super();
 	}
 
-	public DepartmentEntity(@NotNull(message = "Class number must be provided.") ClassEntity classLabel,
-			@Min(value = 1, message = "Department number must be {value} or higher!") String departmentLabel,
-			@NotNull(message = "Semester must be provided.") ESemester semester,
-			@NotNull (message = "School year must be provided.") String schoolYear) {
+	public DepartmentEntity(ClassEntity class_department,
+			@Pattern(regexp = "^[a-zA-Z]$", message = "Department label is not valid, can contain only one letter.") @NotNull(message = "Department label must be provided.") String departmentLabel,
+			Integer createdById) {
 		super();
-		this.class_label = classLabel;
+		this.class_department = class_department;
 		this.departmentLabel = departmentLabel;
-		this.semester = semester;
-		this.schoolYear = schoolYear;
+		this.status = getStatusActive();
+		this.createdById = createdById;
 	}
 
-	public DepartmentEntity(List<TeacherSubjectEntity> teachers_subjects, List<StudentEntity> students,
-			@NotNull(message = "Class number must be provided.") ClassEntity classLabel,
-			@Min(value = 1, message = "Department number must be {value} or higher!") String departmentLabel,
-			@NotNull(message = "Semester must be provided.") ESemester semester,
-			@NotNull (message = "School year must be provided.") String schoolYear) {
-		super();
-		//this.teachers_subjects = teachers_subjects;
-		this.students = students;
-		this.class_label = classLabel;
-		this.departmentLabel = departmentLabel;
-		this.semester = semester;
-		this.schoolYear = schoolYear;
-	}
-
-	public List<StudentEntity> getStudents() {
-		return students;
-	}
-
-	public void setStudents(List<StudentEntity> students) {
-		this.students = students;
-	}
 
 	public Integer getId() {
 		return id;
@@ -141,12 +118,48 @@ public class DepartmentEntity {
 		this.id = id;
 	}
 
-	public ClassEntity getClass_label() {
-		return class_label;
+	public Integer getCreatedById() {
+		return createdById;
 	}
 
-	public void setClass_label(ClassEntity class_label) {
-		this.class_label = class_label;
+	public void setCreatedById(Integer createdById) {
+		this.createdById = createdById;
+	}
+
+	public Integer getUpdatedById() {
+		return updatedById;
+	}
+
+	public void setUpdatedById(Integer updatedById) {
+		this.updatedById = updatedById;
+	}
+
+	public static Integer getStatusInactive() {
+		return STATUS_INACTIVE;
+	}
+
+	public static Integer getStatusActive() {
+		return STATUS_ACTIVE;
+	}
+
+	public static Integer getStatusArchived() {
+		return STATUS_ARCHIVED;
+	}
+
+	public Integer getStatus() {
+		return status;
+	}
+
+	public void setStatusInactive() {
+		this.status = getStatusInactive();
+	}
+
+	public void setStatusActive() {
+		this.status = getStatusActive();
+	}
+
+	public void setStatusArchived() {
+		this.status = getStatusArchived();
 	}
 
 	public String getDepartmentLabel() {
@@ -157,14 +170,6 @@ public class DepartmentEntity {
 		this.departmentLabel = departmentLabel;
 	}
 
-	public ESemester getSemester() {
-		return semester;
-	}
-
-	public void setSemester(ESemester semester) {
-		this.semester = semester;
-	}
-
 	public Integer getVersion() {
 		return version;
 	}
@@ -173,21 +178,53 @@ public class DepartmentEntity {
 		this.version = version;
 	}
 
-	public TeacherEntity getPrimary_teacher() {
-		return primary_teacher;
+	public List<StudentEntity> getStudents() {
+		return students;
 	}
 
-	public void setPrimary_teacher(TeacherEntity primary_teacher) {
-		this.primary_teacher = primary_teacher;
+	public void setStudents(List<StudentEntity> students) {
+		this.students = students;
 	}
 
-	public String getSchoolYear() {
-		return schoolYear;
+	public List<PrimaryTeacherDepartmentEntity> getDepartments() {
+		return teachers;
 	}
 
-	public void setSchoolYear(String schoolYear) {
-		this.schoolYear = schoolYear;
+	public void setDepartments(List<PrimaryTeacherDepartmentEntity> departments) {
+		this.teachers = departments;
 	}
 
+	public ClassEntity getClass_department() {
+		return class_department;
+	}
+
+	public void setClass_department(ClassEntity class_department) {
+		this.class_department = class_department;
+	}
+
+	public List<TeacherSubjectDepartmentEntity> getTeachers_subjects() {
+		return teachers_subjects;
+	}
+
+	public void setTeachers_subjects(List<TeacherSubjectDepartmentEntity> teachers_subjects) {
+		this.teachers_subjects = teachers_subjects;
+	}
+	
+
+	/*@Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+ 
+        if (o == null || getClass() != o.getClass())
+            return false;
+ 
+        DepartmentEntity department = (DepartmentEntity) o;
+        return Objects.equals(this.getDepartmentLabel(), department.getDepartmentLabel());
+    }
+ 
+    @Override
+    public int hashCode() {
+        return Objects.hash(this.getDepartmentLabel());
+    }*/
 
 }

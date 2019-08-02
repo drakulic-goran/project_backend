@@ -5,9 +5,6 @@ import java.util.List;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
-import javax.persistence.DiscriminatorColumn;
-import javax.persistence.DiscriminatorType;
-import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
@@ -22,83 +19,105 @@ import javax.persistence.Table;
 import javax.persistence.Version;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
-import javax.validation.constraints.Size;
+
+import org.hibernate.annotations.DiscriminatorOptions;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonView;
 import com.iktpreobuka.projekat_za_kraj.enumerations.EGender;
 import com.iktpreobuka.projekat_za_kraj.enumerations.EUserRole;
 import com.iktpreobuka.projekat_za_kraj.security.Views;
 
-@Entity
-@Table (name = "user")
+/*@Entity
+@Table (name = "user", uniqueConstraints=@UniqueConstraint(columnNames= {"jmbg"}))
 @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
 @Inheritance(strategy=InheritanceType.SINGLE_TABLE)  
 @DiscriminatorColumn(name="type",discriminatorType=DiscriminatorType.STRING)  
-@DiscriminatorValue(value="user")  
+@DiscriminatorValue(value="user")  */
+/*@MappedSuperclass
+@JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })*/
+@Entity
+@Table (name = "user"/*, uniqueConstraints=@UniqueConstraint(columnNames= {"jmbg", "role"})*/)
+@JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
+@Inheritance(strategy = InheritanceType.JOINED)
+@DiscriminatorOptions(force = true)
 public class UserEntity {
 	
+	/*private static final Integer STATUS_INACTIVE = 0;
+	private static final Integer STATUS_ACTIVE = 1;
+	private static final Integer STATUS_ARCHIVED = -1;*/
+    
 	@JsonView(Views.Admin.class)
-	//@JsonIgnore
+	@JsonIgnore
 	@OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = { CascadeType.REFRESH})
-	@JsonManagedReference
+	//@JsonManagedReference
 	private List<UserAccountEntity> accounts = new ArrayList<>();
-	
-	/* @JsonView(Views.Admin.class)
-	@ManyToOne(cascade = CascadeType.REFRESH, fetch = FetchType.LAZY)
-	@JoinColumn(name = "user_role")
-	private RoleEntity user_role; */
-	
-	/* @ManyToMany(cascade = CascadeType.REFRESH, fetch = FetchType.LAZY)
-    @JoinTable(name = "user_role", joinColumns = { @JoinColumn(name = "user_id") }, inverseJoinColumns = { @JoinColumn(name = "role_id") })
-	private List<UserAccountEntity> roles = new ArrayList<>();
-	// private Set<RoleEntity> roles = new HashSet<>(); */
+	/*@JsonView(Views.Admin.class)
+	@OneToOne
+	@JoinColumn(name="user_account")
+    protected UserAccountEntity userAccount;*/
 	
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	@JsonView(Views.Admin.class)
 	@Column(name="user_id")
-	private Integer id;
+	protected Integer id;
 	@JsonView(Views.Student.class)
 	@Column(name="first_name")
+	@Pattern(regexp = "^[A-Za-z]{2,}$", message="First name is not valid.")
 	@NotNull (message = "First name must be provided.")
-	private String firstName;
+	protected String firstName;
 	@JsonView(Views.Student.class)
 	@Column(name="last_name")
+	@Pattern(regexp = "^[A-Za-z]{2,}$", message="Last name is not valid.")
 	@NotNull (message = "Last name must be provided.")
-	private String lastName;
+	protected String lastName;
 	@JsonView(Views.Admin.class)
-	@Column(name="jmbg", unique=true, length=13)
-	@Pattern(regexp = "^[0-9]*$", message="JMBG is not valid.")
-	@Size(min=13, message = "JMBG must be {min} characters long.")
+	@Column(name="jmbg", unique=true, length=13, nullable=false)
+	@Pattern(regexp = "^[0-9]{13,13}$", message="JMBG is not valid, can contain only numbers and must be exactly 13 numbers long.")
+	//@Size(min=13, max=13, message = "JMBG must be {min} characters long.")
 	@NotNull (message = "JMBG must be provided.")
-	private String jMBG;
-	@JsonView(Views.Student.class)
+	protected String jMBG;
+	@JsonView(Views.Admin.class)
 	@Column(name="gender")
 	@Enumerated(EnumType.STRING)
 	@NotNull (message = "Gender must be provided.")
-	private EGender gender;
+	protected EGender gender;
 	@JsonView(Views.Admin.class)
-	@Column(name="role")
+	@Column(name="role", nullable=false)
 	@Enumerated(EnumType.STRING)
 	@NotNull (message = "User role must be provided.")
-	private EUserRole role;
+	protected EUserRole role;
 	@JsonIgnore
 	@Version
-	private Integer version;
+	protected Integer version;
 	
-	// private final Logger logger= (Logger) LoggerFactory.getLogger(this.getClass());
 	
 	public UserEntity() { 
 		super();
 	}
 
-	public UserEntity(@NotNull(message = "First name must be provided.") String firstName,
-			@NotNull(message = "Last name must be provided.") String lastName,
-			@Pattern(regexp = "^[0-9]*$", message = "JMBG is not valid.") @Size(min = 13, message = "JMBG must be {min} characters long.") @NotNull(message = "JMBG must be provided.") String jMBG,
-			@NotNull(message = "Sex must be provided.") EGender gender,
+	public UserEntity(Integer id,
+			@Pattern(regexp = "^[A-Za-z]{2,}$", message = "First name is not valid.") @NotNull(message = "First name must be provided.") String firstName,
+			@Pattern(regexp = "^[A-Za-z]{2,}$", message = "Last name is not valid.") @NotNull(message = "Last name must be provided.") String lastName,
+			@Pattern(regexp = "^[0-9]{13,13}$", message = "JMBG is not valid, can contain only numbers and must be exactly 13 numbers long.") @NotNull(message = "JMBG must be provided.") String jMBG,
+			@NotNull(message = "Gender must be provided.") EGender gender,
+			@NotNull(message = "User role must be provided.") EUserRole role) {
+		super();
+		this.id = id;
+		this.firstName = firstName;
+		this.lastName = lastName;
+		this.jMBG = jMBG;
+		this.gender = gender;
+		this.role = role;
+	}
+
+	public UserEntity(
+			@Pattern(regexp = "^[A-Za-z]{2,}$", message = "First name is not valid.") @NotNull(message = "First name must be provided.") String firstName,
+			@Pattern(regexp = "^[A-Za-z]{2,}$", message = "Last name is not valid.") @NotNull(message = "Last name must be provided.") String lastName,
+			@Pattern(regexp = "^[0-9]{13,13}$", message = "JMBG is not valid, can contain only numbers and must be exactly 13 numbers long.") @NotNull(message = "JMBG must be provided.") String jMBG,
+			@NotNull(message = "Gender must be provided.") EGender gender,
 			@NotNull(message = "User role must be provided.") EUserRole role) {
 		super();
 		this.firstName = firstName;
@@ -107,6 +126,62 @@ public class UserEntity {
 		this.gender = gender;
 		this.role = role;
 	}
+
+	/*public UserEntity(@NotNull(message = "First name must be provided.") String firstName,
+			@NotNull(message = "Last name must be provided.") String lastName,
+			@Pattern(regexp = "^[0-9]*$", message = "JMBG is not valid.") @Size(min = 13, message = "JMBG must be {min} characters long.") @NotNull(message = "JMBG must be provided.") String jMBG,
+			@NotNull(message = "Gender must be provided.") EGender gender,
+			@NotNull(message = "User role must be provided.") EUserRole role,
+			Integer createdById) {
+		super();
+		this.firstName = firstName;
+		this.lastName = lastName;
+		this.jMBG = jMBG;
+		this.gender = gender;
+		this.role = role;
+		this.status = getStatusActive();
+		this.createdById = createdById;
+	}
+
+	public UserEntity(Integer id,
+			@Pattern(regexp = "^[A-Za-z]{2,}$", message = "First name is not valid.") @NotNull(message = "First name must be provided.") String firstName,
+			@Pattern(regexp = "^[A-Za-z]{2,}$", message = "Last name is not valid.") @NotNull(message = "Last name must be provided.") String lastName,
+			@Pattern(regexp = "^[0-9]{13,13}$", message = "JMBG is not valid, can contain only numbers and must be exactly 13 numbers long.") @NotNull(message = "JMBG must be provided.") String jMBG,
+			@NotNull(message = "Gender must be provided.") EGender gender,
+			@NotNull(message = "User role must be provided.") EUserRole role, @Max(1) @Min(-1) Integer status,
+			Integer createdById, Integer updatedById, Integer version) {
+		super();
+		this.id = id;
+		this.firstName = firstName;
+		this.lastName = lastName;
+		this.jMBG = jMBG;
+		this.gender = gender;
+		this.role = role;
+		this.status = status;
+		this.createdById = createdById;
+		this.updatedById = updatedById;
+		this.version = version;
+	}
+	
+	public UserEntity(Integer id,
+			@Pattern(regexp = "^[A-Za-z]{2,}$", message = "First name is not valid.") @NotNull(message = "First name must be provided.") String firstName,
+			@Pattern(regexp = "^[A-Za-z]{2,}$", message = "Last name is not valid.") @NotNull(message = "Last name must be provided.") String lastName,
+			@Pattern(regexp = "^[0-9]{13,13}$", message = "JMBG is not valid, can contain only numbers and must be exactly 13 numbers long.") @NotNull(message = "JMBG must be provided.") String jMBG,
+			@NotNull(message = "Gender must be provided.") String gender,
+			@NotNull(message = "User role must be provided.") String role, @Max(1) @Min(-1) Integer status,
+			Integer createdById, Integer updatedById, Integer version) {
+		super();
+		this.id = id;
+		this.firstName = firstName;
+		this.lastName = lastName;
+		this.jMBG = jMBG;
+		this.gender = EGender.valueOf(gender);
+		this.role = EUserRole.valueOf(role);
+		this.status = status;
+		this.createdById = createdById;
+		this.updatedById = updatedById;
+		this.version = version;
+	}*/
 
 	public Integer getId() {
 		return id;
@@ -156,6 +231,10 @@ public class UserEntity {
 		this.jMBG = jMBG;
 	}
 
+	public EUserRole getRole() {
+		return role;
+	}
+
 	public List<UserAccountEntity> getAccounts() {
 		return accounts;
 	}
@@ -164,12 +243,52 @@ public class UserEntity {
 		this.accounts = accounts;
 	}
 
-	public EUserRole getRole() {
-		return role;
-	}
-
 	public void setRole(EUserRole role) {
 		this.role = role;
 	}
+
+	/*public Integer getStatus() {
+		return status;
+	}
+
+	public Integer getCreatedById() {
+		return createdById;
+	}
+
+	public void setCreatedById(Integer createdById) {
+		this.createdById = createdById;
+	}
+
+	public Integer getUpdatedById() {
+		return updatedById;
+	}
+
+	public void setUpdatedById(Integer updatedById) {
+		this.updatedById = updatedById;
+	}
+
+	private static Integer getStatusInactive() {
+		return STATUS_INACTIVE;
+	}
+
+	private static Integer getStatusActive() {
+		return STATUS_ACTIVE;
+	}
+
+	private static Integer getStatusArchived() {
+		return STATUS_ARCHIVED;
+	}
+	
+	public void setStatusInactive() {
+		this.status = getStatusInactive();
+	}
+
+	public void setStatusActive() {
+		this.status = getStatusActive();
+	}
+
+	public void setStatusArchived() {
+		this.status = getStatusArchived();
+	}*/
 
 }

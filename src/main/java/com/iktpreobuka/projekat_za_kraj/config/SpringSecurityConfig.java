@@ -11,6 +11,7 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 @Configuration
@@ -36,7 +37,8 @@ public class SpringSecurityConfig extends WebSecurityConfigurerAdapter {
 		.csrf().disable()
 		.authorizeRequests().anyRequest().authenticated()
 		.and().httpBasic()
-		.authenticationEntryPoint(authEntryPoint);
+		.authenticationEntryPoint(authEntryPoint)
+		.and().sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);;
 		}
 	
 	@Autowired

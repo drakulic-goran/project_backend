@@ -1,13 +1,17 @@
 package com.iktpreobuka.projekat_za_kraj.entities.dto;
 
 import javax.validation.constraints.Min;
-import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
+
+import com.fasterxml.jackson.annotation.JsonView;
+import com.iktpreobuka.projekat_za_kraj.security.Views;
 
 public class SubjectDto {
 	
-	@NotNull (message = "Subject name must be provided.")
+	@JsonView(Views.Student.class)
+	@Pattern(regexp = "^([_A-Za-z0-9- _])+$", message="Subject is not valid.")
 	private String subjectName;
-	@NotNull (message = "Number of classes in a week must be provided.")
+	@JsonView(Views.Student.class)
 	@Min(value=0, message = "Number of classes in a week must be {value} or higher!")
 	private Integer weekClassesNumber;
 	
@@ -15,8 +19,8 @@ public class SubjectDto {
 		super();
 	}
 
-	public SubjectDto(@NotNull(message = "Subject name must be provided.") String subjectName,
-			@NotNull(message = "Number of classes in a week must be provided.") @Min(value = 0, message = "Number of classes in a week must be {value} or higher!") Integer weekClassesNumber) {
+	public SubjectDto(@Pattern(regexp = "^([_A-Za-z0-9- _])+$", message = "Subject is not valid.") String subjectName,
+			@Min(value = 0, message = "Number of classes in a week must be {value} or higher!") Integer weekClassesNumber) {
 		super();
 		this.subjectName = subjectName;
 		this.weekClassesNumber = weekClassesNumber;
