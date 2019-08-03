@@ -5,77 +5,79 @@ import java.util.List;
 import javax.validation.constraints.Pattern;
 
 import com.fasterxml.jackson.annotation.JsonView;
-import com.iktpreobuka.projekat_za_kraj.entities.ClassEntity;
-import com.iktpreobuka.projekat_za_kraj.entities.StudentEntity;
-import com.iktpreobuka.projekat_za_kraj.entities.TeacherEntity;
-import com.iktpreobuka.projekat_za_kraj.entities.TeacherSubjectEntity;
 import com.iktpreobuka.projekat_za_kraj.security.Views;
+import com.mysql.cj.conf.ConnectionUrlParser.Pair;
 
 public class DepartmentDto {
 
 	@JsonView(Views.Student.class)
-	private ClassEntity class_department;
-	@JsonView(Views.Student.class)
-	@Pattern(regexp = "^[a-zA-Z]$", message="Department label is not valid, can contain only one letter.")
+	@Pattern(regexp = "^[A-Za-z0-9]{1,2}$", message="Department label is not valid, can contain only one or two letters and/or numbers.")
 	private String departmentLabel;
-	//@Enumerated(EnumType.STRING)
-	//@NotNull (message = "Semester must be provided.")
-	//private String semester;
+	@JsonView(Views.Student.class)
+	@Pattern(regexp = "^(20|[3-9][0-9])\\d{2}$", message="Enrollment year is not valid, must be in format YYYY.")
+	private String enrollmentYear;
 	@JsonView(Views.Teacher.class)
-	private List<StudentEntity> students;
+	private List<String> students;
 	@JsonView(Views.Student.class)
-	private TeacherEntity primaryTeacher;
+	private String primaryTeacher;
 	@JsonView(Views.Student.class)
-	private List<TeacherSubjectEntity> teachers_subjects;
+	private List<Pair<String, String>> teachers_subjects;
+	@JsonView(Views.Student.class)
+	private String department_class;
+
 	
 	public DepartmentDto() {
 		super();
 	}
 
-	public DepartmentDto(ClassEntity class_department,
-			@Pattern(regexp = "^[a-zA-Z]$", message = "Department label is not valid, can contain only one letter.") String departmentLabel,
-			List<StudentEntity> students, TeacherEntity primaryTeacher, List<TeacherSubjectEntity> teachers_subjects) {
+	public DepartmentDto(
+			@Pattern(regexp = "^[A-Za-z0-9]{1,2}$", message = "Department label is not valid, can contain only one or two letters and/or numbers.") String departmentLabel,
+			@Pattern(regexp = "^(20|[3-9][0-9])\\d{2}$", message = "Enrollment year is not valid, must be in format YYYY.") String enrollmentYear,
+			List<String> students, String primaryTeacher, List<Pair<String, String>> teachers_subjects,
+			String department_class) {
 		super();
-		this.class_department = class_department;
 		this.departmentLabel = departmentLabel;
+		this.enrollmentYear = enrollmentYear;
 		this.students = students;
 		this.primaryTeacher = primaryTeacher;
 		this.teachers_subjects = teachers_subjects;
+		this.department_class = department_class;
 	}
 
-	public DepartmentDto(List<TeacherSubjectEntity> teachers_subjects, ClassEntity class_department,
-			@Pattern(regexp = "^[a-zA-Z]$", message = "Department label is not valid, can contain only one letter.") String departmentLabel) {
+	public DepartmentDto(
+			@Pattern(regexp = "^[A-Za-z0-9]{1,2}$", message = "Department label is not valid, can contain only one or two letters and/or numbers.") String departmentLabel,
+			@Pattern(regexp = "^(20|[3-9][0-9])\\d{2}$", message = "Enrollment year is not valid, must be in format YYYY.") String enrollmentYear,
+			List<Pair<String, String>> teachers_subjects, String department_class) {
 		super();
+		this.departmentLabel = departmentLabel;
+		this.enrollmentYear = enrollmentYear;
 		this.teachers_subjects = teachers_subjects;
-		this.class_department = class_department;
-		this.departmentLabel = departmentLabel;
+		this.department_class = department_class;
 	}
-
-	public DepartmentDto(ClassEntity class_department,
-			@Pattern(regexp = "^[a-zA-Z]$", message = "Department label is not valid, can contain only one letter.") String departmentLabel,
-			TeacherEntity primaryTeacher) {
+	
+	public DepartmentDto(
+			@Pattern(regexp = "^[A-Za-z0-9]{1,2}$", message = "Department label is not valid, can contain only one or two letters and/or numbers.") String departmentLabel,
+			@Pattern(regexp = "^(20|[3-9][0-9])\\d{2}$", message = "Enrollment year is not valid, must be in format YYYY.") String enrollmentYear,
+			String primaryTeacher, String department_class) {
 		super();
-		this.class_department = class_department;
 		this.departmentLabel = departmentLabel;
+		this.enrollmentYear = enrollmentYear;
 		this.primaryTeacher = primaryTeacher;
+		this.department_class = department_class;
 	}
 
-	public DepartmentDto(ClassEntity class_department,
-			@Pattern(regexp = "^[a-zA-Z]$", message = "Department label is not valid, can contain only one letter.") String departmentLabel,
-			List<StudentEntity> students) {
+	
+	public DepartmentDto(String department_class,
+			@Pattern(regexp = "^[A-Za-z0-9]{1,2}$", message = "Department label is not valid, can contain only one or two letters and/or numbers.") String departmentLabel,
+			@Pattern(regexp = "^(20|[3-9][0-9])\\d{2}$", message = "Enrollment year is not valid, must be in format YYYY.") String enrollmentYear,
+			List<String> students) {
 		super();
-		this.class_department = class_department;
+		this.department_class = department_class;
 		this.departmentLabel = departmentLabel;
+		this.enrollmentYear = enrollmentYear;
 		this.students = students;
 	}
 
-	public ClassEntity getClass_department() {
-		return class_department;
-	}
-
-	public void setClass_department(ClassEntity class_department) {
-		this.class_department = class_department;
-	}
 
 	public String getDepartmentLabel() {
 		return departmentLabel;
@@ -85,28 +87,44 @@ public class DepartmentDto {
 		this.departmentLabel = departmentLabel;
 	}
 
-	public List<StudentEntity> getStudents() {
+	public String getEnrollmentYear() {
+		return enrollmentYear;
+	}
+
+	public void setEnrollmentYear(String enrollmentYear) {
+		this.enrollmentYear = enrollmentYear;
+	}
+
+	public List<String> getStudents() {
 		return students;
 	}
 
-	public void setStudents(List<StudentEntity> students) {
+	public void setStudents(List<String> students) {
 		this.students = students;
 	}
 
-	public TeacherEntity getPrimaryTeacher() {
+	public String getPrimaryTeacher() {
 		return primaryTeacher;
 	}
 
-	public void setPrimaryTeacher(TeacherEntity primaryTeacher) {
+	public void setPrimaryTeacher(String primaryTeacher) {
 		this.primaryTeacher = primaryTeacher;
 	}
 
-	public List<TeacherSubjectEntity> getTeachers_subjects() {
+	public List<Pair<String, String>> getTeachers_subjects() {
 		return teachers_subjects;
 	}
 
-	public void setTeachers_subjects(List<TeacherSubjectEntity> teachers_subjects) {
+	public void setTeachers_subjects(List<Pair<String, String>> teachers_subjects) {
 		this.teachers_subjects = teachers_subjects;
+	}
+
+	public String getDepartment_class() {
+		return department_class;
+	}
+
+	public void setDepartment_class(String department_class) {
+		this.department_class = department_class;
 	}
 	
 }

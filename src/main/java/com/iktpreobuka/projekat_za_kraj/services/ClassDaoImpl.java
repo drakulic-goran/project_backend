@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 
 import com.iktpreobuka.projekat_za_kraj.entities.ClassEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.ClassSubjectEntity;
+import com.iktpreobuka.projekat_za_kraj.entities.DepartmentClassEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.DepartmentEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.SubjectEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.UserEntity;
@@ -12,7 +13,7 @@ import com.iktpreobuka.projekat_za_kraj.entities.dto.ClassDto;
 import com.iktpreobuka.projekat_za_kraj.enumerations.EClass;
 import com.iktpreobuka.projekat_za_kraj.repositories.ClassRepository;
 import com.iktpreobuka.projekat_za_kraj.repositories.ClassSubjectRepository;
-import com.iktpreobuka.projekat_za_kraj.repositories.DepartmentRepository;
+import com.iktpreobuka.projekat_za_kraj.repositories.DepartmentClassRepository;
 
 @Service
 public class ClassDaoImpl implements ClassDao {
@@ -24,8 +25,7 @@ public class ClassDaoImpl implements ClassDao {
 	private ClassSubjectRepository classSubjectRepository;
 
 	@Autowired
-	private DepartmentRepository departmentRepository;
-
+	private DepartmentClassRepository departmentClassRepository;
 	
 	@Override
 	public ClassEntity addNewClass(UserEntity loggedUser, ClassDto newClass) throws Exception {
@@ -58,14 +58,17 @@ public class ClassDaoImpl implements ClassDao {
 			throw new Exception("modifyClass ClassDto check failed.");
 		}
 		try {
-			class_.setClassLabel(EClass.valueOf(updateClass.getClassLabel()));
-			class_.setUpdatedById(loggedUser.getId());
-			classRepository.save(class_);
+			if (updateClass.getClassLabel() != null && !updateClass.getClassLabel().equals(" ") && !updateClass.getClassLabel().equals("")) {
+				class_.setClassLabel(EClass.valueOf(updateClass.getClassLabel()));
+				class_.setUpdatedById(loggedUser.getId());
+				classRepository.save(class_);
+			}
 		} catch (Exception e) {
 			throw new Exception("modifyClass failed on saving.");
 		}
 	}
 	
+	@Override
 	public void addSubjectToClass(UserEntity loggedUser, ClassEntity class_, SubjectEntity subject, String name) throws Exception {
 		try {
 			boolean contains = false;
@@ -88,20 +91,60 @@ public class ClassDaoImpl implements ClassDao {
 		}
 	}
 	
-	public void addDepartmentToClass(UserEntity loggedUser, ClassEntity class_, DepartmentEntity department) throws Exception {
+	@Override
+	public void removeSubjectFromClass(UserEntity loggedUser, ClassEntity class_, SubjectEntity subject) throws Exception {
+		try {
+			if (class_.getStatus() == 1 && subject.getStatus() == 1) {
+				for (ClassSubjectEntity cs : class_.getSubjects()) {
+					if (cs.getSubject() == subject && cs.getStatus() == 1) {
+						cs.setStatusInactive();
+						classSubjectRepository.save(cs);
+					}
+				}
+			}
+		} catch (Exception e) {
+			throw new Exception("removeSubjectFromClass failed on saving.");
+		}
+
+	}
+	
+	@Override
+	public void addDepartmentToClass(UserEntity loggedUser, ClassEntity class_, DepartmentEntity department, String schoolYear) throws Exception {
 		try {
 			boolean contains = false;
 			if (class_.getStatus() == 1 && department.getStatus() == 1) {
-				for (DepartmentEntity s : class_.getDepartments()) {
-					if (s == department && s.getStatus() == 1) {
-						contains = true;
+				for (DepartmentClassEntity ds : class_.getDepartments()) {
+					if (ds.getStatus() == 1) {
+						if (ds.getDepartment() == department) {
+							contains = true;
+						} else {
+							ds.setStatusInactive();
+							departmentClassRepository.save(ds);
+						}
 					}
 				}
 			} else
 				contains = true;
 			if (!contains) {
-				class_.getDepartments().add(department);
+				DepartmentClassEntity departmentClass = new DepartmentClassEntity(class_, department, schoolYear, loggedUser.getId());
+				departmentClassRepository.save(departmentClass);
+				class_.getDepartments().add(departmentClass);
 				classRepository.save(class_);
+			}
+		} catch (Exception e) {
+			throw new Exception("addDepartmentToClass failed on saving.");
+		}
+	}
+	
+	public void removeDepartmentFromClass(UserEntity loggedUser, ClassEntity class_, DepartmentEntity department, String schoolyear) throws Exception {
+		try {
+			if (class_.getStatus() == 1 && department.getStatus() == 1) {
+				for (DepartmentClassEntity ds : class_.getDepartments()) {
+					if (ds.getStatus() == 1 && ds.getDepartment() == department) {
+						ds.setStatusInactive();
+						departmentClassRepository.save(ds);
+					}
+				}
 			}
 		} catch (Exception e) {
 			throw new Exception("addDepartmentToClass failed on saving.");
@@ -113,13 +156,11 @@ public class ClassDaoImpl implements ClassDao {
 		try {
 			class_.setStatusInactive();
 			class_.setUpdatedById(loggedUser.getId());
-			for (DepartmentEntity s : class_.getDepartments()) {
-				if (s.getStatus() == 1) {
-					class_.getDepartments().remove(s);
-					classRepository.save(class_);
-					//s.setClass_department(null);
-					//s.setUpdatedById(loggedUser.getId());
-					//departmentRepository.save(s);
+			for (DepartmentClassEntity ds : class_.getDepartments()) {
+				if (ds.getStatus() == 1) {
+					ds.setStatusInactive();
+					ds.setUpdatedById(loggedUser.getId());
+					departmentClassRepository.save(ds);
 				}
 			}
 			for (ClassSubjectEntity cs : class_.getSubjects()) {
@@ -131,7 +172,7 @@ public class ClassDaoImpl implements ClassDao {
 			}
 			classRepository.save(class_);
 		} catch (Exception e) {
-			throw new Exception("DeleteStudent failed on saving.");
+			throw new Exception("deleteClass failed on saving.");
 		}
 	}
 	
@@ -140,31 +181,35 @@ public class ClassDaoImpl implements ClassDao {
 		try {	
 			class_.setStatusActive();
 			class_.setUpdatedById(loggedUser.getId());	
+			classRepository.save(class_);
+		} catch (Exception e) {
+			throw new Exception("undeleteClass failed on saving.");
+		}		
+	}
+	
+	@Override
+	public void archiveClass(UserEntity loggedUser, ClassEntity class_) throws Exception {
+		try {
+			class_.setStatusArchived();;
+			class_.setUpdatedById(loggedUser.getId());
+			for (DepartmentClassEntity ds : class_.getDepartments()) {
+				if (ds.getStatus() != -1) {
+					ds.setStatusArchived();;
+					ds.setUpdatedById(loggedUser.getId());
+					departmentClassRepository.save(ds);
+				}
+			}
 			for (ClassSubjectEntity cs : class_.getSubjects()) {
-				if (cs.getStatus() == 0) {
-					cs.setStatusActive();
+				if (cs.getStatus() != -1) {
+					cs.setStatusArchived();;
 					cs.setUpdatedById(loggedUser.getId());
 					classSubjectRepository.save(cs);
 				}
 			}
 			classRepository.save(class_);
 		} catch (Exception e) {
-			throw new Exception("UndeleteStudent failed on saving.");
+			throw new Exception("archiveClass failed on saving.");
 		}		
 	}
-	
-/*		@Override
-	public void archiveDeletedStudent(UserEntity loggedUser, StudentEntity student) throws Exception {
-		try {
-			student.setStatusArchived();
-			student.setUpdatedById(loggedUser.getId());
-			studentRepository.save(student);
-		} catch (Exception e) {
-			throw new Exception("ArchiveDeletedStudent failed on saving.");
-		}		
-	}
-	
-	}*/
-	
 	
 }

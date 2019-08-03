@@ -71,7 +71,7 @@ public class TeacherSubjectDepartmentEntity {
 	@JsonView(Views.Student.class)
 	@Column(name="school_year", nullable=false)
 	@NotNull (message = "School year must be provided.")
-	@Pattern(regexp = "^(20|[3-9][0-9])\\d{2}\\-(20|[3-9][0-9])\\\\d{2}$", message="School year is not valid, must be in format YYYY-YYYY.")
+	@Pattern(regexp = "^(20|[3-9][0-9])[0-9]{2}\\\\-(20|[3-9][0-9])[0-9]{2}$", message="School year is not valid, must be in format YYYY-YYYY.")
 	private String schoolYear;
 	@JsonView(Views.Admin.class)
 	@Max(1)

@@ -20,32 +20,6 @@ public class AdminDaoImpl implements AdminDao {
 	@Autowired
 	private UserRepository userRepository;
 
-	/*@Override
-	public AdminEntity findById(Integer id) throws Exception{
-		try {
-			return adminRepository.getById(id);
-		} catch (Exception e) {
-			throw new Exception("Get admin by Id failed.");
-		}
-	}*/
-	
-	/*@Override
-	public AdminEntity findByIdAndStatusLike(Integer id, Integer status) throws Exception {
-		try {
-			return adminRepository.findByIdAndStatusLike(id, status);
-		} catch (Exception e) {
-			throw new Exception("Get admin by Id and Status failed.");
-		}
-	}*/
-
-	/*@Override
-	public Iterable<AdminEntity> findByStatusLike(Integer status) throws Exception {
-		try {
-			return adminRepository.findByStatusLike(status);
-		} catch (Exception e) {
-			throw new Exception("Get admin by Status failed.");
-		}		
-	}*/
 
 	@Override
 	public UserEntity addNewAdmin(UserEntity loggedUser, AdminDto newAdmin) throws Exception {
@@ -83,18 +57,11 @@ public class AdminDaoImpl implements AdminDao {
 					user.setCreatedById(loggedUser.getId());
 					adminRepository.save(user);
 					temporaryUser = user;
-					//return user;
 				} catch (Exception e) {
 					throw new Exception("AddNewAdmin save failed.");
 				}
 			} else {
-				//temporaryUser.setStatusActive();
-				//temporaryUser.setRole(EUserRole.ROLE_ADMIN);
-				//temporaryUser.setUpdatedById(loggedUser.getId());
-				//userRepository.save(temporaryUser);
 				adminRepository.addAdminFromExistUser(newAdmin.getMobilePhoneNumber(), newAdmin.getEmail(), temporaryUser.getId(), loggedUser.getId());
-				//user = adminRepository.findByIdAndStatusLike(temporaryUser.getId(), 1);
-				//user = (AdminEntity)temporaryUser;
 			}
 			return temporaryUser;
 		} catch (Exception e) {
@@ -143,11 +110,6 @@ public class AdminDaoImpl implements AdminDao {
 				admin.setEmail(updateAdmin.getEmail());
 				i++;
 			}
-			/*if (updateAdmin.getRole() != null && EUserRole.valueOf(updateAdmin.getRole()) != admin.getRole() && (EUserRole.valueOf(updateAdmin.getRole()) == EUserRole.ROLE_ADMIN || EUserRole.valueOf(updateAdmin.getRole()) == EUserRole.ROLE_PARENT || EUserRole.valueOf(updateAdmin.getRole()) == EUserRole.ROLE_TEACHER || EUserRole.valueOf(updateAdmin.getRole()) == EUserRole.ROLE_STUDENT)) {
-				admin.setRole(EUserRole.valueOf(updateAdmin.getRole()));
-				i++;
-				System.out.println(i+10000000);
-			}*/
 			if (i>0) {
 				admin.setUpdatedById(loggedUser.getId());
 				adminRepository.save(admin);
@@ -180,7 +142,7 @@ public class AdminDaoImpl implements AdminDao {
 	}
 	
 	@Override
-	public void archiveDeletedAdmin(UserEntity loggedUser, AdminEntity admin) throws Exception {
+	public void archiveAdmin(UserEntity loggedUser, AdminEntity admin) throws Exception {
 		try {
 			admin.setStatusArchived();
 			admin.setUpdatedById(loggedUser.getId());

@@ -41,10 +41,16 @@ public class ClassEntity {
 	@OneToMany(mappedBy = "clas", fetch = FetchType.LAZY, cascade = { CascadeType.REFRESH}, orphanRemoval = true)
 	private List<ClassSubjectEntity> subjects = new ArrayList<>();
 	
-	@JsonIgnore
+/*	@JsonIgnore
 	@JsonView(Views.Teacher.class)
 	@OneToMany(mappedBy = "class_department", fetch = FetchType.LAZY, cascade = { CascadeType.REFRESH}, orphanRemoval = true)
 	private List<DepartmentEntity> departments = new ArrayList<>();
+*/
+	
+	@JsonIgnore
+	@JsonView(Views.Teacher.class)
+	@OneToMany(mappedBy = "clas", fetch = FetchType.LAZY, cascade = { CascadeType.REFRESH}, orphanRemoval = true)
+	private List<DepartmentClassEntity> departments = new ArrayList<>();
 
 	
 	@Id
@@ -155,11 +161,11 @@ public class ClassEntity {
 		this.classLabel = classLabel;
 	}
 
-	public List<DepartmentEntity> getDepartments() {
+	public List<DepartmentClassEntity> getDepartments() {
 		return departments;
 	}
 
-	public void setDepartments(List<DepartmentEntity> departments) {
+	public void setDepartments(List<DepartmentClassEntity> departments) {
 		this.departments = departments;
 	}
 

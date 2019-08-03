@@ -10,8 +10,6 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
@@ -45,12 +43,19 @@ public class DepartmentEntity {
 	@OneToMany(mappedBy = "primary_department", fetch = FetchType.LAZY, cascade = { CascadeType.REFRESH})
 	private List<PrimaryTeacherDepartmentEntity> teachers = new ArrayList<>();
 	
-	@JsonIgnore
+/*	@JsonIgnore
 	@JsonView(Views.Student.class)
 	@ManyToOne(cascade = CascadeType.REFRESH, fetch = FetchType.LAZY)
 	@JoinColumn(name = "class_id")
 	@NotNull (message = "Class must be provided.")
 	private ClassEntity class_department;
+*/
+	
+	@JsonIgnore
+	@JsonView(Views.Teacher.class)
+	@OneToMany(mappedBy = "department", fetch = FetchType.LAZY, cascade = { CascadeType.REFRESH}, orphanRemoval = true)
+	private List<DepartmentClassEntity> classes = new ArrayList<>();
+
 
 	@JsonView(Views.Admin.class)
 	@JsonIgnore
@@ -99,7 +104,18 @@ public class DepartmentEntity {
 		super();
 	}
 
-	public DepartmentEntity(ClassEntity class_department,
+	public DepartmentEntity(
+			@Pattern(regexp = "^[A-Za-z0-9]{1,2}$", message = "Department label is not valid, can contain only one or two letters and/or numbers.") @NotNull(message = "Department label must be provided.") String departmentLabel,
+			@NotNull(message = "Enrollment year must be provided.") @Pattern(regexp = "^(20|[3-9][0-9])\\d{2}$", message = "Enrollment year is not valid, must be in format YYYY.") String enrollmentYear,
+			Integer createdById) {
+		super();
+		this.departmentLabel = departmentLabel;
+		this.enrollmentYear = enrollmentYear;
+		this.status = getStatusActive();
+		this.createdById = createdById;
+	}
+
+/*	public DepartmentEntity(ClassEntity class_department,
 			@Pattern(regexp = "^[a-zA-Z]$", message = "Department label is not valid, can contain only one letter.") @NotNull(message = "Department label must be provided.") String departmentLabel,
 			Integer createdById) {
 		super();
@@ -108,31 +124,8 @@ public class DepartmentEntity {
 		this.status = getStatusActive();
 		this.createdById = createdById;
 	}
+*/
 
-
-	public Integer getId() {
-		return id;
-	}
-
-	public void setId(Integer id) {
-		this.id = id;
-	}
-
-	public Integer getCreatedById() {
-		return createdById;
-	}
-
-	public void setCreatedById(Integer createdById) {
-		this.createdById = createdById;
-	}
-
-	public Integer getUpdatedById() {
-		return updatedById;
-	}
-
-	public void setUpdatedById(Integer updatedById) {
-		this.updatedById = updatedById;
-	}
 
 	public static Integer getStatusInactive() {
 		return STATUS_INACTIVE;
@@ -162,12 +155,76 @@ public class DepartmentEntity {
 		this.status = getStatusArchived();
 	}
 
+	public List<StudentEntity> getStudents() {
+		return students;
+	}
+
+	public void setStudents(List<StudentEntity> students) {
+		this.students = students;
+	}
+
+	public List<PrimaryTeacherDepartmentEntity> getTeachers() {
+		return teachers;
+	}
+
+	public void setTeachers(List<PrimaryTeacherDepartmentEntity> teachers) {
+		this.teachers = teachers;
+	}
+
+	public List<DepartmentClassEntity> getClasses() {
+		return classes;
+	}
+
+	public void setClasses(List<DepartmentClassEntity> classes) {
+		this.classes = classes;
+	}
+
+	public List<TeacherSubjectDepartmentEntity> getTeachers_subjects() {
+		return teachers_subjects;
+	}
+
+	public void setTeachers_subjects(List<TeacherSubjectDepartmentEntity> teachers_subjects) {
+		this.teachers_subjects = teachers_subjects;
+	}
+
+	public Integer getId() {
+		return id;
+	}
+
+	public void setId(Integer id) {
+		this.id = id;
+	}
+
 	public String getDepartmentLabel() {
 		return departmentLabel;
 	}
 
 	public void setDepartmentLabel(String departmentLabel) {
 		this.departmentLabel = departmentLabel;
+	}
+
+	public String getEnrollmentYear() {
+		return enrollmentYear;
+	}
+
+	public void setEnrollmentYear(String enrollmentYear) {
+		this.enrollmentYear = enrollmentYear;
+	}
+
+	public Integer getCreatedById() {
+		return createdById;
+	}
+
+	public void setCreatedById(Integer createdById) {
+		this.createdById = createdById;
+	}
+
+	public Integer getUpdatedById() {
+		return updatedById;
+	}
+
+	public void setUpdatedById(Integer updatedById) {
+		this.updatedById = updatedById;
 	}
 
 	public Integer getVersion() {
@@ -178,37 +235,16 @@ public class DepartmentEntity {
 		this.version = version;
 	}
 
-	public List<StudentEntity> getStudents() {
-		return students;
-	}
 
-	public void setStudents(List<StudentEntity> students) {
-		this.students = students;
-	}
-
-	public List<PrimaryTeacherDepartmentEntity> getDepartments() {
-		return teachers;
-	}
-
-	public void setDepartments(List<PrimaryTeacherDepartmentEntity> departments) {
-		this.teachers = departments;
-	}
-
-	public ClassEntity getClass_department() {
+/*	public ClassEntity getClass_department() {
 		return class_department;
 	}
 
 	public void setClass_department(ClassEntity class_department) {
 		this.class_department = class_department;
 	}
-
-	public List<TeacherSubjectDepartmentEntity> getTeachers_subjects() {
-		return teachers_subjects;
-	}
-
-	public void setTeachers_subjects(List<TeacherSubjectDepartmentEntity> teachers_subjects) {
-		this.teachers_subjects = teachers_subjects;
-	}
+*/
+	
 	
 
 	/*@Override

@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.iktpreobuka.projekat_za_kraj.entities.ClassSubjectEntity;
+import com.iktpreobuka.projekat_za_kraj.entities.DepartmentClassEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.DepartmentEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.PrimaryTeacherDepartmentEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.SubjectEntity;
@@ -265,25 +266,28 @@ public class TeacherDaoImpl implements TeacherDao {
 			for (Pair<String, String> sd : subject_at_department) {
 				SubjectEntity sub = subjectRepository.getById(Integer.parseInt(sd.left));
 				DepartmentEntity dep = departmentRepository.getById(Integer.parseInt(sd.right));
-				boolean contains = false;
+				boolean contains = true;
 				if (sub != null) {
 					for (TeacherSubjectEntity ts : user.getSubjects()) {
 						if (ts.getSubject() == sub && ts.getStatus() == 1) {
-							contains = true;
+							contains = false;
 						}
 					}
-				} else
-					contains = true;
+				} 
 				if (dep != null && !contains) {
-					for (ClassSubjectEntity cs : dep.getClass_department().getSubjects()) {
-						if (cs.getSubject() == sub && cs.getStatus() == 1) {
-							contains = true;
+					for (DepartmentClassEntity ds : dep.getClasses()) {
+						if (ds.getStatus() == 1) {
+							for (ClassSubjectEntity cs : ds.getClass_().getSubjects()) {
+								if (cs.getSubject() == sub && cs.getStatus() == 1) {
+									contains = false;
+								}
+							}
 						}
 					}
 				}
-				if (dep != null && sub != null && !contains) {
+				if (!contains) {
 					for (TeacherSubjectDepartmentEntity tsd : user.getSubjects_departments()) {
-						if (tsd.getTeaching_department() == dep && tsd.getTeaching_subject() == sub && tsd.getStatus() != 1) {
+						if (tsd.getTeaching_department() == dep && tsd.getTeaching_subject() == sub && tsd.getStatus() == 1) {
 							contains = true;
 						}
 					}

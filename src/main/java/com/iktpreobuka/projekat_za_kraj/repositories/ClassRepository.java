@@ -19,5 +19,7 @@ public interface ClassRepository extends CrudRepository<ClassEntity, Integer> {
 	public Iterable<SubjectEntity> findSubjectsByClass(ClassEntity clas);
 
 	public ClassEntity getByClassLabel(EClass classLabel);
+
+	public ClassEntity findByClassLabelAndStatusLike(EClass valueOf, Integer status);
 	
 }

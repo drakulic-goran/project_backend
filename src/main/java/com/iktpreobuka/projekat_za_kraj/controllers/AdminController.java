@@ -168,7 +168,6 @@ public class AdminController {
 		}
 	}
 
-	@SuppressWarnings("unused")
 	@Secured("ROLE_ADMIN")
 	@JsonView(Views.Admin.class)
 	@RequestMapping(method = RequestMethod.POST)
@@ -195,8 +194,8 @@ public class AdminController {
 			logger.info("Admin created.");
 			if (newAdmin.getUsername() != null && newAdmin.getPassword() != null && newAdmin.getConfirmedPassword() != null && newAdmin.getPassword().equals(newAdmin.getConfirmedPassword())) {
 				UserAccountEntity account = userAccountDao.addNewUserAccount(loggedUser, user, newAdmin.getUsername(), EUserRole.ROLE_ADMIN, newAdmin.getPassword());
-				logger.info("Account created.");
-				//return new ResponseEntity<>(account, HttpStatus.OK);
+				logger.info("---------------- Finished OK.");
+				return new ResponseEntity<>(account, HttpStatus.OK);
 			}
 			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<>(user, HttpStatus.OK);
@@ -238,18 +237,12 @@ public class AdminController {
 				adminDao.modifyAdmin(loggedUser, user, updateAdmin);
 				logger.info("Admin modified.");
 			}
-			/*if (updateAdmin.getUsername() != null && !updateAdmin.getUsername().equals(" ") && !updateAdmin.getUsername().equals(""))
-				userAccountDao.modifyAccountUsername(loggedUser, account, updateAdmin.getUsername());
-			if (updateAdmin.getAccessRole() != null && !updateAdmin.getAccessRole().equals(" ") && !updateAdmin.getAccessRole().equals(""))
-				userAccountDao.modifyAccountRole(loggedUser, account, EUserRole.valueOf(updateAdmin.getAccessRole()));
-			if (updateAdmin.getPassword() != null && !updateAdmin.getPassword().equals(" ") && !updateAdmin.getPassword().equals(""))
-				userAccountDao.modifyAccountPassword(loggedUser, account, updateAdmin.getPassword());*/
 			UserAccountEntity account = userAccountRepository.findByUserAndAccessRoleLikeAndStatusLike(user, EUserRole.ROLE_ADMIN, 1);
 			logger.info("Admin's user account identified.");
 			if (account != null && (updateAdmin.getUsername() != null || (updateAdmin.getPassword() != null && updateAdmin.getConfirmedPassword() != null && updateAdmin.getPassword().equals(updateAdmin.getConfirmedPassword())))) {
 				userAccountDao.modifyAccount(loggedUser, account, updateAdmin.getUsername(), updateAdmin.getPassword());
-				logger.info("Account modified.");
-				//return new ResponseEntity<>(account, HttpStatus.OK);
+				logger.info("---------------- Finished OK.");
+				return new ResponseEntity<>(account, HttpStatus.OK);
 			}
 			user.getAccounts();
 			logger.info("---------------- Finished OK.");
@@ -262,28 +255,28 @@ public class AdminController {
 
 	@Secured("ROLE_ADMIN")
 	@JsonView(Views.Admin.class)
-	@RequestMapping(method = RequestMethod.PUT, value = "/archivedeleted/{id}")
-	public ResponseEntity<?> archiveDeleted(@PathVariable Integer id, Principal principal) {
-		logger.info("################ /project/admin/archivedeleted/archiveDeleted started.");
+	@RequestMapping(method = RequestMethod.PUT, value = "/archive/{id}")
+	public ResponseEntity<?> archive(@PathVariable Integer id, Principal principal) {
+		logger.info("################ /project/admin/archivedeleted/archive started.");
 		logger.info("Logged user: " + principal.getName());
 		AdminEntity user = new AdminEntity();
 		try {
-			user = adminRepository.findByIdAndStatusLike(id, 0);
-			if (user == null) {
+			user = adminRepository.getById(id);
+			if (user == null || user.getStatus() == -1) {
 				logger.info("---------------- Admin didn't find.");
 		        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 		      }
 			logger.info("Admin for archiving identified.");
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
-			adminDao.archiveDeletedAdmin(loggedUser, user);
+			adminDao.archiveAdmin(loggedUser, user);
 			logger.info("Admin archived.");
 			UserAccountEntity account = userAccountRepository.findByUserAndAccessRoleLikeAndStatusLike(user, EUserRole.ROLE_ADMIN, 1);
 			logger.info("Admin's user account identified.");
 			if (account != null) {
 				userAccountDao.archiveDeleteAccount(loggedUser, account);
-				logger.info("Account archived.");
-				//return new ResponseEntity<UserAccountEntity>(account, HttpStatus.OK);
+				logger.info("---------------- Finished OK.");
+				return new ResponseEntity<UserAccountEntity>(account, HttpStatus.OK);
 			}
 			user.getAccounts();
 			logger.info("---------------- Finished OK.");
@@ -324,8 +317,8 @@ public class AdminController {
 			logger.info("Admin's user account identified.");
 			if (account != null) {
 				userAccountDao.undeleteAccount(loggedUser, account);
-				logger.info("Account undeleted.");
-				//return new ResponseEntity<UserAccountEntity>(account, HttpStatus.OK);
+				logger.info("---------------- Finished OK.");
+				return new ResponseEntity<UserAccountEntity>(account, HttpStatus.OK);
 			}
 			user.getAccounts();
 			logger.info("---------------- Finished OK.");
@@ -370,8 +363,8 @@ public class AdminController {
 			logger.info("Admin's user account identified.");
 			if (account != null) {
 				userAccountDao.deleteAccount(loggedUser, account);
-				logger.info("Account deleted.");
-				//return new ResponseEntity<UserAccountEntity>(account, HttpStatus.OK);
+				logger.info("---------------- Finished OK.");
+				return new ResponseEntity<UserAccountEntity>(account, HttpStatus.OK);
 			}
 			user.getAccounts();
 			logger.info("---------------- Finished OK.");

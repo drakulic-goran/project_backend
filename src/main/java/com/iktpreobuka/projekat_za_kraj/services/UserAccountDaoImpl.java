@@ -17,14 +17,6 @@ public class UserAccountDaoImpl implements UserAccountDao {
 	@Autowired
 	private UserAccountRepository userAccountRepository;
 	
-	/*@Override
-	public UserEntity findUserByUsername(String username) throws Exception {
-		try {
-			return userAccountRepository.findUserByUsername(username);
-		} catch (Exception e) {
-			throw new Exception("Find User by Username failed.");
-		}
-	}*/
 	
 	@Override
 	public UserAccountEntity addNewUserAccount(UserEntity loggedUser, UserEntity user, String username, EUserRole role, String password) throws Exception {
@@ -45,26 +37,7 @@ public class UserAccountDaoImpl implements UserAccountDao {
 		}
 		return account;
 	}
-	
-	/*@Override
-	public UserAccountEntity findUserAccountByUser(AdminEntity user) throws Exception {
-		try {
-			return userAccountRepository.getByUser(user);
-		} catch (Exception e) {
-			throw new Exception("User account didn't find.");
-		}
-	}*/
-	
-	/*+++++++++++++++++++++++++++++++++++
-	@Override
-	public UserAccountEntity findUserAccountByUserAndAccessRoleLike(UserEntity user, String role) throws Exception {
-		try {
-			return userAccountRepository.findByUserAndAccessRoleLike(user, EUserRole.valueOf(role));
-		} catch (Exception e) {
-			throw new Exception("Find UserAccount by User and AccessRole failed.");
-		}
-	}*/
-	
+		
 	@Override
 	public void modifyAccount(UserEntity loggedUser, UserAccountEntity account, AdminDto updateAdmin) throws Exception {
 		if (updateAdmin.getUsername() != null && userAccountRepository.getByUsername(updateAdmin.getUsername()) != null) {
@@ -78,10 +51,7 @@ public class UserAccountDaoImpl implements UserAccountDao {
 			if (updateAdmin.getUsername() != null && updateAdmin.getUsername().equals(account.getUsername()) && !updateAdmin.getUsername().equals(" ") && !updateAdmin.getUsername().equals("")) {
 				account.setUsername(updateAdmin.getUsername());
 				i++;
-			}/*if (updateAdmin.getAccessRole() != null && EUserRole.valueOf(updateAdmin.getAccessRole()) != account.getAccessRole() && (EUserRole.valueOf(updateAdmin.getAccessRole()) == EUserRole.ROLE_ADMIN || EUserRole.valueOf(updateAdmin.getAccessRole()) == EUserRole.ROLE_PARENT || EUserRole.valueOf(updateAdmin.getAccessRole()) == EUserRole.ROLE_TEACHER || EUserRole.valueOf(updateAdmin.getAccessRole()) == EUserRole.ROLE_STUDENT)) {
-				account.setAccessRole(EUserRole.valueOf(updateAdmin.getAccessRole()));
-				i++;
-			}*/
+			}
 			if (updateAdmin.getPassword() != null && !Encryption.getPassEncoded(updateAdmin.getPassword()).equals(account.getPassword()) && !updateAdmin.getPassword().equals(" ") && !updateAdmin.getPassword().equals("")) {
 				account.setPassword(Encryption.getPassEncoded(updateAdmin.getPassword()));
 				i++;
@@ -108,10 +78,7 @@ public class UserAccountDaoImpl implements UserAccountDao {
 			if (updateParent.getUsername() != null && updateParent.getUsername().equals(account.getUsername()) && !updateParent.getUsername().equals(" ") && !updateParent.getUsername().equals("")) {
 				account.setUsername(updateParent.getUsername());
 				i++;
-			}/*if (updateParent.getAccessRole() != null && EUserRole.valueOf(updateParent.getAccessRole()) != account.getAccessRole() && (EUserRole.valueOf(updateParent.getAccessRole()) == EUserRole.ROLE_ADMIN || EUserRole.valueOf(updateParent.getAccessRole()) == EUserRole.ROLE_PARENT || EUserRole.valueOf(updateParent.getAccessRole()) == EUserRole.ROLE_TEACHER || EUserRole.valueOf(updateParent.getAccessRole()) == EUserRole.ROLE_STUDENT)) {
-				account.setAccessRole(EUserRole.valueOf(updateParent.getAccessRole()));
-				i++;
-			}*/
+			}
 			if (updateParent.getPassword() != null && !Encryption.getPassEncoded(updateParent.getPassword()).equals(account.getPassword()) && !updateParent.getPassword().equals(" ") && !updateParent.getPassword().equals("")) {
 				account.setPassword(Encryption.getPassEncoded(updateParent.getPassword()));
 				i++;
@@ -168,7 +135,6 @@ public class UserAccountDaoImpl implements UserAccountDao {
 		}
 	}
 	
-	@SuppressWarnings({ "null", "unused" })
 	@Override
 	public void modifyAccount(UserEntity loggedUser, UserAccountEntity account, String username, String password) throws Exception {
 		if (username != null && userAccountRepository.getByUsername(username) != null) {

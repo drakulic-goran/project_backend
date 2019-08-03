@@ -98,6 +98,70 @@ public class ClassController {
 
 	@Secured({"ROLE_ADMIN"})
 	@JsonView(Views.Admin.class)
+	@RequestMapping(method = RequestMethod.GET, value = "/deleted")
+	public ResponseEntity<?> getAllDeleted(Principal principal) {
+		logger.info("################ /project/class/getAll started.");
+		logger.info("Logged user: " + principal.getName());
+		try {
+			Iterable<ClassEntity> classes= classRepository.findByStatusLike(0);
+			logger.info("---------------- Finished OK.");
+			return new ResponseEntity<Iterable<ClassEntity>>(classes, HttpStatus.OK);
+		} catch(Exception e) {
+			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+	
+	@Secured({"ROLE_ADMIN"})
+	@JsonView(Views.Admin.class)
+	@RequestMapping(method = RequestMethod.GET, value = "/deleted/{id}")
+	public ResponseEntity<?> getByIdDeleted(@PathVariable String id, Principal principal) {
+		logger.info("################ /project/class/{id}/getById started.");
+		logger.info("Logged user: " + principal.getName());
+		try {
+			ClassEntity class_ = classRepository.findByIdAndStatusLike(Integer.parseInt(id), 0);
+			logger.info("---------------- Finished OK.");
+			return new ResponseEntity<ClassEntity>(class_, HttpStatus.OK);
+		} catch(Exception e) {
+			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+
+	@Secured({"ROLE_ADMIN"})
+	@JsonView(Views.Admin.class)
+	@RequestMapping(method = RequestMethod.GET, value = "/archived")
+	public ResponseEntity<?> getAllArchived(Principal principal) {
+		logger.info("################ /project/class/getAll started.");
+		logger.info("Logged user: " + principal.getName());
+		try {
+			Iterable<ClassEntity> classes= classRepository.findByStatusLike(-1);
+			logger.info("---------------- Finished OK.");
+			return new ResponseEntity<Iterable<ClassEntity>>(classes, HttpStatus.OK);
+		} catch(Exception e) {
+			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+	
+	@Secured({"ROLE_ADMIN"})
+	@JsonView(Views.Admin.class)
+	@RequestMapping(method = RequestMethod.GET, value = "/archived/{id}")
+	public ResponseEntity<?> getByIdArchived(@PathVariable String id, Principal principal) {
+		logger.info("################ /project/class/{id}/getById started.");
+		logger.info("Logged user: " + principal.getName());
+		try {
+			ClassEntity class_ = classRepository.findByIdAndStatusLike(Integer.parseInt(id), -1);
+			logger.info("---------------- Finished OK.");
+			return new ResponseEntity<ClassEntity>(class_, HttpStatus.OK);
+		} catch(Exception e) {
+			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+
+	@Secured({"ROLE_ADMIN"})
+	@JsonView(Views.Admin.class)
 	@RequestMapping(method = RequestMethod.GET, value = "/subjectsbyclass/{id}")
 	public ResponseEntity<?> getClassSubjects(@PathVariable String id, Principal principal) {
 		logger.info("################ /project/class/subjectsbyclass/{id}/getClassSubjects started.");
@@ -106,7 +170,7 @@ public class ClassController {
 			ClassEntity class_ = classRepository.findByIdAndStatusLike(Integer.parseInt(id), 1);
 			if (class_==null) { 
 				logger.info("---------------- Searched class not exist.");
-				return new ResponseEntity<ClassEntity>(class_, HttpStatus.OK);
+		        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 			}
 			Iterable<SubjectEntity> classes= classRepository.findSubjectsByClass(class_);
 			logger.info("---------------- Finished OK.");
@@ -166,7 +230,7 @@ public class ClassController {
 			class_ = classRepository.findByIdAndStatusLike(Integer.parseInt(id), 1);
 			if (class_==null) { 
 				logger.info("---------------- Searched class not exist.");
-				return new ResponseEntity<>(class_, HttpStatus.OK);
+		        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 			}
 			if (updateClass.getClassLabel() != null && !updateClass.getClassLabel().equals(" ") && !updateClass.getClassLabel().equals("")) {
 				UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
@@ -224,7 +288,7 @@ public class ClassController {
 */
 	@Secured("ROLE_ADMIN")
 	@JsonView(Views.Admin.class)
-	@RequestMapping(method = RequestMethod.PUT, value = "/{id}/subject/{s_id}/learningprogram/{name}")
+	@RequestMapping(method = RequestMethod.PUT, value = "/{id}/add-subject/{s_id}/learningprogram/{name}")
 	public ResponseEntity<?> addSubjectToClass(@PathVariable String id, @PathVariable String s_id, @PathVariable String name, Principal principal) {
 		logger.info("################ /project/class/{id}/subject/{s_id}/learningprogram/{name}/addSubjectToClass started.");
 		logger.info("Logged user: " + principal.getName());
@@ -237,12 +301,12 @@ public class ClassController {
 			class_ = classRepository.findByIdAndStatusLike(Integer.parseInt(id), 1);
 			if (class_==null) {
 				logger.info("---------------- Searched class not exist.");
-				return new ResponseEntity<ClassEntity>(class_, HttpStatus.OK);
+		        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 			} 
 			SubjectEntity subject = subjectRepository.findById(Integer.parseInt(s_id)).orElse(null);
 			if (subject==null) {
 				logger.info("---------------- Searched subject not exist.");
-				return new ResponseEntity<SubjectEntity>(subject, HttpStatus.OK);
+		        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 			}
 			if (name != null && !name.equals(" ") && !name.equals("")) {
 				UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
@@ -263,11 +327,11 @@ public class ClassController {
 	
 	@Secured("ROLE_ADMIN")
 	@JsonView(Views.Admin.class)
-	@RequestMapping(method = RequestMethod.PUT, value = "/{id}/department/{d_id}")
-	public ResponseEntity<?> addSubjectToClass(@PathVariable String id, @PathVariable String d_id, Principal principal) {
-		logger.info("################ /project/class/{id}/subject/{s_id}/learningprogram/{name}/addSubjectToClass started.");
+	@RequestMapping(method = RequestMethod.PUT, value = "/{id}/remove-subject/{s_id}")
+	public ResponseEntity<?> removeSubjectFromClass(@PathVariable String id, @PathVariable String s_id, Principal principal) {
+		logger.info("################ /project/class/{id}/subject/{s_id}/removeSubjectFromClass started.");
 		logger.info("Logged user: " + principal.getName());
-		if (id == null || d_id == null) {
+		if (id == null || s_id == null) {
 			logger.info("---------------- Some data is null.");
 	        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 	      }
@@ -276,17 +340,55 @@ public class ClassController {
 			class_ = classRepository.findByIdAndStatusLike(Integer.parseInt(id), 1);
 			if (class_==null) {
 				logger.info("---------------- Searched class not exist.");
-				return new ResponseEntity<ClassEntity>(class_, HttpStatus.OK);
+		        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 			} 
-			DepartmentEntity department = departmentRepository.findByIdAndStatusLike(Integer.parseInt(d_id), 1);
-			if (department==null) {
-				logger.info("---------------- Searched departmnet not exist.");
-				return new ResponseEntity<DepartmentEntity>(department, HttpStatus.OK);
+			SubjectEntity subject = subjectRepository.findById(Integer.parseInt(s_id)).orElse(null);
+			if (subject==null) {
+				logger.info("---------------- Searched subject not exist.");
+		        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 			}
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
-			classDao.addDepartmentToClass(loggedUser, class_, department);
-			logger.info("Subject added to class.");
+			classDao.removeSubjectFromClass(loggedUser, class_, subject);
+			logger.info("---------------- Finished OK.");
+			return new ResponseEntity<ClassEntity>(class_, HttpStatus.OK);
+		} catch (NumberFormatException e) {
+			logger.error("++++++++++++++++ Number format exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(2, "Number format exception occurred: "+ e.getLocalizedMessage()), HttpStatus.NOT_ACCEPTABLE);
+		} catch (Exception e) {
+			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+
+	@Secured("ROLE_ADMIN")
+	@JsonView(Views.Admin.class)
+	@RequestMapping(method = RequestMethod.PUT, value = "/{id}/add-department/{d_id}/schoolyear/{schoolyear}")
+	public ResponseEntity<?> addDepartmentToClass(@PathVariable String id, @PathVariable String d_id, @PathVariable String schoolyear, Principal principal) {
+		logger.info("################ /project/class/{id}/add-department/{d_id}/schoolyear/{schoolyear}/addDepartmentToClass started.");
+		logger.info("Logged user: " + principal.getName());
+		if (id == null || d_id == null || schoolyear == null) {
+			logger.info("---------------- Some data is null.");
+	        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+	      }
+		ClassEntity class_ = new ClassEntity();
+		try {
+			class_ = classRepository.findByIdAndStatusLike(Integer.parseInt(id), 1);
+			if (class_==null) {
+				logger.info("---------------- Class not exist.");
+		        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+			} 
+			DepartmentEntity department = departmentRepository.findByIdAndStatusLike(Integer.parseInt(d_id), 1);
+			if (department==null) {
+				logger.info("---------------- Department not exist.");
+		        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+			}
+			if (schoolyear != null && !schoolyear.equals(" ") && !schoolyear.equals("")) {
+				UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
+				logger.info("Logged user identified.");
+				classDao.addDepartmentToClass(loggedUser, class_, department, schoolyear);
+				logger.info("Department added to class.");
+			}
 			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<ClassEntity>(class_, HttpStatus.OK);
 		} catch (NumberFormatException e) {
@@ -298,15 +400,41 @@ public class ClassController {
 		}
 	}
 	
-	//-------------------------------------------------------------------------------------------------
-	//-------------------------------------------------------------------------------------------------
-	//-------------------------------------------------------------------------------------------------
-	//-------------------------------------------------------------------------------------------------
-	//-------------------------------------------------------------------------------------------------
-	//-------------------------------------------------------------------------------------------------
-	//-------------------------------------------------------------------------------------------------
-	//-------------------------------------------------------------------------------------------------
-	//-------------------------------------------------------------------------------------------------
+	@Secured("ROLE_ADMIN")
+	@JsonView(Views.Admin.class)
+	@RequestMapping(method = RequestMethod.PUT, value = "/{id}/remove-department/{d_id}")
+	public ResponseEntity<?> removeDepartmentToClass(@PathVariable String id, @PathVariable String d_id, @PathVariable String schoolyear, Principal principal) {
+		logger.info("################ /project/class/{id}/remove-department/{d_id}/removeDepartmentToClass started.");
+		logger.info("Logged user: " + principal.getName());
+		if (id == null || d_id == null) {
+			logger.info("---------------- Some data is null.");
+	        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+	      }
+		ClassEntity class_ = new ClassEntity();
+		try {
+			class_ = classRepository.findByIdAndStatusLike(Integer.parseInt(id), 1);
+			if (class_==null) {
+				logger.info("---------------- Searched class not exist.");
+		        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+			} 
+			DepartmentEntity department = departmentRepository.findByIdAndStatusLike(Integer.parseInt(d_id), 1);
+			if (department==null) {
+				logger.info("---------------- Searched departmnet not exist.");
+		        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+			}
+			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
+			logger.info("Logged user identified.");
+			classDao.removeDepartmentFromClass(loggedUser, class_, department, schoolyear);
+			logger.info("---------------- Finished OK.");
+			return new ResponseEntity<ClassEntity>(class_, HttpStatus.OK);
+		} catch (NumberFormatException e) {
+			logger.error("++++++++++++++++ Number format exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(2, "Number format exception occurred: "+ e.getLocalizedMessage()), HttpStatus.NOT_ACCEPTABLE);
+		} catch (Exception e) {
+			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
 
 	@Secured("ROLE_ADMIN")
 	@JsonView(Views.Admin.class)
@@ -318,21 +446,17 @@ public class ClassController {
 			logger.info("This is an info message: Class is null.");
 	        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 	      }
+		ClassEntity class_ = new ClassEntity();
 		try {
-			ClassEntity class_ = classRepository.findByIdAndStatusLike(Integer.parseInt(id), 0);
-			if (class_==null || class_.getStatus()==-1 || class_.getStatus()==1) {
-				logger.info("This is an info message: Searched class not exist or class is active or archived.");
-				return new ResponseEntity<Object>(null, HttpStatus.OK);
+			class_ = classRepository.getById(Integer.parseInt(id));
+			if (class_==null || class_.getStatus()==-1) {
+				logger.info("---------------- Class not exist.");
+		        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 			}
-			//classRepository.deleteById(Integer.parseInt(id));
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
-			//AdminEntity user = adminRepository.getByUserAccount(loggedUser);
-			//AdminEntity user = (AdminEntity) loggedUser.getUser();
-			class_.setStatusArchived();
-			class_.setUpdatedById(loggedUser.getId());
-			classRepository.save(class_);
-			logger.info("This is an info message: Class undeleted.");
+			classDao.archiveClass(loggedUser, class_);
+			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<ClassEntity>(class_, HttpStatus.OK);
 		} catch (NumberFormatException e) {
 			logger.error("++++++++++++++++ Number format exception occurred: " + e.getMessage());
@@ -342,13 +466,6 @@ public class ClassController {
 			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
-
-	//-------------------------------------------------------------------------------------------------
-	//-------------------------------------------------------------------------------------------------
-	//-------------------------------------------------------------------------------------------------
-	//-------------------------------------------------------------------------------------------------
-	//-------------------------------------------------------------------------------------------------
-	//-------------------------------------------------------------------------------------------------
 
 	@Secured("ROLE_ADMIN")
 	@JsonView(Views.Admin.class)
@@ -365,7 +482,7 @@ public class ClassController {
 			class_ = classRepository.findByIdAndStatusLike(Integer.parseInt(id), 0);
 			if (class_==null || class_.getStatus()!=0) {
 				logger.info("---------------- Class not exist.");
-				return new ResponseEntity<Object>(null, HttpStatus.OK);
+		        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 			}
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
@@ -396,7 +513,7 @@ public class ClassController {
 			class_ = classRepository.findByIdAndStatusLike(Integer.parseInt(id), 1);
 			if (class_==null || class_.getStatus()!=1) {
 				logger.info("---------------- Class not exist.");
-				return new ResponseEntity<Object>(null, HttpStatus.OK);
+		        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 			}
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
