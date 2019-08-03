@@ -6,11 +6,11 @@ import com.iktpreobuka.projekat_za_kraj.entities.dto.AdminDto;
 
 public interface AdminDao {
 
-	public AdminEntity findById(Integer id) throws Exception;
+	//public AdminEntity findById(Integer id) throws Exception;
 	
-	public AdminEntity findByIdAndStatusLike(Integer id, Integer status) throws Exception;
+	//public AdminEntity findByIdAndStatusLike(Integer id, Integer status) throws Exception;
 
-	public Iterable<AdminEntity> findByStatusLike(Integer status) throws Exception;
+	//public Iterable<AdminEntity> findByStatusLike(Integer status) throws Exception;
 
 	public UserEntity addNewAdmin(UserEntity loggedUser, AdminDto newAdmin) throws Exception;
 

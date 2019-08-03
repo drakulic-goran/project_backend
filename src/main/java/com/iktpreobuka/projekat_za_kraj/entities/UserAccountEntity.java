@@ -21,6 +21,7 @@ import javax.validation.constraints.Size;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonView;
 import com.iktpreobuka.projekat_za_kraj.enumerations.EUserRole;
 import com.iktpreobuka.projekat_za_kraj.security.Views;
@@ -39,6 +40,7 @@ public class UserAccountEntity {
 	@JoinColumn(name = "user")
 	@NotNull (message = "User must be provided.")
 	//@JsonBackReference
+	@JsonManagedReference
 	private UserEntity user;
 	/*@JsonView(Views.Admin.class)
 	@OneToOne

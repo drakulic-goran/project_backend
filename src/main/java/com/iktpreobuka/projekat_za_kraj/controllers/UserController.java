@@ -12,26 +12,23 @@ import org.springframework.security.access.annotation.Secured;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.ObjectError;
-import org.springframework.web.bind.WebDataBinder;
-import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.annotation.JsonView;
+import com.iktpreobuka.projekat_za_kraj.controllers.util.RESTError;
 import com.iktpreobuka.projekat_za_kraj.entities.UserEntity;
+import com.iktpreobuka.projekat_za_kraj.repositories.UserRepository;
 import com.iktpreobuka.projekat_za_kraj.security.Views;
-import com.iktpreobuka.projekat_za_kraj.services.UserDao;
-import com.iktpreobuka.projekat_za_kraj.util.RESTError;
-import com.iktpreobuka.projekat_za_kraj.util.UserCustomValidator;
 
 @Controller
 @RestController
 @RequestMapping(value= "/project/users")
 public class UserController {
 	
-	@Autowired
-	private UserDao userDao;
+	/*@Autowired
+	private UserDao userDao;*/
 
 	/*@Autowired
 	private AdminRepository adminRepository;*/
@@ -45,19 +42,19 @@ public class UserController {
 	/*@Autowired
 	private TeacherRepository teacherRepository;*/
 	
-	/*@Autowired
-	private UserRepository userRepository;*/
+	@Autowired
+	private UserRepository userRepository;
 	
 	/*@Autowired
 	private UserAccountRepository userAccountRepository;*/
 	
-	@Autowired 
-	private UserCustomValidator userValidator;
+	/*@Autowired 
+	private UserCustomValidator userValidator;*/
 
-	@InitBinder
+	/*@InitBinder
 	protected void initBinder(final WebDataBinder binder) { 
 		binder.addValidators(userValidator); 
-		}
+		}*/
 
 	
 	private final Logger logger = (Logger) LoggerFactory.getLogger(this.getClass());
@@ -71,10 +68,10 @@ public class UserController {
 	@JsonView(Views.Admin.class)
 	@RequestMapping(method = RequestMethod.GET)
 	public ResponseEntity<?> getAll(Principal principal) {
-		logger.info("################ /project/admin/getAll started.");
+		logger.info("################ /project/users/getAll started.");
 		logger.info("Logged username: " + principal.getName());
 		try {
-			Iterable<UserEntity> users= userDao.findAllActiveUsers();
+			Iterable<UserEntity> users= userRepository.findAll();
 			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<Iterable<UserEntity>>(users, HttpStatus.OK);
 		} catch(Exception e) {

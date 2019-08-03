@@ -20,40 +20,40 @@ public class AdminDaoImpl implements AdminDao {
 	@Autowired
 	private UserRepository userRepository;
 
-	@Override
+	/*@Override
 	public AdminEntity findById(Integer id) throws Exception{
 		try {
 			return adminRepository.getById(id);
 		} catch (Exception e) {
 			throw new Exception("Get admin by Id failed.");
 		}
-	}
+	}*/
 	
-	@Override
+	/*@Override
 	public AdminEntity findByIdAndStatusLike(Integer id, Integer status) throws Exception {
 		try {
 			return adminRepository.findByIdAndStatusLike(id, status);
 		} catch (Exception e) {
 			throw new Exception("Get admin by Id and Status failed.");
 		}
-	}
+	}*/
 
-	@Override
+	/*@Override
 	public Iterable<AdminEntity> findByStatusLike(Integer status) throws Exception {
 		try {
 			return adminRepository.findByStatusLike(status);
 		} catch (Exception e) {
 			throw new Exception("Get admin by Status failed.");
 		}		
-	}
+	}*/
 
 	@Override
 	public UserEntity addNewAdmin(UserEntity loggedUser, AdminDto newAdmin) throws Exception {
 			try {
-				if (newAdmin.getjMBG() != null && adminRepository.getByJMBGAndStatusLike(newAdmin.getjMBG(), 1) != null) {
+				if (newAdmin.getjMBG() != null && adminRepository.getByJMBG(newAdmin.getjMBG()) != null) {
 				     throw new Exception("JMBG already exists.");
 				}
-				if (newAdmin.getEmail() != null && adminRepository.getByEmailAndStatusLike(newAdmin.getEmail(), 1) != null) {
+				if (newAdmin.getEmail() != null && adminRepository.getByEmail(newAdmin.getEmail()) != null) {
 				     throw new Exception("E-mail already exists.");
 				}
 			} catch (Exception e) {
@@ -96,19 +96,19 @@ public class AdminDaoImpl implements AdminDao {
 				//user = adminRepository.findByIdAndStatusLike(temporaryUser.getId(), 1);
 				//user = (AdminEntity)temporaryUser;
 			}
+			return temporaryUser;
 		} catch (Exception e) {
 			throw new Exception("AddNewAdmin save failed.");
 		}
-		return temporaryUser;
 	}
 
 	@Override
 	public void modifyAdmin(UserEntity loggedUser, AdminEntity admin, AdminDto updateAdmin) throws Exception {
 		try {
-			if (updateAdmin.getEmail() != null && adminRepository.getByEmailAndStatusLike(updateAdmin.getEmail(), 1) != null) {
+			if (updateAdmin.getEmail() != null && adminRepository.getByEmail(updateAdmin.getEmail()) != null) {
 			     throw new Exception("E-mail already exists.");
 			}
-			if (updateAdmin.getjMBG() != null && adminRepository.getByJMBGAndStatusLike(updateAdmin.getjMBG(), 1) != null) {
+			if (updateAdmin.getjMBG() != null && !updateAdmin.getjMBG().equals(" ") && !updateAdmin.getjMBG().equals("") && userRepository.getByJMBG(updateAdmin.getjMBG()) != null) {
 			     throw new Exception("JMBG already exists.");
 			}
 			if (updateAdmin.getAccessRole() != null && updateAdmin.getAccessRole() != "ROLE_ADMIN") {

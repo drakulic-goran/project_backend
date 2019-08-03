@@ -6,8 +6,8 @@ import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 
 import com.fasterxml.jackson.annotation.JsonView;
-import com.iktpreobuka.projekat_za_kraj.entities.SubjectEntity;
 import com.iktpreobuka.projekat_za_kraj.security.Views;
+import com.mysql.cj.conf.ConnectionUrlParser.Pair;
 
 public class TeacherDto {
 	
@@ -31,14 +31,21 @@ public class TeacherDto {
 	private String employmentDate;
 	
 	@JsonView(Views.Teacher.class)
-	//@Pattern(regexp = "^([_A-Za-z0-9- _])+$", message="Subject is not valid.")
-	private List<SubjectEntity> subjects;
+	//@Pattern(regexp = "^[0-9]+$", message="Subjects Id is not valid, can contain only numbers and minimum 1 number.")
+	private List<String> subjects;
 	@JsonView(Views.Student.class)
-	@Pattern(regexp = "^([A-Za-z]{1,1})$", message="Student department is not valid, must be only one letter.")
+	@Pattern(regexp = "^[0-9]+$", message="Department Id is not valid, can contain only numbers and minimum 1 number.")
 	private String primaryDepartment;
-	@JsonView(Views.Student.class)
+	/*@JsonView(Views.Student.class)
 	@Pattern(regexp = "^(IV|V?I{1,2})$", message="Student class is not valid, must be I, II, III, IV, V, VI, VII or VIII.")
-	private String primaryClass;
+	private String primaryClass;*/
+	@JsonView(Views.Teacher.class)
+	//@Pattern(regexp = "^[0-9]+$", message="Subjects in departments Id is not valid, can contain only numbers and minimum 1 number.")
+	private List<Pair<String, String>> subject_at_department;
+	@JsonView(Views.Teacher.class)
+	@Pattern(regexp = "^(20|[3-9][0-9])\\d{2}\\-(20|[3-9][0-9])\\\\d{2}$", message="School year is not valid, must be in format YYYY-YYYY.")
+	private String schoolYear;
+
 	
 	@JsonView(Views.Admin.class)
 	@Size(min=5, max=20, message = "Username must be between {min} and {max} characters long.")
@@ -100,12 +107,11 @@ public class TeacherDto {
 	public TeacherDto(
 			@Pattern(regexp = "^[A-Za-z]{2,}$", message = "First name is not valid, can contain only letters and minimum is 2 letter.") String firstName,
 			@Pattern(regexp = "^[A-Za-z]{2,}$", message = "Last name is not valid, can contain only letters and minimum is 2 letter.") String lastName,
-			@Pattern(regexp = "^[0-9]{13,13}$", message = "JMBG is not valid, can contain only numbers and must be exactly 13 numbers long.") @Size(min = 13, max = 13, message = "JMBG must be exactly {min} characters long.") String jMBG,
-			@Pattern(regexp="^(GENDER_MALE|GENDER_FEMALE)$",message="Gender is not valid, must be GENDER_MALE or GENDER_FEMALE") String gender, 
-			String certificate, 
-			@Pattern(regexp = "^([0][1-9]|[1|2][0-9]|[3][0|1])[./-]([0][1-9]|[1][0-2])[./-]([1-2][0-9]{3})$", message="Employment date is not valid, must be in dd-MM-yyyy format.") String employmentDate, 
-			//@Pattern(regexp = "^([_A-Za-z0-9- _])+$", message="Subject is not valid.") 
-			List<SubjectEntity> subjects) {
+			@Pattern(regexp = "^[0-9]{13,13}$", message = "JMBG is not valid, can contain only numbers and must be exactly 13 numbers long.") String jMBG,
+			@Pattern(regexp = "^(GENDER_MALE|GENDER_FEMALE)$", message = "Gender is not valid, must be GENDER_MALE or GENDER_FEMALE") String gender,
+			String certificate,
+			@Pattern(regexp = "^([0][1-9]|[1|2][0-9]|[3][0|1])[./-]([0][1-9]|[1][0-2])[./-]([1-2][0-9]{3})$", message = "Employment date is not valid, must be in dd-MM-yyyy format.") String employmentDate,
+			List<String> subjects) {
 		super();
 		this.firstName = firstName;
 		this.lastName = lastName;
@@ -119,14 +125,13 @@ public class TeacherDto {
 	public TeacherDto(
 			@Pattern(regexp = "^[A-Za-z]{2,}$", message = "First name is not valid, can contain only letters and minimum is 2 letter.") String firstName,
 			@Pattern(regexp = "^[A-Za-z]{2,}$", message = "Last name is not valid, can contain only letters and minimum is 2 letter.") String lastName,
-			@Pattern(regexp = "^[0-9]{13,13}$", message = "JMBG is not valid, can contain only numbers and must be exactly 13 numbers long.") @Size(min = 13, max = 13, message = "JMBG must be exactly {min} characters long.") String jMBG,
+			@Pattern(regexp = "^[0-9]{13,13}$", message = "JMBG is not valid, can contain only numbers and must be exactly 13 numbers long.") String jMBG,
 			@Pattern(regexp = "^(GENDER_MALE|GENDER_FEMALE)$", message = "Gender is not valid, must be GENDER_MALE or GENDER_FEMALE") String gender,
 			String certificate,
 			@Pattern(regexp = "^([0][1-9]|[1|2][0-9]|[3][0|1])[./-]([0][1-9]|[1][0-2])[./-]([1-2][0-9]{3})$", message = "Employment date is not valid, must be in dd-MM-yyyy format.") String employmentDate,
-			//@Pattern(regexp = "^([_A-Za-z0-9- _])+$", message = "Subject is not valid.") 
-			List<SubjectEntity> subjects,
+			List<String> subjects,
 			@Size(min = 5, max = 20, message = "Username must be between {min} and {max} characters long.") String username,
-			@Pattern(regexp = "^(ROLE_ADMIN|ROLE_TEACHER|ROLE_PARENT|ROLE_STUDENT)$", message = "Role is not valid, must be ROLE_ADMIN, ROLE_TEACHER, ROLE_PARENT or ROLE_STUDENT") String role,
+			@Pattern(regexp = "^(ROLE_ADMIN|ROLE_TEACHER|ROLE_PARENT|ROLE_STUDENT)$", message = "Role is not valid, must be ROLE_ADMIN, ROLE_TEACHER, ROLE_PARENT or ROLE_STUDENT") String accessRole,
 			@Size(min = 5, message = "Password must be {min} characters long or higher.") @Pattern(regexp = "^[A-Za-z0-9]*$", message = "Password is not valid, must contin only letters and numbers.") String password,
 			@Size(min = 5, message = "Password must be {min} characters long or higher.") @Pattern(regexp = "^[A-Za-z0-9]*$", message = "Password is not valid, must contin only letters and numbers.") String confirmedPassword) {
 		super();
@@ -138,7 +143,7 @@ public class TeacherDto {
 		this.employmentDate = employmentDate;
 		this.subjects = subjects;
 		this.username = username;
-		this.accessRole = role;
+		this.accessRole = accessRole;
 		this.password = password;
 		this.confirmedPassword = confirmedPassword;
 	}
@@ -146,12 +151,11 @@ public class TeacherDto {
 	public TeacherDto(
 			@Pattern(regexp = "^[A-Za-z]{2,}$", message = "First name is not valid, can contain only letters and minimum is 2 letter.") String firstName,
 			@Pattern(regexp = "^[A-Za-z]{2,}$", message = "Last name is not valid, can contain only letters and minimum is 2 letter.") String lastName,
-			@Pattern(regexp = "^[0-9]{13,13}$", message = "JMBG is not valid, can contain only numbers and must be exactly 13 numbers long.") @Size(min = 13, max = 13, message = "JMBG must be exactly {min} characters long.") String jMBG,
-			@Pattern(regexp="^(GENDER_MALE|GENDER_FEMALE)$",message="Gender is not valid, must be GENDER_MALE or GENDER_FEMALE") String gender, 
-			String certificate, 
-			@Pattern(regexp = "^([0][1-9]|[1|2][0-9]|[3][0|1])[./-]([0][1-9]|[1][0-2])[./-]([1-2][0-9]{3})$", message="Employment date is not valid, must be in dd-MM-yyyy format.") String employmentDate,
-			@Pattern(regexp = "^([A-Za-z]{1,1})$", message = "Student department is not valid, must be only one letter.") String primaryDepartment,
-			@Pattern(regexp = "^(IV|V?I{1,2})$", message = "Student class is not valid, must be I, II, III, IV, V, VI, VII or VIII.") String primaryClass) {
+			@Pattern(regexp = "^[0-9]{13,13}$", message = "JMBG is not valid, can contain only numbers and must be exactly 13 numbers long.") String jMBG,
+			@Pattern(regexp = "^(GENDER_MALE|GENDER_FEMALE)$", message = "Gender is not valid, must be GENDER_MALE or GENDER_FEMALE") String gender,
+			String certificate,
+			@Pattern(regexp = "^([0][1-9]|[1|2][0-9]|[3][0|1])[./-]([0][1-9]|[1][0-2])[./-]([1-2][0-9]{3})$", message = "Employment date is not valid, must be in dd-MM-yyyy format.") String employmentDate,
+			@Pattern(regexp = "^[0-9]+$", message = "Department Id is not valid, can contain only numbers and minimum 1 number.") String primaryDepartment) {
 		super();
 		this.firstName = firstName;
 		this.lastName = lastName;
@@ -160,20 +164,18 @@ public class TeacherDto {
 		this.certificate = certificate;
 		this.employmentDate = employmentDate;
 		this.primaryDepartment = primaryDepartment;
-		this.primaryClass = primaryClass;
 	}
 
 	public TeacherDto(
 			@Pattern(regexp = "^[A-Za-z]{2,}$", message = "First name is not valid, can contain only letters and minimum is 2 letter.") String firstName,
 			@Pattern(regexp = "^[A-Za-z]{2,}$", message = "Last name is not valid, can contain only letters and minimum is 2 letter.") String lastName,
-			@Pattern(regexp = "^[0-9]{13,13}$", message = "JMBG is not valid, can contain only numbers and must be exactly 13 numbers long.") @Size(min = 13, max = 13, message = "JMBG must be exactly {min} characters long.") String jMBG,
+			@Pattern(regexp = "^[0-9]{13,13}$", message = "JMBG is not valid, can contain only numbers and must be exactly 13 numbers long.") String jMBG,
 			@Pattern(regexp = "^(GENDER_MALE|GENDER_FEMALE)$", message = "Gender is not valid, must be GENDER_MALE or GENDER_FEMALE") String gender,
 			String certificate,
 			@Pattern(regexp = "^([0][1-9]|[1|2][0-9]|[3][0|1])[./-]([0][1-9]|[1][0-2])[./-]([1-2][0-9]{3})$", message = "Employment date is not valid, must be in dd-MM-yyyy format.") String employmentDate,
-			@Pattern(regexp = "^([A-Za-z]{1,1})$", message = "Student department is not valid, must be only one letter.") String primaryDepartment,
-			@Pattern(regexp = "^(IV|V?I{1,2})$", message = "Student class is not valid, must be I, II, III, IV, V, VI, VII or VIII.") String primaryClass,
+			@Pattern(regexp = "^[0-9]+$", message = "Department Id is not valid, can contain only numbers and minimum 1 number.") String primaryDepartment,
 			@Size(min = 5, max = 20, message = "Username must be between {min} and {max} characters long.") String username,
-			@Pattern(regexp = "^(ROLE_ADMIN|ROLE_TEACHER|ROLE_PARENT|ROLE_STUDENT)$", message = "Role is not valid, must be ROLE_ADMIN, ROLE_TEACHER, ROLE_PARENT or ROLE_STUDENT") String role,
+			@Pattern(regexp = "^(ROLE_ADMIN|ROLE_TEACHER|ROLE_PARENT|ROLE_STUDENT)$", message = "Role is not valid, must be ROLE_ADMIN, ROLE_TEACHER, ROLE_PARENT or ROLE_STUDENT") String accessRole,
 			@Size(min = 5, message = "Password must be {min} characters long or higher.") @Pattern(regexp = "^[A-Za-z0-9]*$", message = "Password is not valid, must contin only letters and numbers.") String password,
 			@Size(min = 5, message = "Password must be {min} characters long or higher.") @Pattern(regexp = "^[A-Za-z0-9]*$", message = "Password is not valid, must contin only letters and numbers.") String confirmedPassword) {
 		super();
@@ -184,9 +186,8 @@ public class TeacherDto {
 		this.certificate = certificate;
 		this.employmentDate = employmentDate;
 		this.primaryDepartment = primaryDepartment;
-		this.primaryClass = primaryClass;
 		this.username = username;
-		this.accessRole = role;
+		this.accessRole = accessRole;
 		this.password = password;
 		this.confirmedPassword = confirmedPassword;
 	}
@@ -194,16 +195,88 @@ public class TeacherDto {
 	public TeacherDto(
 			@Pattern(regexp = "^[A-Za-z]{2,}$", message = "First name is not valid, can contain only letters and minimum is 2 letter.") String firstName,
 			@Pattern(regexp = "^[A-Za-z]{2,}$", message = "Last name is not valid, can contain only letters and minimum is 2 letter.") String lastName,
-			@Pattern(regexp = "^[0-9]{13,13}$", message = "JMBG is not valid, can contain only numbers and must be exactly 13 numbers long.") @Size(min = 13, max = 13, message = "JMBG must be exactly {min} characters long.") String jMBG,
+			@Pattern(regexp = "^[0-9]{13,13}$", message = "JMBG is not valid, can contain only numbers and must be exactly 13 numbers long.") String jMBG,
 			@Pattern(regexp = "^(GENDER_MALE|GENDER_FEMALE)$", message = "Gender is not valid, must be GENDER_MALE or GENDER_FEMALE") String gender,
 			String certificate,
 			@Pattern(regexp = "^([0][1-9]|[1|2][0-9]|[3][0|1])[./-]([0][1-9]|[1][0-2])[./-]([1-2][0-9]{3})$", message = "Employment date is not valid, must be in dd-MM-yyyy format.") String employmentDate,
-			//@Pattern(regexp = "^([_A-Za-z0-9- _])+$", message = "Subject is not valid.") 
-			List<SubjectEntity> subjects,
-			@Pattern(regexp = "^([A-Za-z]{1,1})$", message = "Student department is not valid, must be only one letter.") String primaryDepartment,
-			@Pattern(regexp = "^(IV|V?I{1,2})$", message = "Student class is not valid, must be I, II, III, IV, V, VI, VII or VIII.") String primaryClass,
+			List<Pair<String, String>> subject_at_department,
+			@Pattern(regexp = "^(20|[3-9][0-9])\\d{2}\\-(20|[3-9][0-9])\\\\d{2}$", message = "School year is not valid, must be in format YYYY-YYYY.") String schoolYear) {
+		super();
+		this.firstName = firstName;
+		this.lastName = lastName;
+		this.jMBG = jMBG;
+		this.gender = gender;
+		this.certificate = certificate;
+		this.employmentDate = employmentDate;
+		this.subject_at_department = subject_at_department;
+		this.schoolYear = schoolYear;
+	}
+
+	public TeacherDto(
+			@Pattern(regexp = "^[A-Za-z]{2,}$", message = "First name is not valid, can contain only letters and minimum is 2 letter.") String firstName,
+			@Pattern(regexp = "^[A-Za-z]{2,}$", message = "Last name is not valid, can contain only letters and minimum is 2 letter.") String lastName,
+			@Pattern(regexp = "^[0-9]{13,13}$", message = "JMBG is not valid, can contain only numbers and must be exactly 13 numbers long.") String jMBG,
+			@Pattern(regexp = "^(GENDER_MALE|GENDER_FEMALE)$", message = "Gender is not valid, must be GENDER_MALE or GENDER_FEMALE") String gender,
+			String certificate,
+			@Pattern(regexp = "^([0][1-9]|[1|2][0-9]|[3][0|1])[./-]([0][1-9]|[1][0-2])[./-]([1-2][0-9]{3})$", message = "Employment date is not valid, must be in dd-MM-yyyy format.") String employmentDate,
+			List<Pair<String, String>> subject_at_department,
+			@Pattern(regexp = "^(20|[3-9][0-9])\\d{2}\\-(20|[3-9][0-9])\\\\d{2}$", message = "School year is not valid, must be in format YYYY-YYYY.") String schoolYear,
 			@Size(min = 5, max = 20, message = "Username must be between {min} and {max} characters long.") String username,
-			@Pattern(regexp = "^(ROLE_ADMIN|ROLE_TEACHER|ROLE_PARENT|ROLE_STUDENT)$", message = "Role is not valid, must be ROLE_ADMIN, ROLE_TEACHER, ROLE_PARENT or ROLE_STUDENT") String role,
+			@Pattern(regexp = "^(ROLE_ADMIN|ROLE_TEACHER|ROLE_PARENT|ROLE_STUDENT)$", message = "Role is not valid, must be ROLE_ADMIN, ROLE_TEACHER, ROLE_PARENT or ROLE_STUDENT") String accessRole,
+			@Size(min = 5, message = "Password must be {min} characters long or higher.") @Pattern(regexp = "^[A-Za-z0-9]*$", message = "Password is not valid, must contin only letters and numbers.") String password,
+			@Size(min = 5, message = "Password must be {min} characters long or higher.") @Pattern(regexp = "^[A-Za-z0-9]*$", message = "Password is not valid, must contin only letters and numbers.") String confirmedPassword) {
+		super();
+		this.firstName = firstName;
+		this.lastName = lastName;
+		this.jMBG = jMBG;
+		this.gender = gender;
+		this.certificate = certificate;
+		this.employmentDate = employmentDate;
+		this.subject_at_department = subject_at_department;
+		this.schoolYear = schoolYear;
+		this.username = username;
+		this.accessRole = accessRole;
+		this.password = password;
+		this.confirmedPassword = confirmedPassword;
+	}
+
+	public TeacherDto(
+			@Pattern(regexp = "^[A-Za-z]{2,}$", message = "First name is not valid, can contain only letters and minimum is 2 letter.") String firstName,
+			@Pattern(regexp = "^[A-Za-z]{2,}$", message = "Last name is not valid, can contain only letters and minimum is 2 letter.") String lastName,
+			@Pattern(regexp = "^[0-9]{13,13}$", message = "JMBG is not valid, can contain only numbers and must be exactly 13 numbers long.") String jMBG,
+			@Pattern(regexp = "^(GENDER_MALE|GENDER_FEMALE)$", message = "Gender is not valid, must be GENDER_MALE or GENDER_FEMALE") String gender,
+			String certificate,
+			@Pattern(regexp = "^([0][1-9]|[1|2][0-9]|[3][0|1])[./-]([0][1-9]|[1][0-2])[./-]([1-2][0-9]{3})$", message = "Employment date is not valid, must be in dd-MM-yyyy format.") String employmentDate,
+			List<String> subjects,
+			@Pattern(regexp = "^[0-9]+$", message = "Department Id is not valid, can contain only numbers and minimum 1 number.") String primaryDepartment,
+			List<Pair<String, String>> subject_at_department,
+			@Pattern(regexp = "^(20|[3-9][0-9])\\d{2}\\-(20|[3-9][0-9])\\\\d{2}$", message = "School year is not valid, must be in format YYYY-YYYY.") String schoolYear) {
+		super();
+		this.firstName = firstName;
+		this.lastName = lastName;
+		this.jMBG = jMBG;
+		this.gender = gender;
+		this.certificate = certificate;
+		this.employmentDate = employmentDate;
+		this.subjects = subjects;
+		this.primaryDepartment = primaryDepartment;
+		this.subject_at_department = subject_at_department;
+		this.schoolYear = schoolYear;
+	}
+
+	public TeacherDto(
+			@Pattern(regexp = "^[A-Za-z]{2,}$", message = "First name is not valid, can contain only letters and minimum is 2 letter.") String firstName,
+			@Pattern(regexp = "^[A-Za-z]{2,}$", message = "Last name is not valid, can contain only letters and minimum is 2 letter.") String lastName,
+			@Pattern(regexp = "^[0-9]{13,13}$", message = "JMBG is not valid, can contain only numbers and must be exactly 13 numbers long.") String jMBG,
+			@Pattern(regexp = "^(GENDER_MALE|GENDER_FEMALE)$", message = "Gender is not valid, must be GENDER_MALE or GENDER_FEMALE") String gender,
+			String certificate,
+			@Pattern(regexp = "^([0][1-9]|[1|2][0-9]|[3][0|1])[./-]([0][1-9]|[1][0-2])[./-]([1-2][0-9]{3})$", message = "Employment date is not valid, must be in dd-MM-yyyy format.") String employmentDate,
+			List<String> subjects,
+			@Pattern(regexp = "^[0-9]+$", message = "Department Id is not valid, can contain only numbers and minimum 1 number.") String primaryDepartment,
+			List<Pair<String, String>> subject_at_department,
+			@Pattern(regexp = "^(20|[3-9][0-9])\\d{2}\\-(20|[3-9][0-9])\\\\d{2}$", message = "School year is not valid, must be in format YYYY-YYYY.") String schoolYear,
+			@Size(min = 5, max = 20, message = "Username must be between {min} and {max} characters long.") String username,
+			@Pattern(regexp = "^(ROLE_ADMIN|ROLE_TEACHER|ROLE_PARENT|ROLE_STUDENT)$", message = "Role is not valid, must be ROLE_ADMIN, ROLE_TEACHER, ROLE_PARENT or ROLE_STUDENT") String accessRole,
 			@Size(min = 5, message = "Password must be {min} characters long or higher.") @Pattern(regexp = "^[A-Za-z0-9]*$", message = "Password is not valid, must contin only letters and numbers.") String password,
 			@Size(min = 5, message = "Password must be {min} characters long or higher.") @Pattern(regexp = "^[A-Za-z0-9]*$", message = "Password is not valid, must contin only letters and numbers.") String confirmedPassword) {
 		super();
@@ -215,18 +288,19 @@ public class TeacherDto {
 		this.employmentDate = employmentDate;
 		this.subjects = subjects;
 		this.primaryDepartment = primaryDepartment;
-		this.primaryClass = primaryClass;
+		this.subject_at_department = subject_at_department;
+		this.schoolYear = schoolYear;
 		this.username = username;
-		this.accessRole = role;
+		this.accessRole = accessRole;
 		this.password = password;
 		this.confirmedPassword = confirmedPassword;
 	}
 
-	public List<SubjectEntity> getSubjects() {
+	public List<String> getSubjects() {
 		return subjects;
 	}
 
-	public void setSubjects(List<SubjectEntity> subjects) {
+	public void setSubjects(List<String> subjects) {
 		this.subjects = subjects;
 	}
 
@@ -238,14 +312,14 @@ public class TeacherDto {
 		this.primaryDepartment = primaryDepartment;
 	}
 
-	public String getPrimaryClass() {
+/*	public String getPrimaryClass() {
 		return primaryClass;
 	}
 
 	public void setPrimaryClass(String primaryClass) {
 		this.primaryClass = primaryClass;
 	}
-
+*/
 	public String getAccessRole() {
 		return accessRole;
 	}
@@ -324,6 +398,22 @@ public class TeacherDto {
 
 	public void setConfirmedPassword(String confirmedPassword) {
 		this.confirmedPassword = confirmedPassword;
+	}
+
+	public List<Pair<String, String>> getSubject_at_department() {
+		return subject_at_department;
+	}
+
+	public void setSubject_at_department(List<Pair<String, String>> subjects_departments) {
+		this.subject_at_department = subjects_departments;
+	}
+
+	public String getSchoolYear() {
+		return schoolYear;
+	}
+
+	public void setSchoolYear(String schoolYear) {
+		this.schoolYear = schoolYear;
 	}
 
 }

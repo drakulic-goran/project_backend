@@ -6,7 +6,6 @@ import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 
 import com.fasterxml.jackson.annotation.JsonView;
-import com.iktpreobuka.projekat_za_kraj.entities.StudentEntity;
 import com.iktpreobuka.projekat_za_kraj.security.Views;
 
 public class ParentDto {
@@ -30,8 +29,8 @@ public class ParentDto {
 	private String email;
 
 	@JsonView(Views.Admin.class)
-	//@Pattern(regexp = "^[0-9]{13,13}$", message="Students JMBG is not valid, can contain only numbers and must be exactly 13 numbers long.")
-	private List<StudentEntity> students;
+	//@Pattern(regexp = "^[0-9]+$", message="Students Id is not valid, can contain only numbers and minimum 1 number.")
+	private List<String> students;
 	
 	@JsonView(Views.Admin.class)
 	@Size(min=5, max=20, message = "Username must be between {min} and {max} characters long.")
@@ -93,7 +92,7 @@ public class ParentDto {
 			@Pattern(regexp = "^(GENDER_MALE|GENDER_FEMALE)$", message = "Gender is not valid, must be GENDER_MALE or GENDER_FEMALE") String gender,
 			@Size(max = 50, message = "E-mail must be maximum {max} characters long.") @Pattern(regexp = "^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$", message = "Email is not valid.") String email,
 			//@Pattern(regexp = "^[0-9]{13,13}$", message = "Students JMBG is not valid, can contain only numbers and must be exactly 13 numbers long.") 
-			List<StudentEntity> students,
+			List<String> students,
 			@Size(min = 5, max = 20, message = "Username must be between {min} and {max} characters long.") String username,
 			@Pattern(regexp = "^(ROLE_ADMIN|ROLE_TEACHER|ROLE_PARENT|ROLE_STUDENT)$", message = "Role is not valid, must be ROLE_ADMIN, ROLE_TEACHER, ROLE_PARENT or ROLE_STUDENT") String role,
 			@Size(min = 5, message = "Password must be {min} characters long or higher.") @Pattern(regexp = "^[A-Za-z0-9]*$", message = "Password is not valid, must contin only letters and numbers.") String password,
@@ -118,7 +117,7 @@ public class ParentDto {
 			@Pattern(regexp = "^(GENDER_MALE|GENDER_FEMALE)$", message = "Gender is not valid, must be GENDER_MALE or GENDER_FEMALE") String gender,
 			@Size(max = 50, message = "E-mail must be maximum {max} characters long.") @Pattern(regexp = "^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$", message = "Email is not valid.") String email,
 			//@Pattern(regexp = "^[0-9]{13,13}$", message = "Students JMBG is not valid, can contain only numbers and must be exactly 13 numbers long.") 
-			List<StudentEntity> students) {
+			List<String> students) {
 		super();
 		this.firstName = firstName;
 		this.lastName = lastName;
@@ -152,11 +151,11 @@ public class ParentDto {
 		this.accessRole = role;
 	}
 
-	public List<StudentEntity> getStudents() {
+	public List<String> getStudents() {
 		return students;
 	}
 
-	public void setStudents(List<StudentEntity> students) {
+	public void setStudents(List<String> students) {
 		this.students = students;
 	}
 

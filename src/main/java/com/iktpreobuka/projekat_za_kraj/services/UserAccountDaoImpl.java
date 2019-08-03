@@ -17,15 +17,14 @@ public class UserAccountDaoImpl implements UserAccountDao {
 	@Autowired
 	private UserAccountRepository userAccountRepository;
 	
-	@Override
+	/*@Override
 	public UserEntity findUserByUsername(String username) throws Exception {
 		try {
 			return userAccountRepository.findUserByUsername(username);
-			//return userAccountRepository.getByUsername(username);
 		} catch (Exception e) {
 			throw new Exception("Find User by Username failed.");
 		}
-	}
+	}*/
 	
 	@Override
 	public UserAccountEntity addNewUserAccount(UserEntity loggedUser, UserEntity user, String username, EUserRole role, String password) throws Exception {
@@ -56,6 +55,7 @@ public class UserAccountDaoImpl implements UserAccountDao {
 		}
 	}*/
 	
+	/*+++++++++++++++++++++++++++++++++++
 	@Override
 	public UserAccountEntity findUserAccountByUserAndAccessRoleLike(UserEntity user, String role) throws Exception {
 		try {
@@ -63,7 +63,7 @@ public class UserAccountDaoImpl implements UserAccountDao {
 		} catch (Exception e) {
 			throw new Exception("Find UserAccount by User and AccessRole failed.");
 		}
-	}
+	}*/
 	
 	@Override
 	public void modifyAccount(UserEntity loggedUser, UserAccountEntity account, AdminDto updateAdmin) throws Exception {
@@ -158,7 +158,7 @@ public class UserAccountDaoImpl implements UserAccountDao {
 	@Override
 	public void modifyAccountPassword(UserEntity loggedUser, UserAccountEntity account, String password) throws Exception {
 		try {
-			if (!Encryption.getPassEncoded(password).equals(account.getPassword()) && password != null && !password.equals(" ") && !password.equals("")) {
+			if (password != null && !Encryption.getPassEncoded(password).equals(account.getPassword()) && !password.equals(" ") && !password.equals("")) {
 				account.setPassword(Encryption.getPassEncoded(password));
 				account.setUpdatedById(loggedUser.getId());
 				userAccountRepository.save(account);

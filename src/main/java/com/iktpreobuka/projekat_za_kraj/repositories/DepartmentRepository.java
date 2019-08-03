@@ -15,5 +15,7 @@ public interface DepartmentRepository extends CrudRepository<DepartmentEntity, I
 	
 	@Query("select new com.iktpreobuka.projekat_za_kraj.entities.dto.DepartmentClassDto(c.classLabel, d.departmentLabel, d.status, d.createdById, d.updatedById) from DepartmentEntity d join d.class_department c where d.status=1")
 	public Iterable<DepartmentClassDto> findWithClass_departmentByStatusLike(Integer status);
+
+	public DepartmentEntity findByIdAndStatusLike(Integer depatmentId, Integer status);
 	
 }

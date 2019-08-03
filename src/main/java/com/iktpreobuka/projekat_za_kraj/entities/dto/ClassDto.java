@@ -16,10 +16,10 @@ public class ClassDto {
 	private String classLabel;
 	@JsonView(Views.Student.class)
 	//@Pattern(regexp = "^([_A-Za-z0-9- _])+$", message="Subject is not valid.")
-	private List<SubjectEntity> subjects;
+	private List<String> subjects;
 	@JsonView(Views.Admin.class)
 	//@Pattern(regexp = "^[a-zA-Z]$", message="Department label is not valid, can contain only one letter.")
-	private List<DepartmentEntity> departments;
+	private List<String> departments;
 	@JsonView(Views.Student.class)
 	//@Pattern(regexp = "^([_A-Za-z0-9- _])+$", message="Subject is not valid.")
 	private SubjectEntity subject;
@@ -46,7 +46,7 @@ public class ClassDto {
 	public ClassDto(
 			@Pattern(regexp = "^(IV|V?I{1,4})$", message = "Student class is not valid, must be I, II, III, IV, V, VI, VII or VIII.") String classLabel,
 			//@Pattern(regexp = "^([_A-Za-z0-9- _])+$", message = "Subject is not valid.") 
-			List<SubjectEntity> subjects,
+			List<String> subjects,
 			//@Pattern(regexp = "^[a-zA-Z]$", message = "Department label is not valid, can contain only one letter.") 
 			DepartmentEntity department) {
 		super();
@@ -60,7 +60,7 @@ public class ClassDto {
 			//@Pattern(regexp = "^([_A-Za-z0-9- _])+$", message = "Subject is not valid.") 
 			SubjectEntity subject,
 			//@Pattern(regexp = "^[a-zA-Z]$", message = "Department label is not valid, can contain only one letter.") 
-			List<DepartmentEntity> departments) {
+			List<String> departments) {
 		super();
 		this.classLabel = classLabel;
 		this.subject = subject;
@@ -70,7 +70,7 @@ public class ClassDto {
 	public ClassDto(
 			@Pattern(regexp = "^(IV|V?I{1,4})$", message = "Student class is not valid, must be I, II, III, IV, V, VI, VII or VIII.") String classLabel,
 			//@Pattern(regexp = "^([_A-Za-z0-9- _])+$", message = "Subject is not valid.") 
-			List<SubjectEntity> subjects) {
+			List<String> subjects) {
 		super();
 		this.classLabel = classLabel;
 		this.subjects = subjects;
@@ -78,7 +78,7 @@ public class ClassDto {
 
 	public ClassDto(
 			//@Pattern(regexp = "^[a-zA-Z]$", message = "Department label is not valid, can contain only one letter.") 
-			List<DepartmentEntity> departments,
+			List<String> departments,
 			@Pattern(regexp = "^(IV|V?I{1,4})$", message = "Student class is not valid, must be I, II, III, IV, V, VI, VII or VIII.") String classLabel) {
 		super();
 		this.departments = departments;
@@ -93,19 +93,19 @@ public class ClassDto {
 		this.classLabel = classLabel;
 	}
 
-	public List<SubjectEntity> getSubjects() {
+	public List<String> getSubjects() {
 		return subjects;
 	}
 
-	public void setSubjects(List<SubjectEntity> subjects) {
+	public void setSubjects(List<String> subjects) {
 		this.subjects = subjects;
 	}
 
-	public List<DepartmentEntity> getDepartments() {
+	public List<String> getDepartments() {
 		return departments;
 	}
 
-	public void setDepartments(List<DepartmentEntity> departments) {
+	public void setDepartments(List<String> departments) {
 		this.departments = departments;
 	}
 

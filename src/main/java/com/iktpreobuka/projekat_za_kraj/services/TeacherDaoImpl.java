@@ -1,17 +1,31 @@
 package com.iktpreobuka.projekat_za_kraj.services;
 
-import java.sql.Date;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.iktpreobuka.projekat_za_kraj.entities.ClassSubjectEntity;
+import com.iktpreobuka.projekat_za_kraj.entities.DepartmentEntity;
+import com.iktpreobuka.projekat_za_kraj.entities.PrimaryTeacherDepartmentEntity;
+import com.iktpreobuka.projekat_za_kraj.entities.SubjectEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.TeacherEntity;
+import com.iktpreobuka.projekat_za_kraj.entities.TeacherSubjectDepartmentEntity;
+import com.iktpreobuka.projekat_za_kraj.entities.TeacherSubjectEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.UserEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.dto.TeacherDto;
 import com.iktpreobuka.projekat_za_kraj.enumerations.EGender;
 import com.iktpreobuka.projekat_za_kraj.enumerations.EUserRole;
+import com.iktpreobuka.projekat_za_kraj.repositories.DepartmentRepository;
+import com.iktpreobuka.projekat_za_kraj.repositories.PrimaryTeacherDepartmentRepository;
+import com.iktpreobuka.projekat_za_kraj.repositories.SubjectRepository;
 import com.iktpreobuka.projekat_za_kraj.repositories.TeacherRepository;
+import com.iktpreobuka.projekat_za_kraj.repositories.TeacherSubjectDepartmentRepository;
+import com.iktpreobuka.projekat_za_kraj.repositories.TeacherSubjectRepository;
 import com.iktpreobuka.projekat_za_kraj.repositories.UserRepository;
+import com.mysql.cj.conf.ConnectionUrlParser.Pair;
 
 @Service
 public class TeacherDaoImpl implements TeacherDao {
@@ -20,9 +34,26 @@ public class TeacherDaoImpl implements TeacherDao {
 	private TeacherRepository teacherRepository;
 
 	@Autowired
+	private SubjectRepository subjectRepository;
+	
+	@Autowired
+	private DepartmentRepository departmentRepository;
+	
+	@Autowired
+	private TeacherSubjectRepository teacherSubjectRepository;
+	
+	@Autowired
+	private PrimaryTeacherDepartmentRepository primaryTeacherDepartmentRepository;
+	
+	@Autowired
+	private TeacherSubjectDepartmentRepository teacherSubjectDepartmentRepository;
+
+	@Autowired
 	private UserRepository userRepository;
 
-	@Override
+    SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy");
+
+	/*@Override
 	public TeacherEntity findById(Integer id) throws Exception{
 		try {
 			return teacherRepository.getById(id);
@@ -47,12 +78,12 @@ public class TeacherDaoImpl implements TeacherDao {
 		} catch (Exception e) {
 			throw new Exception("Get teacher by Status failed.");
 		}		
-	}
+	}*/
 
 	@Override
 	public UserEntity addNewTeacher(UserEntity loggedUser, TeacherDto newTeacher) throws Exception {
 			try {
-				if (newTeacher.getjMBG() != null && teacherRepository.getByJMBGAndStatusLike(newTeacher.getjMBG(), 1) != null) {
+				if (newTeacher.getjMBG() != null && teacherRepository.getByJMBG(newTeacher.getjMBG()) != null) {
 				     throw new Exception("JMBG already exists.");
 				}
 			} catch (Exception e) {
@@ -75,7 +106,9 @@ public class TeacherDaoImpl implements TeacherDao {
 					user.setLastName(newTeacher.getLastName());
 					user.setjMBG(newTeacher.getjMBG());
 					user.setGender(EGender.valueOf(newTeacher.getGender()));
-					user.setEmploymentDate(Date.valueOf(newTeacher.getEmploymentDate()));
+				    Date employmentDate = formatter.parse(newTeacher.getEmploymentDate());
+				    user.setEmploymentDate(employmentDate);
+					//user.setEmploymentDate(Date.valueOf(newTeacher.getEmploymentDate()));
 					user.setCertificate(newTeacher.getCertificate());
 					user.setRole(EUserRole.ROLE_TEACHER);
 					user.setStatusActive();
@@ -88,16 +121,16 @@ public class TeacherDaoImpl implements TeacherDao {
 			} else {
 				teacherRepository.addAdminFromExistUser(newTeacher.getCertificate(), newTeacher.getEmploymentDate(), temporaryUser.getId(), loggedUser.getId());
 			}
+			return temporaryUser;
 		} catch (Exception e) {
 			throw new Exception("addNewTeacher save failed.");
 		}
-		return temporaryUser;
 	}
 
 	@Override
 	public void modifyTeacher(UserEntity loggedUser, TeacherEntity teacher, TeacherDto updateTeacher) throws Exception {
 		try {
-			if (updateTeacher.getjMBG() != null && teacherRepository.getByJMBGAndStatusLike(updateTeacher.getjMBG(), 1) != null) {
+			if (updateTeacher.getjMBG() != null && !updateTeacher.getjMBG().equals(" ") && !updateTeacher.getjMBG().equals("") && userRepository.getByJMBG(updateTeacher.getjMBG()) != null) {
 			     throw new Exception("JMBG already exists.");
 			}
 			if (updateTeacher.getAccessRole() != null && updateTeacher.getAccessRole() != "ROLE_TEACHER") {
@@ -128,8 +161,10 @@ public class TeacherDaoImpl implements TeacherDao {
 				teacher.setCertificate(updateTeacher.getCertificate());
 				i++;
 			}
-			if (updateTeacher.getEmploymentDate() != null && !updateTeacher.getEmploymentDate().equals(teacher.getEmploymentDate()) && !updateTeacher.getEmploymentDate().equals(" ") && !updateTeacher.getEmploymentDate().equals("")) {
-				teacher.setEmploymentDate(Date.valueOf(updateTeacher.getEmploymentDate()));
+			if (updateTeacher.getEmploymentDate() != null && !formatter.parse(updateTeacher.getEmploymentDate()).equals(teacher.getEmploymentDate()) && !updateTeacher.getEmploymentDate().equals(" ") && !updateTeacher.getEmploymentDate().equals("")) {
+			    Date employmentDate = formatter.parse(updateTeacher.getEmploymentDate());
+			    teacher.setEmploymentDate(employmentDate);
+				//teacher.setEmploymentDate(Date.valueOf(updateTeacher.getEmploymentDate()));
 				i++;
 			}
 			if (i>0) {
@@ -172,6 +207,97 @@ public class TeacherDaoImpl implements TeacherDao {
 		} catch (Exception e) {
 			throw new Exception("ArchiveDeletedAdmin failed on saving.");
 		}		
+	}
+
+	@Override
+	public void addSubjectsToTeacher(UserEntity loggedUser, TeacherEntity user, List<String> subjects) throws Exception {
+		try {
+			for (String s : subjects) {
+				SubjectEntity sub = subjectRepository.getById(Integer.parseInt(s));
+				boolean contains = false;
+				if (sub != null) {
+					for (TeacherSubjectEntity ts : user.getSubjects()) {
+						if (ts.getSubject() == sub && ts.getStatus() == 1) {
+							contains = true;
+						}
+					}
+				} else
+					contains = true;
+				if (!contains) {
+					TeacherSubjectEntity teaching = new TeacherSubjectEntity(user, sub, new Date(), loggedUser.getId());
+					teacherSubjectRepository.save(teaching);
+					user.getSubjects().add(teaching);
+					teacherRepository.save(user);
+				}
+			}
+		} catch (Exception e) {
+			throw new Exception("addSubjectsToTeacher failed on saving.");
+		}
+	}
+	
+	@Override
+	public void addPrimaryDepartmentToTeacher(UserEntity loggedUser, TeacherEntity user, String primaryDepartment) throws Exception {
+		try {
+			DepartmentEntity dep = departmentRepository.getById(Integer.parseInt(primaryDepartment));
+			boolean contains = false;
+			if (dep != null) {
+				for (PrimaryTeacherDepartmentEntity de : user.getDepartments()) {
+					if (de.getDepartment() == dep && de.getStatus() == 1) {
+						contains = true;
+					}
+				}
+			} else
+				contains = true;
+			if (!contains) {
+				PrimaryTeacherDepartmentEntity pt = new PrimaryTeacherDepartmentEntity(user, dep, new Date(), loggedUser.getId());
+				primaryTeacherDepartmentRepository.save(pt);
+				user.getDepartments().add(pt);
+				teacherRepository.save(user);
+			}
+		} catch (Exception e) {
+			throw new Exception("addPrimaryDepartmentToTeacher failed on saving.");
+		}
+	}
+	
+	@Override
+	public void addSubjectsInDepartmentsToTeacher(UserEntity loggedUser, TeacherEntity user, List<Pair<String, String>> subject_at_department, String schoolYear) throws Exception {
+		try {
+			for (Pair<String, String> sd : subject_at_department) {
+				SubjectEntity sub = subjectRepository.getById(Integer.parseInt(sd.left));
+				DepartmentEntity dep = departmentRepository.getById(Integer.parseInt(sd.right));
+				boolean contains = false;
+				if (sub != null) {
+					for (TeacherSubjectEntity ts : user.getSubjects()) {
+						if (ts.getSubject() == sub && ts.getStatus() == 1) {
+							contains = true;
+						}
+					}
+				} else
+					contains = true;
+				if (dep != null && !contains) {
+					for (ClassSubjectEntity cs : dep.getClass_department().getSubjects()) {
+						if (cs.getSubject() == sub && cs.getStatus() == 1) {
+							contains = true;
+						}
+					}
+				}
+				if (dep != null && sub != null && !contains) {
+					for (TeacherSubjectDepartmentEntity tsd : user.getSubjects_departments()) {
+						if (tsd.getTeaching_department() == dep && tsd.getTeaching_subject() == sub && tsd.getStatus() != 1) {
+							contains = true;
+						}
+					}
+				}
+				if (!contains) {
+					TeacherSubjectDepartmentEntity teaching = new TeacherSubjectDepartmentEntity(dep, sub, user, schoolYear, loggedUser.getId());
+					teacherSubjectDepartmentRepository.save(teaching);
+					user.getSubjects_departments().add(teaching);
+					teacherRepository.save(user);
+				}
+			}
+		} catch (Exception e) {
+			throw new Exception("addSubjectsInDepartmentsToTeacher failed on saving.");
+		}
 	}
 
 }

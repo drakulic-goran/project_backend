@@ -8,7 +8,7 @@ import com.iktpreobuka.projekat_za_kraj.enumerations.EUserRole;
 
 public interface UserAccountDao {
 
-	public UserEntity findUserByUsername(String username) throws Exception;
+	//public UserEntity findUserByUsername(String username) throws Exception;
 	public UserAccountEntity addNewUserAccount(UserEntity loggedUser, UserEntity user, String username, EUserRole role, String password) throws Exception;
 	//public UserAccountEntity findUserAccountByUser(AdminEntity user) throws Exception;
 	public void modifyAccount(UserEntity loggedUser, UserAccountEntity account, AdminDto updateAdmin) throws Exception;
@@ -18,7 +18,7 @@ public interface UserAccountDao {
 	public void deleteAccount(UserEntity loggedUser, UserAccountEntity account) throws Exception;
 	public void undeleteAccount(UserEntity loggedUser, UserAccountEntity account) throws Exception;
 	public void archiveDeleteAccount(UserEntity loggedUser, UserAccountEntity account) throws Exception;
-	public UserAccountEntity findUserAccountByUserAndAccessRoleLike(UserEntity user, String role) throws Exception;
+	//public UserAccountEntity findUserAccountByUserAndAccessRoleLike(UserEntity user, String role) throws Exception;
 	public void modifyAccount(UserEntity loggedUser, UserAccountEntity account, ParentDto updateParent) throws Exception;
 	public void modifyAccount(UserEntity loggedUser, UserAccountEntity account, String username, String password) throws Exception;
 	

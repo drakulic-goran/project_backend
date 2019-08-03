@@ -12,5 +12,7 @@ public interface UserRepository extends CrudRepository<UserEntity, Integer> {
 */
 	public UserEntity findByJMBG(String getjMBG);
 
+	public UserEntity getByJMBG(String jMBG);
+
 	/*public UserEntity findByJMBGAndStatusLike(String jmbg, Integer status);*/
 }

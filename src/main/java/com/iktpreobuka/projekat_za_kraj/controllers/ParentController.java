@@ -23,6 +23,8 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.annotation.JsonView;
+import com.iktpreobuka.projekat_za_kraj.controllers.util.RESTError;
+import com.iktpreobuka.projekat_za_kraj.controllers.util.UserCustomValidator;
 import com.iktpreobuka.projekat_za_kraj.entities.ParentEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.StudentEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.UserAccountEntity;
@@ -30,12 +32,11 @@ import com.iktpreobuka.projekat_za_kraj.entities.UserEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.dto.ParentDto;
 import com.iktpreobuka.projekat_za_kraj.enumerations.EUserRole;
 import com.iktpreobuka.projekat_za_kraj.repositories.ParentRepository;
+import com.iktpreobuka.projekat_za_kraj.repositories.StudentRepository;
+import com.iktpreobuka.projekat_za_kraj.repositories.UserAccountRepository;
 import com.iktpreobuka.projekat_za_kraj.security.Views;
 import com.iktpreobuka.projekat_za_kraj.services.ParentDao;
-import com.iktpreobuka.projekat_za_kraj.services.StudentDao;
 import com.iktpreobuka.projekat_za_kraj.services.UserAccountDao;
-import com.iktpreobuka.projekat_za_kraj.util.RESTError;
-import com.iktpreobuka.projekat_za_kraj.util.UserCustomValidator;
 
 @Controller
 @RestController
@@ -49,11 +50,14 @@ public class ParentController {
 	private ParentDao parentDao;
 
 	@Autowired
-	private StudentDao studentDao;
+	private StudentRepository studentRepository;
 
 	@Autowired
 	private ParentRepository parentRepository;
 	
+	@Autowired
+	private UserAccountRepository userAccountRepository;
+
 	@Autowired 
 	private UserCustomValidator userValidator;
 
@@ -76,7 +80,7 @@ public class ParentController {
 		logger.info("################ /project/parent/getAll started.");
 		logger.info("Logged username: " + principal.getName());
 		try {
-			Iterable<ParentEntity> users= parentDao.findByStatusLike(1);
+			Iterable<ParentEntity> users= parentRepository.findByStatusLike(1);
 			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<Iterable<ParentEntity>>(users, HttpStatus.OK);
 		} catch(Exception e) {
@@ -92,9 +96,9 @@ public class ParentController {
 		logger.info("################ /project/parent/getAll started.");
 		logger.info("Logged username: " + principal.getName());
 		try {
-			ParentEntity users= parentDao.findByIdAndStatusLike(id, 1);
+			ParentEntity user= parentRepository.findByIdAndStatusLike(id, 1);
 			logger.info("---------------- Finished OK.");
-			return new ResponseEntity<ParentEntity>(users, HttpStatus.OK);
+			return new ResponseEntity<ParentEntity>(user, HttpStatus.OK);
 		} catch(Exception e) {
 			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
 			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -108,7 +112,7 @@ public class ParentController {
 		logger.info("################ /project/admin/deleted/getAllDeleted started.");
 		logger.info("Logged username: " + principal.getName());
 		try {
-			Iterable<ParentEntity> users= parentDao.findByStatusLike(0);
+			Iterable<ParentEntity> users= parentRepository.findByStatusLike(0);
 			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<Iterable<ParentEntity>>(users, HttpStatus.OK);
 		} catch(Exception e) {
@@ -124,9 +128,9 @@ public class ParentController {
 		logger.info("################ /project/admin/deleted/getAllDeleted started.");
 		logger.info("Logged username: " + principal.getName());
 		try {
-			ParentEntity users= parentDao.findByIdAndStatusLike(id, 0);
+			ParentEntity user= parentRepository.findByIdAndStatusLike(id, 0);
 			logger.info("---------------- Finished OK.");
-			return new ResponseEntity<ParentEntity>(users, HttpStatus.OK);
+			return new ResponseEntity<ParentEntity>(user, HttpStatus.OK);
 		} catch(Exception e) {
 			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
 			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -140,7 +144,7 @@ public class ParentController {
 		logger.info("################ /project/parent/archived/getAllArchived started.");
 		logger.info("Logged username: " + principal.getName());
 		try {
-			Iterable<ParentEntity> users= parentDao.findByStatusLike(-1);
+			Iterable<ParentEntity> users= parentRepository.findByStatusLike(-1);
 			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<Iterable<ParentEntity>>(users, HttpStatus.OK);
 		} catch(Exception e) {
@@ -156,9 +160,9 @@ public class ParentController {
 		logger.info("################ /project/parent/archived/getAllArchived started.");
 		logger.info("Logged username: " + principal.getName());
 		try {
-			ParentEntity users= parentDao.findByIdAndStatusLike(id, -1);
+			ParentEntity user= parentRepository.findByIdAndStatusLike(id, -1);
 			logger.info("---------------- Finished OK.");
-			return new ResponseEntity<ParentEntity>(users, HttpStatus.OK);
+			return new ResponseEntity<ParentEntity>(user, HttpStatus.OK);
 		} catch(Exception e) {
 			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
 			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -180,13 +184,13 @@ public class ParentController {
 			logger.info("---------------- New parent is null.");
 	        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 	      }
-		if (newParent.getFirstName() == null || newParent.getLastName() == null || newParent.getUsername() == null || newParent.getEmail() == null || newParent.getGender() == null || newParent.getjMBG() == null || newParent.getPassword() == null || newParent.getConfirmedPassword() == null) {
+		if (newParent.getFirstName() == null || newParent.getLastName() == null || newParent.getEmail() == null || newParent.getGender() == null || newParent.getjMBG() == null) {
 			logger.info("---------------- Some or all Parent atributes is null.");
 			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 		}
 		UserEntity user = new ParentEntity();
 		try {
-			UserEntity loggedUser = userAccountDao.findUserByUsername(principal.getName());
+			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
 			user = parentDao.addNewParent(loggedUser, newParent);
 			logger.info("Parent created.");
@@ -224,19 +228,19 @@ public class ParentController {
 	      }
 		ParentEntity user = new ParentEntity();
 		try {
-			user = parentDao.findByIdAndStatusLike(id, 1);
+			user = parentRepository.findByIdAndStatusLike(id, 1);
 			if (user == null) {
 				logger.info("---------------- Parent didn't find.");
 		        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 		      }
 			logger.info("Parent identified.");
-			UserEntity loggedUser = userAccountDao.findUserByUsername(principal.getName());
+			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
 			if (updateParent.getFirstName() != null || updateParent.getLastName() != null || updateParent.getEmail() != null || updateParent.getGender() != null || updateParent.getjMBG() != null) {
 				parentDao.modifyParent(loggedUser, user, updateParent);
 				logger.info("Parent modified.");
 			}
-			UserAccountEntity account = userAccountDao.findUserAccountByUserAndAccessRoleLike(user, "ROLE_PARENT");
+			UserAccountEntity account = userAccountRepository.findByUserAndAccessRoleLikeAndStatusLike(user, EUserRole.ROLE_PARENT, 1);
 			logger.info("Parent's user account identified.");
 			if (account != null && (updateParent.getUsername() != null || (updateParent.getPassword() != null && updateParent.getConfirmedPassword() != null && updateParent.getPassword().equals(updateParent.getConfirmedPassword())))) {
 				userAccountDao.modifyAccount(loggedUser, account, updateParent);
@@ -260,18 +264,22 @@ public class ParentController {
 		logger.info("Logged user: " + principal.getName());
 		ParentEntity user = new ParentEntity();
 		try {
-			user = parentDao.findByIdAndStatusLike(id, 1);
+			user = parentRepository.findByIdAndStatusLike(id, 1);
 			if (user == null) {
 				logger.info("---------------- Parent didn't find.");
 		        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 		      }
 			logger.info("Parent identified.");
-			StudentEntity student = studentDao.findByIdAndStatusLike(c_id, 1);
+			StudentEntity student = studentRepository.findByIdAndStatusLike(c_id, 1);
 			if (student == null) {
 				logger.info("---------------- Student didn't find.");
 		        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 		      }
 			logger.info("Student identified.");
+			for (StudentEntity s : user.getStudents()) {
+				if (s.equals(student))
+					return new ResponseEntity<Object>(null, HttpStatus.OK);
+			}
 			parentDao.addStudentToParent(user, student);		
 			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<UserEntity>(user, HttpStatus.OK);
@@ -292,17 +300,17 @@ public class ParentController {
 		logger.info("Logged user: " + principal.getName());
 		ParentEntity user = new ParentEntity();
 		try {
-			user = parentDao.findByIdAndStatusLike(id, 0);
+			user = parentRepository.findByIdAndStatusLike(id, 0);
 			if (user == null) {
 				logger.info("---------------- Parent didn't find.");
 		        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 		      }
 			logger.info("Parent for archiving identified.");
-			UserEntity loggedUser = userAccountDao.findUserByUsername(principal.getName());
+			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
 			parentDao.archiveDeletedParent(loggedUser, user);
 			logger.info("Parent archived.");
-			UserAccountEntity account = userAccountDao.findUserAccountByUserAndAccessRoleLike(user, "ROLE_PARENT");
+			UserAccountEntity account = userAccountRepository.findByUserAndAccessRoleLikeAndStatusLike(user, EUserRole.ROLE_PARENT, 1);
 			logger.info("Parent's user account identified.");
 			if (account != null) {
 				userAccountDao.archiveDeleteAccount(loggedUser, account);
@@ -334,17 +342,17 @@ public class ParentController {
 		logger.info("Logged user: " + principal.getName());
 		ParentEntity user = new ParentEntity();
 		try {
-			user = parentDao.findByIdAndStatusLike(id, 0);
+			user = parentRepository.findByIdAndStatusLike(id, 0);
 			if (user == null) {
 				logger.info("---------------- Parent didn't find.");
 		        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 		      }
 			logger.info("Parent for undeleting identified.");
-			UserEntity loggedUser = userAccountDao.findUserByUsername(principal.getName());
+			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
 			parentDao.undeleteParent(loggedUser, user);
 			logger.info("Parent undeleted.");
-			UserAccountEntity account = userAccountDao.findUserAccountByUserAndAccessRoleLike(user, "ROLE_PARENT");
+			UserAccountEntity account = userAccountRepository.findByUserAndAccessRoleLikeAndStatusLike(user, EUserRole.ROLE_PARENT, 1);
 			logger.info("Parent's user account identified.");
 			if (account != null) {
 				userAccountDao.undeleteAccount(loggedUser, account);
@@ -376,13 +384,13 @@ public class ParentController {
 		logger.info("Logged user: " + principal.getName());
 		ParentEntity user = new ParentEntity();
 		try {
-			user = parentDao.findByIdAndStatusLike(id, 1);
+			user = parentRepository.findByIdAndStatusLike(id, 1);
 			if (user == null) {
 				logger.info("---------------- Parent didn't find.");
 		        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 		      }
 			logger.info("Parent for deleting identified.");
-			UserEntity loggedUser = userAccountDao.findUserByUsername(principal.getName());
+			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
 			if (id == loggedUser.getId()) {
 				logger.info("---------------- Selected Id is ID of logged User: Cann't delete yourself.");
@@ -390,7 +398,7 @@ public class ParentController {
 		      }	
 			parentDao.deleteParent(loggedUser, user);
 			logger.info("Parent deleted.");
-			UserAccountEntity account = userAccountDao.findUserAccountByUserAndAccessRoleLike(user, "ROLE_PARENT");
+			UserAccountEntity account = userAccountRepository.findByUserAndAccessRoleLikeAndStatusLike(user, EUserRole.ROLE_PARENT, 1);
 			logger.info("Parent's user account identified.");
 			if (account != null) {
 				userAccountDao.deleteAccount(loggedUser, account);

@@ -23,17 +23,18 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.annotation.JsonView;
+import com.iktpreobuka.projekat_za_kraj.controllers.util.RESTError;
+import com.iktpreobuka.projekat_za_kraj.controllers.util.UserCustomValidator;
 import com.iktpreobuka.projekat_za_kraj.entities.AdminEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.UserAccountEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.UserEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.dto.AdminDto;
 import com.iktpreobuka.projekat_za_kraj.enumerations.EUserRole;
 import com.iktpreobuka.projekat_za_kraj.repositories.AdminRepository;
+import com.iktpreobuka.projekat_za_kraj.repositories.UserAccountRepository;
 import com.iktpreobuka.projekat_za_kraj.security.Views;
 import com.iktpreobuka.projekat_za_kraj.services.AdminDao;
 import com.iktpreobuka.projekat_za_kraj.services.UserAccountDao;
-import com.iktpreobuka.projekat_za_kraj.util.RESTError;
-import com.iktpreobuka.projekat_za_kraj.util.UserCustomValidator;
 
 @Controller
 @RestController
@@ -49,6 +50,9 @@ public class AdminController {
 	@Autowired
 	private AdminRepository adminRepository;
 	
+	@Autowired
+	private UserAccountRepository userAccountRepository;
+
 	@Autowired 
 	private UserCustomValidator userValidator;
 
@@ -71,7 +75,7 @@ public class AdminController {
 		logger.info("################ /project/admin/getAll started.");
 		logger.info("Logged username: " + principal.getName());
 		try {
-			Iterable<AdminEntity> users= adminDao.findByStatusLike(1);
+			Iterable<AdminEntity> users= adminRepository.findByStatusLike(1);
 			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<Iterable<AdminEntity>>(users, HttpStatus.OK);
 		} catch(Exception e) {
@@ -87,10 +91,10 @@ public class AdminController {
 		logger.info("################ /project/admin/getAll started.");
 		logger.info("Logged username: " + principal.getName());
 		try {
-			AdminEntity users= adminDao.findByIdAndStatusLike(id, 1);
-			users.getAccounts();
+			AdminEntity user= adminRepository.findByIdAndStatusLike(id, 1);
+			user.getAccounts();
 			logger.info("---------------- Finished OK.");
-			return new ResponseEntity<AdminEntity>(users, HttpStatus.OK);
+			return new ResponseEntity<AdminEntity>(user, HttpStatus.OK);
 		} catch(Exception e) {
 			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
 			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -105,7 +109,7 @@ public class AdminController {
 		logger.info("################ /project/admin/deleted/getAllDeleted started.");
 		logger.info("Logged username: " + principal.getName());
 		try {
-			Iterable<AdminEntity> users= adminDao.findByStatusLike(0);
+			Iterable<AdminEntity> users= adminRepository.findByStatusLike(0);
 			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<Iterable<AdminEntity>>(users, HttpStatus.OK);
 		} catch(Exception e) {
@@ -121,10 +125,10 @@ public class AdminController {
 		logger.info("################ /project/admin/deleted/getAllDeleted started.");
 		logger.info("Logged username: " + principal.getName());
 		try {
-			AdminEntity users= adminDao.findByIdAndStatusLike(id, 0);
-			users.getAccounts();
+			AdminEntity user= adminRepository.findByIdAndStatusLike(id, 0);
+			user.getAccounts();
 			logger.info("---------------- Finished OK.");
-			return new ResponseEntity<AdminEntity>(users, HttpStatus.OK);
+			return new ResponseEntity<AdminEntity>(user, HttpStatus.OK);
 		} catch(Exception e) {
 			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
 			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -138,7 +142,7 @@ public class AdminController {
 		logger.info("################ /project/admin/archived/getAllArchived started.");
 		logger.info("Logged username: " + principal.getName());
 		try {
-			Iterable<AdminEntity> users= adminDao.findByStatusLike(-1);
+			Iterable<AdminEntity> users= adminRepository.findByStatusLike(-1);
 			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<Iterable<AdminEntity>>(users, HttpStatus.OK);
 		} catch(Exception e) {
@@ -154,10 +158,10 @@ public class AdminController {
 		logger.info("################ /project/admin/archived/getAllArchived started.");
 		logger.info("Logged username: " + principal.getName());
 		try {
-			AdminEntity users= adminDao.findByIdAndStatusLike(id, -1);
-			users.getAccounts();
+			AdminEntity user= adminRepository.findByIdAndStatusLike(id, -1);
+			user.getAccounts();
 			logger.info("---------------- Finished OK.");
-			return new ResponseEntity<AdminEntity>(users, HttpStatus.OK);
+			return new ResponseEntity<AdminEntity>(user, HttpStatus.OK);
 		} catch(Exception e) {
 			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
 			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -185,7 +189,7 @@ public class AdminController {
 		}
 		UserEntity user = new AdminEntity();
 		try {
-			UserEntity loggedUser = userAccountDao.findUserByUsername(principal.getName());
+			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
 			user = adminDao.addNewAdmin(loggedUser, newAdmin);
 			logger.info("Admin created.");
@@ -194,7 +198,6 @@ public class AdminController {
 				logger.info("Account created.");
 				//return new ResponseEntity<>(account, HttpStatus.OK);
 			}
-			user.getAccounts();
 			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<>(user, HttpStatus.OK);
 		} catch (Exception e) {
@@ -223,13 +226,13 @@ public class AdminController {
 	      }
 		AdminEntity user = new AdminEntity();
 		try {
-			user = adminDao.findByIdAndStatusLike(id, 1);
+			user = adminRepository.findByIdAndStatusLike(id, 1);
 			if (user == null) {
 				logger.info("---------------- Admin didn't find.");
 		        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 		      }
 			logger.info("Admin identified.");
-			UserEntity loggedUser = userAccountDao.findUserByUsername(principal.getName());
+			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
 			if (updateAdmin.getFirstName() != null || updateAdmin.getLastName() != null || updateAdmin.getEmail() != null || updateAdmin.getMobilePhoneNumber() != null|| updateAdmin.getGender() != null || updateAdmin.getjMBG() != null) {
 				adminDao.modifyAdmin(loggedUser, user, updateAdmin);
@@ -241,7 +244,7 @@ public class AdminController {
 				userAccountDao.modifyAccountRole(loggedUser, account, EUserRole.valueOf(updateAdmin.getAccessRole()));
 			if (updateAdmin.getPassword() != null && !updateAdmin.getPassword().equals(" ") && !updateAdmin.getPassword().equals(""))
 				userAccountDao.modifyAccountPassword(loggedUser, account, updateAdmin.getPassword());*/
-			UserAccountEntity account = userAccountDao.findUserAccountByUserAndAccessRoleLike(user, "ROLE_ADMIN");
+			UserAccountEntity account = userAccountRepository.findByUserAndAccessRoleLikeAndStatusLike(user, EUserRole.ROLE_ADMIN, 1);
 			logger.info("Admin's user account identified.");
 			if (account != null && (updateAdmin.getUsername() != null || (updateAdmin.getPassword() != null && updateAdmin.getConfirmedPassword() != null && updateAdmin.getPassword().equals(updateAdmin.getConfirmedPassword())))) {
 				userAccountDao.modifyAccount(loggedUser, account, updateAdmin.getUsername(), updateAdmin.getPassword());
@@ -265,17 +268,17 @@ public class AdminController {
 		logger.info("Logged user: " + principal.getName());
 		AdminEntity user = new AdminEntity();
 		try {
-			user = adminDao.findByIdAndStatusLike(id, 0);
+			user = adminRepository.findByIdAndStatusLike(id, 0);
 			if (user == null) {
 				logger.info("---------------- Admin didn't find.");
 		        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 		      }
 			logger.info("Admin for archiving identified.");
-			UserEntity loggedUser = userAccountDao.findUserByUsername(principal.getName());
+			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
 			adminDao.archiveDeletedAdmin(loggedUser, user);
 			logger.info("Admin archived.");
-			UserAccountEntity account = userAccountDao.findUserAccountByUserAndAccessRoleLike(user, "ROLE_ADMIN");
+			UserAccountEntity account = userAccountRepository.findByUserAndAccessRoleLikeAndStatusLike(user, EUserRole.ROLE_ADMIN, 1);
 			logger.info("Admin's user account identified.");
 			if (account != null) {
 				userAccountDao.archiveDeleteAccount(loggedUser, account);
@@ -307,17 +310,17 @@ public class AdminController {
 		logger.info("Logged user: " + principal.getName());
 		AdminEntity user = new AdminEntity();
 		try {
-			user = adminDao.findByIdAndStatusLike(id, 0);
+			user = adminRepository.findByIdAndStatusLike(id, 0);
 			if (user == null) {
 				logger.info("---------------- Admin didn't find.");
 		        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 		      }
 			logger.info("Admin for undeleting identified.");
-			UserEntity loggedUser = userAccountDao.findUserByUsername(principal.getName());
+			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
 			adminDao.undeleteAdmin(loggedUser, user);
 			logger.info("Admin undeleted.");
-			UserAccountEntity account = userAccountDao.findUserAccountByUserAndAccessRoleLike(user, "ROLE_ADMIN");
+			UserAccountEntity account = userAccountRepository.findByUserAndAccessRoleLikeAndStatusLike(user, EUserRole.ROLE_ADMIN, 1);
 			logger.info("Admin's user account identified.");
 			if (account != null) {
 				userAccountDao.undeleteAccount(loggedUser, account);
@@ -349,13 +352,13 @@ public class AdminController {
 		logger.info("Logged user: " + principal.getName());
 		AdminEntity user = new AdminEntity();
 		try {
-			user = adminDao.findByIdAndStatusLike(id, 1);
+			user = adminRepository.findByIdAndStatusLike(id, 1);
 			if (user == null) {
 				logger.info("---------------- Admin didn't find.");
 		        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 		      }
 			logger.info("Admin for deleting identified.");
-			UserEntity loggedUser = userAccountDao.findUserByUsername(principal.getName());
+			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
 			if (id == loggedUser.getId()) {
 				logger.info("---------------- Selected Id is ID of logged User: Cann't delete yourself.");
@@ -363,7 +366,7 @@ public class AdminController {
 		      }	
 			adminDao.deleteAdmin(loggedUser, user);
 			logger.info("Admin deleted.");
-			UserAccountEntity account = userAccountDao.findUserAccountByUserAndAccessRoleLike(user, "ROLE_ADMIN");
+			UserAccountEntity account = userAccountRepository.findByUserAndAccessRoleLikeAndStatusLike(user, EUserRole.ROLE_ADMIN, 1);
 			logger.info("Admin's user account identified.");
 			if (account != null) {
 				userAccountDao.deleteAccount(loggedUser, account);

@@ -66,7 +66,7 @@ public class DepartmentEntity {
 	@Column(name="department_label", nullable=false)
 	@JsonView(Views.Student.class)
 	//@Min(value=1, message = "Department label must be {value} or higher!")
-	@Pattern(regexp = "^[A-Za-z0-9]{1,2}$", message="Department label is not valid, can contain only one letter.")
+	@Pattern(regexp = "^[A-Za-z0-9]{1,2}$", message="Department label is not valid, can contain only one or two letters and/or numbers.")
 	@NotNull (message = "Department label must be provided.")
 	//@NaturalId
 	private String departmentLabel;

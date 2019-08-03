@@ -23,17 +23,18 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.annotation.JsonView;
+import com.iktpreobuka.projekat_za_kraj.controllers.util.RESTError;
+import com.iktpreobuka.projekat_za_kraj.controllers.util.UserCustomValidator;
 import com.iktpreobuka.projekat_za_kraj.entities.TeacherEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.UserAccountEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.UserEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.dto.TeacherDto;
 import com.iktpreobuka.projekat_za_kraj.enumerations.EUserRole;
 import com.iktpreobuka.projekat_za_kraj.repositories.TeacherRepository;
+import com.iktpreobuka.projekat_za_kraj.repositories.UserAccountRepository;
 import com.iktpreobuka.projekat_za_kraj.security.Views;
 import com.iktpreobuka.projekat_za_kraj.services.TeacherDao;
 import com.iktpreobuka.projekat_za_kraj.services.UserAccountDao;
-import com.iktpreobuka.projekat_za_kraj.util.RESTError;
-import com.iktpreobuka.projekat_za_kraj.util.UserCustomValidator;
 
 @Controller
 @RestController
@@ -49,6 +50,9 @@ public class TeacherController {
 	@Autowired
 	private TeacherRepository teacherRepository;
 	
+	@Autowired
+	private UserAccountRepository userAccountRepository;
+
 	@Autowired 
 	private UserCustomValidator userValidator;
 
@@ -71,7 +75,7 @@ public class TeacherController {
 		logger.info("################ /project/teacher/getAll started.");
 		logger.info("Logged username: " + principal.getName());
 		try {
-			Iterable<TeacherEntity> users= teacherDao.findByStatusLike(1);
+			Iterable<TeacherEntity> users= teacherRepository.findByStatusLike(1);
 			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<Iterable<TeacherEntity>>(users, HttpStatus.OK);
 		} catch(Exception e) {
@@ -87,9 +91,9 @@ public class TeacherController {
 		logger.info("################ /project/teacher/getAll started.");
 		logger.info("Logged username: " + principal.getName());
 		try {
-			TeacherEntity users= teacherDao.findByIdAndStatusLike(id, 1);
+			TeacherEntity user= teacherRepository.findByIdAndStatusLike(id, 1);
 			logger.info("---------------- Finished OK.");
-			return new ResponseEntity<TeacherEntity>(users, HttpStatus.OK);
+			return new ResponseEntity<TeacherEntity>(user, HttpStatus.OK);
 		} catch(Exception e) {
 			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
 			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -104,7 +108,7 @@ public class TeacherController {
 		logger.info("################ /project/teacher/deleted/getAllDeleted started.");
 		logger.info("Logged username: " + principal.getName());
 		try {
-			Iterable<TeacherEntity> users= teacherDao.findByStatusLike(0);
+			Iterable<TeacherEntity> users= teacherRepository.findByStatusLike(0);
 			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<Iterable<TeacherEntity>>(users, HttpStatus.OK);
 		} catch(Exception e) {
@@ -120,9 +124,9 @@ public class TeacherController {
 		logger.info("################ /project/teacher/deleted/getAllDeleted started.");
 		logger.info("Logged username: " + principal.getName());
 		try {
-			TeacherEntity users= teacherDao.findByIdAndStatusLike(id, 0);
+			TeacherEntity user= teacherRepository.findByIdAndStatusLike(id, 0);
 			logger.info("---------------- Finished OK.");
-			return new ResponseEntity<TeacherEntity>(users, HttpStatus.OK);
+			return new ResponseEntity<TeacherEntity>(user, HttpStatus.OK);
 		} catch(Exception e) {
 			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
 			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -136,7 +140,7 @@ public class TeacherController {
 		logger.info("################ /project/teacher/archived/getAllArchived started.");
 		logger.info("Logged username: " + principal.getName());
 		try {
-			Iterable<TeacherEntity> users= teacherDao.findByStatusLike(-1);
+			Iterable<TeacherEntity> users= teacherRepository.findByStatusLike(-1);
 			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<Iterable<TeacherEntity>>(users, HttpStatus.OK);
 		} catch(Exception e) {
@@ -152,9 +156,9 @@ public class TeacherController {
 		logger.info("################ /project/teacher/archived/getAllArchived started.");
 		logger.info("Logged username: " + principal.getName());
 		try {
-			TeacherEntity users= teacherDao.findByIdAndStatusLike(id, -1);
+			TeacherEntity user= teacherRepository.findByIdAndStatusLike(id, -1);
 			logger.info("---------------- Finished OK.");
-			return new ResponseEntity<TeacherEntity>(users, HttpStatus.OK);
+			return new ResponseEntity<TeacherEntity>(user, HttpStatus.OK);
 		} catch(Exception e) {
 			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
 			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -165,8 +169,8 @@ public class TeacherController {
 	@Secured("ROLE_ADMIN")
 	@JsonView(Views.Admin.class)
 	@RequestMapping(method = RequestMethod.POST)
-	public ResponseEntity<?> addNewAdmin(@Valid @RequestBody TeacherDto newTeacher, Principal principal, BindingResult result) {
-		logger.info("################ /project/teacher/addNewAdmin started.");
+	public ResponseEntity<?> addNewTeacher(@Valid @RequestBody TeacherDto newTeacher, Principal principal, BindingResult result) {
+		logger.info("################ /project/teacher/addNewTeacher started.");
 		logger.info("Logged user: " + principal.getName());
 		if (result.hasErrors()) { 
 			logger.info("---------------- Validation has errors - " + createErrorMessage(result));
@@ -176,13 +180,13 @@ public class TeacherController {
 			logger.info("---------------- New teacher is null.");
 	        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 	      }
-		if (newTeacher.getFirstName() == null || newTeacher.getLastName() == null || newTeacher.getCertificate() == null || newTeacher.getEmploymentDate() == null|| newTeacher.getGender() == null || newTeacher.getjMBG() == null) {
-			logger.info("---------------- Some or all Teacher atributes is null.");
+		if (newTeacher.getFirstName() == null || newTeacher.getLastName() == null || newTeacher.getCertificate() == null || newTeacher.getEmploymentDate() == null || newTeacher.getGender() == null || newTeacher.getjMBG() == null || newTeacher.getAccessRole() != "ROLE_TEACHER") {
+			logger.info("---------------- Some or all Teacher atributes is null or school role is wrong.");
 			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 		}
 		UserEntity user = new TeacherEntity();
 		try {
-			UserEntity loggedUser = userAccountDao.findUserByUsername(principal.getName());
+			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
 			user = teacherDao.addNewTeacher(loggedUser, newTeacher);
 			logger.info("Teacher created.");
@@ -207,8 +211,8 @@ public class TeacherController {
 	@Secured("ROLE_ADMIN")
 	@JsonView(Views.Admin.class)
 	@RequestMapping(method = RequestMethod.PUT, value = "/{id}")
-	public ResponseEntity<?> modifyAdmin(@PathVariable Integer id, @Valid @RequestBody TeacherDto updateTeacher, Principal principal, BindingResult result) {
-		logger.info("################ /project/teacher/{id}/modifyAdmin started.");
+	public ResponseEntity<?> modifyTeacher(@PathVariable Integer id, @Valid @RequestBody TeacherDto updateTeacher, Principal principal, BindingResult result) {
+		logger.info("################ /project/teacher/{id}/modifyTeacher started.");
 		logger.info("Logged user: " + principal.getName());
 		if (result.hasErrors()) { 
 			logger.info("---------------- Validation has errors - " + createErrorMessage(result));
@@ -220,19 +224,19 @@ public class TeacherController {
 	      }
 		TeacherEntity user = new TeacherEntity();
 		try {
-			user = teacherDao.findByIdAndStatusLike(id, 1);
+			user = teacherRepository.findByIdAndStatusLike(id, 1);
 			if (user == null) {
 				logger.info("---------------- Teacher didn't find.");
 		        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 		      }
 			logger.info("Teacher identified.");
-			UserEntity loggedUser = userAccountDao.findUserByUsername(principal.getName());
+			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
 			if (updateTeacher.getFirstName() != null || updateTeacher.getLastName() != null || updateTeacher.getCertificate() != null || updateTeacher.getEmploymentDate() != null|| updateTeacher.getGender() != null || updateTeacher.getjMBG() != null) {
 				teacherDao.modifyTeacher(loggedUser, user, updateTeacher);
 				logger.info("Teacher modified.");
 			}
-			UserAccountEntity account = userAccountDao.findUserAccountByUserAndAccessRoleLike(user, "ROLE_ADMIN");
+			UserAccountEntity account = userAccountRepository.findByUserAndAccessRoleLikeAndStatusLike(user, EUserRole.ROLE_TEACHER, 1);
 			logger.info("Admin's user account identified.");
 			if (account != null && (updateTeacher.getUsername() != null || (updateTeacher.getPassword() != null && updateTeacher.getConfirmedPassword() != null && updateTeacher.getPassword().equals(updateTeacher.getConfirmedPassword())))) {
 				userAccountDao.modifyAccount(loggedUser, account, updateTeacher.getUsername(), updateTeacher.getPassword());
@@ -247,6 +251,55 @@ public class TeacherController {
 			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
+	
+	@Secured("ROLE_ADMIN")
+	@JsonView(Views.Admin.class)
+	@RequestMapping(method = RequestMethod.PUT, value = "/{id}/subject-primarydepartment-subjectswithdepartments")
+	public ResponseEntity<?> addSubjectsAndOrPrimaryDepartmentAndOrSubjectsWithDepartments(@PathVariable Integer id, @Valid @RequestBody TeacherDto updateTeacher, Principal principal, BindingResult result) {
+		logger.info("################ /project/teacher/{id}/subject-primarydepartment-subjectswithdepartments/addSubjectsAndOrPrimaryDepartmentAndOrSubjectsWithDepartments started.");
+		logger.info("Logged user: " + principal.getName());
+		if (result.hasErrors()) { 
+			logger.info("---------------- Validation has errors - " + createErrorMessage(result));
+			return new ResponseEntity<>(createErrorMessage(result), HttpStatus.BAD_REQUEST); 
+			}
+		if (updateTeacher == null) {
+			logger.info("---------------- New teacher is null.");
+	        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+	      }
+		if (updateTeacher.getFirstName() != null || updateTeacher.getLastName() != null || updateTeacher.getCertificate() != null || updateTeacher.getEmploymentDate() != null|| updateTeacher.getGender() != null || updateTeacher.getjMBG() != null || updateTeacher.getUsername() != null || updateTeacher.getPassword() != null || updateTeacher.getConfirmedPassword() != null) {
+			logger.info("---------------- Update have non acceptable Teacher atrributes.");
+	        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+		}
+		TeacherEntity user = new TeacherEntity();
+		try {
+			user = teacherRepository.findByIdAndStatusLike(id, 1);
+			if (user == null) {
+				logger.info("---------------- Teacher didn't find.");
+		        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+		      }
+			logger.info("Teacher identified.");
+			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
+			logger.info("Logged user identified.");
+			if (updateTeacher.getSubjects() != null) {
+				teacherDao.addSubjectsToTeacher(loggedUser, user, updateTeacher.getSubjects());
+				logger.info("Subject/s added.");
+			}
+			if (updateTeacher.getPrimaryDepartment() != null) {
+				teacherDao.addPrimaryDepartmentToTeacher(loggedUser, user, updateTeacher.getPrimaryDepartment());
+				logger.info("Primary department added.");
+			}
+			if (updateTeacher.getSubject_at_department()!= null) {
+				teacherDao.addSubjectsInDepartmentsToTeacher(loggedUser, user, updateTeacher.getSubject_at_department(), updateTeacher.getSchoolYear());
+				logger.info("Subject/s in department/s added.");
+			}
+			logger.info("---------------- Finished OK.");
+			return new ResponseEntity<>(user, HttpStatus.OK);
+		} catch (Exception e) {
+			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+
 
 	@Secured("ROLE_ADMIN")
 	@JsonView(Views.Admin.class)
@@ -256,17 +309,17 @@ public class TeacherController {
 		logger.info("Logged user: " + principal.getName());
 		TeacherEntity user = new TeacherEntity();
 		try {
-			user = teacherDao.findByIdAndStatusLike(id, 0);
+			user = teacherRepository.findByIdAndStatusLike(id, 0);
 			if (user == null) {
 				logger.info("---------------- Teacher didn't find.");
 		        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 		      }
 			logger.info("Teacher for archiving identified.");
-			UserEntity loggedUser = userAccountDao.findUserByUsername(principal.getName());
+			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
 			teacherDao.archiveDeletedTeacher(loggedUser, user);
 			logger.info("Teacher archived.");
-			UserAccountEntity account = userAccountDao.findUserAccountByUserAndAccessRoleLike(user, "ROLE_ADMIN");
+			UserAccountEntity account = userAccountRepository.findByUserAndAccessRoleLikeAndStatusLike(user, EUserRole.ROLE_TEACHER, 1);
 			logger.info("Teacher's user account identified.");
 			if (account != null) {
 				userAccountDao.archiveDeleteAccount(loggedUser, account);
@@ -298,17 +351,17 @@ public class TeacherController {
 		logger.info("Logged user: " + principal.getName());
 		TeacherEntity user = new TeacherEntity();
 		try {
-			user = teacherDao.findByIdAndStatusLike(id, 0);
+			user = teacherRepository.findByIdAndStatusLike(id, 0);
 			if (user == null) {
 				logger.info("---------------- Teacher didn't find.");
 		        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 		      }
 			logger.info("Teacher for undeleting identified.");
-			UserEntity loggedUser = userAccountDao.findUserByUsername(principal.getName());
+			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
 			teacherDao.undeleteTeacher(loggedUser, user);
 			logger.info("Teacher undeleted.");
-			UserAccountEntity account = userAccountDao.findUserAccountByUserAndAccessRoleLike(user, "ROLE_ADMIN");
+			UserAccountEntity account = userAccountRepository.findByUserAndAccessRoleLikeAndStatusLike(user, EUserRole.ROLE_TEACHER, 1);
 			logger.info("Teacher's user account identified.");
 			if (account != null) {
 				userAccountDao.undeleteAccount(loggedUser, account);
@@ -340,13 +393,13 @@ public class TeacherController {
 		logger.info("Logged user: " + principal.getName());
 		TeacherEntity user = new TeacherEntity();
 		try {
-			user = teacherDao.findByIdAndStatusLike(id, 1);
+			user = teacherRepository.findByIdAndStatusLike(id, 1);
 			if (user == null) {
 				logger.info("---------------- Teacher didn't find.");
 		        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 		      }
 			logger.info("Teacher for deleting identified.");
-			UserEntity loggedUser = userAccountDao.findUserByUsername(principal.getName());
+			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
 			if (id == loggedUser.getId()) {
 				logger.info("---------------- Selected Id is ID of logged User: Cann't delete yourself.");
@@ -354,7 +407,7 @@ public class TeacherController {
 		      }	
 			teacherDao.deleteTeacher(loggedUser, user);
 			logger.info("Teacher deleted.");
-			UserAccountEntity account = userAccountDao.findUserAccountByUserAndAccessRoleLike(user, "ROLE_ADMIN");
+			UserAccountEntity account = userAccountRepository.findByUserAndAccessRoleLikeAndStatusLike(user, EUserRole.ROLE_TEACHER, 1);
 			logger.info("Teacher's user account identified.");
 			if (account != null) {
 				userAccountDao.deleteAccount(loggedUser, account);

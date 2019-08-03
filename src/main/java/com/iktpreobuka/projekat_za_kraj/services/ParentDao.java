@@ -7,11 +7,11 @@ import com.iktpreobuka.projekat_za_kraj.entities.dto.ParentDto;
 
 public interface ParentDao {
 
-	public ParentEntity findById(Integer id) throws Exception;
+	//public ParentEntity findById(Integer id) throws Exception;
 	
-	public ParentEntity findByIdAndStatusLike(Integer id, Integer status) throws Exception;
+	//public ParentEntity findByIdAndStatusLike(Integer id, Integer status) throws Exception;
 
-	public Iterable<ParentEntity> findByStatusLike(Integer status) throws Exception;
+	//public Iterable<ParentEntity> findByStatusLike(Integer status) throws Exception;
 
 	public UserEntity addNewParent(UserEntity loggedUser, ParentDto newParent) throws Exception;
 

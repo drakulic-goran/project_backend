@@ -31,6 +31,7 @@ public class ParentEntity extends UserEntity {
 	private static final Integer STATUS_ARCHIVED = -1;
 
 	@JsonView(Views.Parent.class)
+	//@JsonIgnore
 	@ManyToMany(cascade = CascadeType.REFRESH, fetch = FetchType.LAZY)
     @JoinTable(name = "parent_student", joinColumns = { @JoinColumn(name = "parent_id") }, inverseJoinColumns = { @JoinColumn(name = "student_id") })
 	private Set<StudentEntity> students = new HashSet<>();

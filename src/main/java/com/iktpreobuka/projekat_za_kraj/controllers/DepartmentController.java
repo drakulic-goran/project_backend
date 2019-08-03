@@ -21,16 +21,20 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.annotation.JsonView;
+import com.iktpreobuka.projekat_za_kraj.controllers.util.RESTError;
 import com.iktpreobuka.projekat_za_kraj.entities.ClassEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.DepartmentEntity;
+import com.iktpreobuka.projekat_za_kraj.entities.StudentEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.UserAccountEntity;
+import com.iktpreobuka.projekat_za_kraj.entities.UserEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.dto.DepartmentClassDto;
 import com.iktpreobuka.projekat_za_kraj.entities.dto.DepartmentDto;
 import com.iktpreobuka.projekat_za_kraj.repositories.ClassRepository;
 import com.iktpreobuka.projekat_za_kraj.repositories.DepartmentRepository;
+import com.iktpreobuka.projekat_za_kraj.repositories.StudentRepository;
 import com.iktpreobuka.projekat_za_kraj.repositories.UserAccountRepository;
 import com.iktpreobuka.projekat_za_kraj.security.Views;
-import com.iktpreobuka.projekat_za_kraj.util.RESTError;
+import com.iktpreobuka.projekat_za_kraj.services.DepartmentDao;
 
 @Controller
 @RestController
@@ -38,10 +42,16 @@ import com.iktpreobuka.projekat_za_kraj.util.RESTError;
 public class DepartmentController {
 
 	@Autowired
+	private DepartmentDao departmentDao;
+
+	@Autowired
 	private DepartmentRepository departmentRepository;
 	
 	@Autowired
 	private UserAccountRepository userAccountRepository;
+
+	@Autowired
+	private StudentRepository studentRepository;
 
 	/*@Autowired
 	private AdminRepository adminRepository;*/
@@ -295,6 +305,42 @@ public class DepartmentController {
 			return new ResponseEntity<RESTError>(new RESTError(2, "Number format exception occurred: "+ e.getLocalizedMessage()), HttpStatus.NOT_ACCEPTABLE);
 		} catch (Exception e) {
 			logger.error("This is an exception message:" + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+
+	@Secured("ROLE_ADMIN")
+	@JsonView(Views.Admin.class)
+	@RequestMapping(method = RequestMethod.PUT, value = "/{id}/student/{s_id}")
+	public ResponseEntity<?> addDepartment(@PathVariable Integer id, @PathVariable Integer s_id, Principal principal) {
+		logger.info("################ /project/student/{id}/parent/{c_id}/addChild started.");
+		logger.info("Logged user: " + principal.getName());
+		StudentEntity student = new StudentEntity();
+		try {
+			DepartmentEntity department = departmentRepository.findByIdAndStatusLike(s_id, 1);
+			if (department == null) {
+				logger.info("---------------- Parent didn't find.");
+		        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+		      }
+			logger.info("Department identified.");
+			student = studentRepository.findByIdAndStatusLike(id, 1);
+			if (student == null) {
+				logger.info("---------------- Student didn't find.");
+		        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+		      }
+			logger.info("Student identified.");
+			for (StudentEntity s : department.getStudents()) {
+				if (s.equals(student))
+					return new ResponseEntity<Object>(null, HttpStatus.OK);
+			}			
+			departmentDao.addStudentToDepartment(student, department);
+			logger.info("---------------- Finished OK.");
+			return new ResponseEntity<UserEntity>(student, HttpStatus.OK);
+		} catch (NumberFormatException e) {
+			logger.error("++++++++++++++++ Number format exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(2, "Number format exception occurred: "+ e.getLocalizedMessage()), HttpStatus.NOT_ACCEPTABLE);
+		} catch (Exception e) {
+			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
 			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}

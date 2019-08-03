@@ -24,7 +24,7 @@ import com.fasterxml.jackson.annotation.JsonView;
 import com.iktpreobuka.projekat_za_kraj.security.Views;
 
 @Entity
-@Table(name = "primary_teacher_department", uniqueConstraints=@UniqueConstraint(columnNames= {"teacher_id", "department_id"}))
+@Table(name = "primary_teacher_department", uniqueConstraints=@UniqueConstraint(columnNames= {"teacher_id", "department_id", "assignment_date"}))
 @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
 public class PrimaryTeacherDepartmentEntity {
 	

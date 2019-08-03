@@ -22,7 +22,7 @@ public class ParentDaoImpl implements ParentDao {
 	@Autowired
 	private UserRepository userRepository;
 
-	@Override
+	/*@Override
 	public ParentEntity findById(Integer id) throws Exception{
 		try {
 			return parentRepository.getById(id);
@@ -47,15 +47,15 @@ public class ParentDaoImpl implements ParentDao {
 		} catch (Exception e) {
 			throw new Exception("Get parent by Status failed.");
 		}		
-	}
+	}*/
 
 	@Override
 	public UserEntity addNewParent(UserEntity loggedUser, ParentDto newParent) throws Exception {
 			try {
-				if (newParent.getjMBG() != null && parentRepository.getByJMBGAndStatusLike(newParent.getjMBG(), 1) != null) {
+				if (newParent.getjMBG() != null && parentRepository.getByJMBG(newParent.getjMBG()) != null) {
 				     throw new Exception("JMBG already exists.");
 				}
-				if (newParent.getEmail() != null && parentRepository.getByEmailAndStatusLike(newParent.getEmail(), 1) != null) {
+				if (newParent.getEmail() != null && parentRepository.getByEmail(newParent.getEmail()) != null) {
 				     throw new Exception("E-mail already exists.");
 				}
 			} catch (Exception e) {
@@ -90,10 +90,10 @@ public class ParentDaoImpl implements ParentDao {
 			} else {
 				parentRepository.addAdminFromExistUser(newParent.getEmail(), temporaryUser.getId(), loggedUser.getId());
 			}
+			return temporaryUser;
 		} catch (Exception e) {
 			throw new Exception("addNewParent save failed.");
 		}
-		return temporaryUser;
 	}
 
 
@@ -103,7 +103,7 @@ public class ParentDaoImpl implements ParentDao {
 			if (updateParent.getEmail() != null && parentRepository.getByEmail(updateParent.getEmail()) != null) {
 			     throw new Exception("E-mail already exists.");
 			}
-			if (updateParent.getjMBG() != null && parentRepository.getByJMBG(updateParent.getjMBG()) != null) {
+			if (updateParent.getjMBG() != null && !updateParent.getjMBG().equals(" ") && !updateParent.getjMBG().equals("") && userRepository.getByJMBG(updateParent.getjMBG()) != null) {
 			     throw new Exception("JMBG already exists.");
 			}
 			if (updateParent.getAccessRole() != null && !updateParent.getAccessRole().equals("ROLE_PARENT")) {
