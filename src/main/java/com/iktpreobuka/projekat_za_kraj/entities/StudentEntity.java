@@ -10,9 +10,7 @@ import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
-import javax.persistence.JoinColumn;
 import javax.persistence.ManyToMany;
-import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.validation.constraints.Max;
@@ -46,10 +44,15 @@ public class StudentEntity extends UserEntity {
 	@OneToMany(mappedBy = "student", fetch = FetchType.LAZY, cascade = { CascadeType.REFRESH})
 	private List<GradeEntity> grades = new ArrayList<>();
 	
-	@JsonView(Views.Student.class)
+/*	@JsonView(Views.Student.class)
 	@ManyToOne(cascade = CascadeType.REFRESH, fetch = FetchType.LAZY)
 	@JoinColumn(name = "department")
 	private DepartmentEntity student_department;
+*/
+	@JsonIgnore
+	@JsonView(Views.Teacher.class)
+	@OneToMany(mappedBy = "student", fetch = FetchType.LAZY, cascade = { CascadeType.REFRESH}, orphanRemoval = true)
+	private List<StudentDepartmentEntity> departments = new ArrayList<>();
 
 
 	@JsonView(Views.Parent.class)
@@ -94,12 +97,12 @@ public class StudentEntity extends UserEntity {
 		this.createdById = createdById;
 	}
 
-	public StudentEntity(DepartmentEntity student_department,
+	public StudentEntity(StudentDepartmentEntity student_department,
 			@NotNull(message = "Enrollment date must be provided.") Date enrollmentDate,
 			@Pattern(regexp = "^[0-9]{8,8}$", message = "School identification number is not valid, must be 8 only numbers long.") @NotNull(message = "School identification number must be provided.") String schoolIdentificationNumber,
 			Integer createdById) {
 		super();
-		this.student_department = student_department;
+		this.departments.add(student_department);
 		this.enrollmentDate = enrollmentDate;
 		this.schoolIdentificationNumber = schoolIdentificationNumber;
 		this.status = getStatusActive();
@@ -118,13 +121,13 @@ public class StudentEntity extends UserEntity {
 		this.createdById = createdById;
 	}
 
-	public StudentEntity(Set<ParentEntity> parents, DepartmentEntity student_department,
+	public StudentEntity(Set<ParentEntity> parents, StudentDepartmentEntity student_department,
 			@NotNull(message = "Enrollment date must be provided.") Date enrollmentDate,
 			@Pattern(regexp = "^[0-9]{8,8}$", message = "School identification number is not valid, must be 8 only numbers long.") @NotNull(message = "School identification number must be provided.") String schoolIdentificationNumber,
 			Integer createdById) {
 		super();
 		this.parents = parents;
-		this.student_department = student_department;
+		this.departments.add(student_department);
 		this.enrollmentDate = enrollmentDate;
 		this.schoolIdentificationNumber = schoolIdentificationNumber;
 		this.status = getStatusActive();
@@ -139,12 +142,12 @@ public class StudentEntity extends UserEntity {
 		this.parents = parents;
 	}
 
-	public DepartmentEntity getStudent_department() {
-		return student_department;
+	public List<StudentDepartmentEntity> getDepartments() {
+		return departments;
 	}
 
-	public void setStudent_department(DepartmentEntity student_department) {
-		this.student_department = student_department;
+	public void setDepartments(List<StudentDepartmentEntity> departments) {
+		this.departments = departments;
 	}
 
 	public List<GradeEntity> getGrades() {

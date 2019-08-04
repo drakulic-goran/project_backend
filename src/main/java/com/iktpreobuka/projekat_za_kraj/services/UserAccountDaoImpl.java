@@ -43,12 +43,12 @@ public class UserAccountDaoImpl implements UserAccountDao {
 		if (updateAdmin.getUsername() != null && userAccountRepository.getByUsername(updateAdmin.getUsername()) != null) {
 	         throw new Exception("Username already exists.");
 	      }
-		if (updateAdmin.getAccessRole() != null && !updateAdmin.getAccessRole().equals("ROLE_PARENT")) {
-	         throw new Exception("Access role must be ROLE_PARENT.");
+		if (updateAdmin.getAccessRole() != null && !updateAdmin.getAccessRole().equals("ROLE_ADMIN")) {
+	         throw new Exception("Access role must be ROLE_ADMIN.");
 		}		
 		try {
 			Integer i = 0;
-			if (updateAdmin.getUsername() != null && updateAdmin.getUsername().equals(account.getUsername()) && !updateAdmin.getUsername().equals(" ") && !updateAdmin.getUsername().equals("")) {
+			if (updateAdmin.getUsername() != null && !updateAdmin.getUsername().equals(account.getUsername()) && !updateAdmin.getUsername().equals(" ") && !updateAdmin.getUsername().equals("")) {
 				account.setUsername(updateAdmin.getUsername());
 				i++;
 			}
@@ -75,7 +75,7 @@ public class UserAccountDaoImpl implements UserAccountDao {
 		}		
 		try {
 			Integer i = 0;
-			if (updateParent.getUsername() != null && updateParent.getUsername().equals(account.getUsername()) && !updateParent.getUsername().equals(" ") && !updateParent.getUsername().equals("")) {
+			if (updateParent.getUsername() != null && !updateParent.getUsername().equals(account.getUsername()) && !updateParent.getUsername().equals(" ") && !updateParent.getUsername().equals("")) {
 				account.setUsername(updateParent.getUsername());
 				i++;
 			}
@@ -98,7 +98,7 @@ public class UserAccountDaoImpl implements UserAccountDao {
 	         throw new Exception("Username already exists.");
 	      }
 		try {
-			if (!username.equals(account.getUsername()) && username != null && !username.equals(" ") && !username.equals("")) {
+			if (username != null && !username.equals(account.getUsername()) && !username.equals(" ") && !username.equals("")) {
 				account.setUsername(username);
 				account.setUpdatedById(loggedUser.getId());
 				userAccountRepository.save(account);
@@ -143,14 +143,19 @@ public class UserAccountDaoImpl implements UserAccountDao {
 		if (username == null && password == null)
 			throw new Exception("Username and password are null.");
 		try {
+			Integer i = 0;
 			if (!username.equals(account.getUsername()) && username != null && !username.equals(" ") && !username.equals("")) {
 				account.setUsername(username);
+				i++;
 			}
 			if (!Encryption.getPassEncoded(password).equals(account.getPassword()) && password != null && !password.equals(" ") && !password.equals("")) {
 				account.setPassword(Encryption.getPassEncoded(password));
+				i++;
 			}
-			account.setUpdatedById(loggedUser.getId());
-			userAccountRepository.save(account);
+			if (i>0) {
+				account.setUpdatedById(loggedUser.getId());
+				userAccountRepository.save(account);
+			}
 		} catch (Exception e) {
 			throw new Exception("ModifyAccountUsername failed on saving.");
 		}
@@ -180,7 +185,7 @@ public class UserAccountDaoImpl implements UserAccountDao {
 	}
 	
 	@Override
-	public void archiveDeleteAccount(UserEntity loggedUser, UserAccountEntity account) throws Exception {
+	public void archiveAccount(UserEntity loggedUser, UserAccountEntity account) throws Exception {
 		try {
 			account.setStatusArchived();
 			account.setUpdatedById(loggedUser.getId());

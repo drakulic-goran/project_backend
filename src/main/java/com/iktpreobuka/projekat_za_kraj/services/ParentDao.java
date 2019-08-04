@@ -21,8 +21,10 @@ public interface ParentDao {
 
 	public void undeleteParent(UserEntity loggedUser, ParentEntity parent) throws Exception;
 
-	public void archiveDeletedParent(UserEntity loggedUser, ParentEntity parent) throws Exception;
+	public void archiveParent(UserEntity loggedUser, ParentEntity parent) throws Exception;
 
-	public void addStudentToParent(ParentEntity parent, StudentEntity student) throws Exception;
+	public void addStudentToParent(UserEntity loggedUser, ParentEntity parent, StudentEntity student) throws Exception;
+
+	public void removeStudentFromParent(UserEntity loggedUser, ParentEntity parent, StudentEntity student) throws Exception;
 
 }

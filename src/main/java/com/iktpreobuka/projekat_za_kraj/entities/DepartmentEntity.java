@@ -33,10 +33,17 @@ public class DepartmentEntity {
 	private static final Integer STATUS_ACTIVE = 1;
 	private static final Integer STATUS_ARCHIVED = -1;
 	
-	@JsonView(Views.Teacher.class)
+/*	@JsonView(Views.Teacher.class)
 	@JsonIgnore
 	@OneToMany(mappedBy = "student_department", fetch = FetchType.LAZY, cascade = { CascadeType.REFRESH})
 	private List<StudentEntity> students = new ArrayList<>();
+*/
+	
+	@JsonIgnore
+	@JsonView(Views.Teacher.class)
+	@OneToMany(mappedBy = "department", fetch = FetchType.LAZY, cascade = { CascadeType.REFRESH}, orphanRemoval = true)
+	private List<StudentDepartmentEntity> students = new ArrayList<>();
+
 	
 	@JsonView(Views.Student.class)
 	@JsonIgnore
@@ -155,11 +162,11 @@ public class DepartmentEntity {
 		this.status = getStatusArchived();
 	}
 
-	public List<StudentEntity> getStudents() {
+	public List<StudentDepartmentEntity> getStudents() {
 		return students;
 	}
 
-	public void setStudents(List<StudentEntity> students) {
+	public void setStudents(List<StudentDepartmentEntity> students) {
 		this.students = students;
 	}
 

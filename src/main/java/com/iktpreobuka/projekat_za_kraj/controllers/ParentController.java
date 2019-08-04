@@ -34,6 +34,7 @@ import com.iktpreobuka.projekat_za_kraj.enumerations.EUserRole;
 import com.iktpreobuka.projekat_za_kraj.repositories.ParentRepository;
 import com.iktpreobuka.projekat_za_kraj.repositories.StudentRepository;
 import com.iktpreobuka.projekat_za_kraj.repositories.UserAccountRepository;
+import com.iktpreobuka.projekat_za_kraj.repositories.UserRepository;
 import com.iktpreobuka.projekat_za_kraj.security.Views;
 import com.iktpreobuka.projekat_za_kraj.services.ParentDao;
 import com.iktpreobuka.projekat_za_kraj.services.UserAccountDao;
@@ -54,6 +55,9 @@ public class ParentController {
 
 	@Autowired
 	private ParentRepository parentRepository;
+	
+	@Autowired
+	private UserRepository userRepository;
 	
 	@Autowired
 	private UserAccountRepository userAccountRepository;
@@ -182,14 +186,30 @@ public class ParentController {
 			}
 		if (newParent == null) {
 			logger.info("---------------- New parent is null.");
-	        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+	        return new ResponseEntity<>("New parent is null.", HttpStatus.BAD_REQUEST);
 	      }
 		if (newParent.getFirstName() == null || newParent.getLastName() == null || newParent.getEmail() == null || newParent.getGender() == null || newParent.getjMBG() == null) {
-			logger.info("---------------- Some or all Parent atributes is null.");
-			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+			logger.info("---------------- Some atributes is null.");
+			return new ResponseEntity<>("Some atributes is null.", HttpStatus.BAD_REQUEST);
 		}
 		UserEntity user = new ParentEntity();
 		try {
+			if (newParent.getjMBG() != null && userRepository.getByJMBG(newParent.getjMBG()) != null) {
+				logger.info("---------------- JMBG already exist.");
+				return new ResponseEntity<>("JMBG already exist.", HttpStatus.BAD_REQUEST);
+			}
+			if (newParent.getEmail() != null && parentRepository.getByEmail(newParent.getEmail()) != null) {
+				logger.info("---------------- Email already exist.");
+				return new ResponseEntity<>("Email already exist.", HttpStatus.BAD_REQUEST);
+			}
+			if (newParent.getAccessRole() != null && !newParent.getAccessRole().equals("ROLE_PARENT")) {
+				logger.info("---------------- Access role must be ROLE_PARENT.");
+		        return new ResponseEntity<>("Access role must be ROLE_PARENT.", HttpStatus.BAD_REQUEST);
+			}		
+			if (newParent.getUsername() != null && userAccountRepository.getByUsername(newParent.getUsername()) != null) {
+				logger.info("---------------- Username already exists.");
+		        return new ResponseEntity<>("Username already exists.", HttpStatus.BAD_REQUEST);
+		    }
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
 			user = parentDao.addNewParent(loggedUser, newParent);
@@ -197,9 +217,8 @@ public class ParentController {
 			if (newParent.getUsername() != null && newParent.getPassword() != null && newParent.getConfirmedPassword() != null && newParent.getPassword().equals(newParent.getConfirmedPassword())) {
 				UserAccountEntity account = userAccountDao.addNewUserAccount(loggedUser, user, newParent.getUsername(), EUserRole.ROLE_PARENT, newParent.getPassword());
 				logger.info("Account created.");
-				//return new ResponseEntity<>(account, HttpStatus.OK);
+				return new ResponseEntity<>(account, HttpStatus.OK);
 			}
-			user.getAccounts();
 			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<>(user, HttpStatus.OK);
 		} catch (Exception e) {
@@ -224,14 +243,30 @@ public class ParentController {
 			}
 		if (updateParent == null) {
 			logger.info("---------------- New parent is null.");
-	        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+	        return new ResponseEntity<>("New parent is null.", HttpStatus.BAD_REQUEST);
 	      }
 		ParentEntity user = new ParentEntity();
 		try {
+			if (updateParent.getjMBG() != null && userRepository.getByJMBG(updateParent.getjMBG()) != null) {
+				logger.info("---------------- JMBG already exist.");
+				return new ResponseEntity<>("JMBG already exist.", HttpStatus.BAD_REQUEST);
+			}
+			if (updateParent.getEmail() != null && parentRepository.getByEmail(updateParent.getEmail()) != null) {
+				logger.info("---------------- Email already exist.");
+				return new ResponseEntity<>("Email already exist.", HttpStatus.BAD_REQUEST);
+			}
+			if (updateParent.getAccessRole() != null && !updateParent.getAccessRole().equals("ROLE_ADMIN")) {
+				logger.info("---------------- Access role must be ROLE_ADMIN.");
+		        return new ResponseEntity<>("Access role must be ROLE_ADMIN.", HttpStatus.BAD_REQUEST);
+			}		
+			if (updateParent.getUsername() != null && userAccountRepository.getByUsername(updateParent.getUsername()) != null) {
+				logger.info("---------------- Username already exists.");
+		        return new ResponseEntity<>("Username already exists.", HttpStatus.BAD_REQUEST);
+		    }
 			user = parentRepository.findByIdAndStatusLike(id, 1);
 			if (user == null) {
 				logger.info("---------------- Parent didn't find.");
-		        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+		        return new ResponseEntity<>("Parent didn't find.", HttpStatus.BAD_REQUEST);
 		      }
 			logger.info("Parent identified.");
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
@@ -242,12 +277,18 @@ public class ParentController {
 			}
 			UserAccountEntity account = userAccountRepository.findByUserAndAccessRoleLikeAndStatusLike(user, EUserRole.ROLE_PARENT, 1);
 			logger.info("Parent's user account identified.");
-			if (account != null && (updateParent.getUsername() != null || (updateParent.getPassword() != null && updateParent.getConfirmedPassword() != null && updateParent.getPassword().equals(updateParent.getConfirmedPassword())))) {
-				userAccountDao.modifyAccount(loggedUser, account, updateParent);
+			if (account != null) {
+				if (updateParent.getUsername() != null && !updateParent.getUsername().equals("") && !updateParent.getUsername().equals(" ") && userAccountRepository.getByUsername(updateParent.getUsername()) != null) {
+					userAccountDao.modifyAccountUsername(loggedUser, account, updateParent.getUsername());
+					logger.info("Username modified.");					
+				}
+				if (updateParent.getPassword() != null && !updateParent.getPassword().equals("") && !updateParent.getPassword().equals(" ") && updateParent.getConfirmedPassword() != null && updateParent.getPassword().equals(updateParent.getConfirmedPassword())) {
+					userAccountDao.modifyAccountPassword(loggedUser, account, updateParent.getPassword());
+					logger.info("Password modified.");
+				}
 				logger.info("Account modified.");
-				//return new ResponseEntity<>(account, HttpStatus.OK);
+				return new ResponseEntity<>(account, HttpStatus.OK);
 			}
-			user.getAccounts();
 			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<>(user, HttpStatus.OK);
 		} catch (Exception e) {
@@ -267,20 +308,22 @@ public class ParentController {
 			user = parentRepository.findByIdAndStatusLike(id, 1);
 			if (user == null) {
 				logger.info("---------------- Parent didn't find.");
-		        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+		        return new ResponseEntity<>("Parent didn't find.", HttpStatus.BAD_REQUEST);
 		      }
 			logger.info("Parent identified.");
 			StudentEntity student = studentRepository.findByIdAndStatusLike(c_id, 1);
 			if (student == null) {
 				logger.info("---------------- Student didn't find.");
-		        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+		        return new ResponseEntity<>("Student didn't find.", HttpStatus.BAD_REQUEST);
 		      }
 			logger.info("Student identified.");
-			for (StudentEntity s : user.getStudents()) {
-				if (s.equals(student))
-					return new ResponseEntity<Object>(null, HttpStatus.OK);
+			if (user.getStudents().contains(student)) {
+				logger.info("---------------- Student already exist.");
+				return new ResponseEntity<>("Student already exist.", HttpStatus.BAD_REQUEST);
 			}
-			parentDao.addStudentToParent(user, student);		
+			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
+			logger.info("Logged user identified.");
+			parentDao.addStudentToParent(loggedUser, user, student);		
 			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<UserEntity>(user, HttpStatus.OK);
 		} catch (NumberFormatException e) {
@@ -294,30 +337,67 @@ public class ParentController {
 	
 	@Secured("ROLE_ADMIN")
 	@JsonView(Views.Admin.class)
-	@RequestMapping(method = RequestMethod.PUT, value = "/archivedeleted/{id}")
-	public ResponseEntity<?> archiveDeleted(@PathVariable Integer id, Principal principal) {
-		logger.info("################ /project/parent/archivedeleted/archiveDeleted started.");
+	@RequestMapping(method = RequestMethod.PUT, value = "/{id}/remove/child/{c_id}")
+	public ResponseEntity<?> removeChild(@PathVariable Integer id, @PathVariable Integer c_id, Principal principal) {
+		logger.info("################ /project/parent/{id}/remove/child/{c_id}/addChild started.");
 		logger.info("Logged user: " + principal.getName());
 		ParentEntity user = new ParentEntity();
 		try {
-			user = parentRepository.findByIdAndStatusLike(id, 0);
+			user = parentRepository.findByIdAndStatusLike(id, 1);
 			if (user == null) {
 				logger.info("---------------- Parent didn't find.");
-		        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+		        return new ResponseEntity<>("Parent didn't find.", HttpStatus.BAD_REQUEST);
+		      }
+			logger.info("Parent identified.");
+			StudentEntity student = studentRepository.findByIdAndStatusLike(c_id, 1);
+			if (student == null) {
+				logger.info("---------------- Student didn't find.");
+		        return new ResponseEntity<>("Student didn't find.", HttpStatus.BAD_REQUEST);
+		      }
+			logger.info("Student identified.");
+			if (!user.getStudents().contains(student)) {
+				logger.info("---------------- Student don't exist.");
+				return new ResponseEntity<>("Student don't exist.", HttpStatus.BAD_REQUEST);
+			}
+			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
+			logger.info("Logged user identified.");
+			parentDao.removeStudentFromParent(loggedUser, user, student);		
+			logger.info("---------------- Finished OK.");
+			return new ResponseEntity<UserEntity>(user, HttpStatus.OK);
+		} catch (NumberFormatException e) {
+			logger.error("++++++++++++++++ Number format exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(2, "Number format exception occurred: "+ e.getLocalizedMessage()), HttpStatus.NOT_ACCEPTABLE);
+		} catch (Exception e) {
+			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+	
+	@Secured("ROLE_ADMIN")
+	@JsonView(Views.Admin.class)
+	@RequestMapping(method = RequestMethod.PUT, value = "/archive/{id}")
+	public ResponseEntity<?> archive(@PathVariable Integer id, Principal principal) {
+		logger.info("################ /project/parent/archive/archiveDeleted started.");
+		logger.info("Logged user: " + principal.getName());
+		ParentEntity user = new ParentEntity();
+		try {
+			user = parentRepository.getById(id);
+			if (user == null || user.getStatus() == -1) {
+				logger.info("---------------- Parent didn't find.");
+		        return new ResponseEntity<>("Parent didn't find.", HttpStatus.BAD_REQUEST);
 		      }
 			logger.info("Parent for archiving identified.");
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
-			parentDao.archiveDeletedParent(loggedUser, user);
+			parentDao.archiveParent(loggedUser, user);
 			logger.info("Parent archived.");
 			UserAccountEntity account = userAccountRepository.findByUserAndAccessRoleLikeAndStatusLike(user, EUserRole.ROLE_PARENT, 1);
 			logger.info("Parent's user account identified.");
 			if (account != null) {
-				userAccountDao.archiveDeleteAccount(loggedUser, account);
+				userAccountDao.archiveAccount(loggedUser, account);
 				logger.info("Account archived.");
-				//return new ResponseEntity<UserAccountEntity>(account, HttpStatus.OK);
+				return new ResponseEntity<UserAccountEntity>(account, HttpStatus.OK);
 			}
-			user.getAccounts();
 			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<UserEntity>(user, HttpStatus.OK);
 		} catch (NumberFormatException e) {
@@ -345,7 +425,7 @@ public class ParentController {
 			user = parentRepository.findByIdAndStatusLike(id, 0);
 			if (user == null) {
 				logger.info("---------------- Parent didn't find.");
-		        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+		        return new ResponseEntity<>("Parent didn't find.", HttpStatus.BAD_REQUEST);
 		      }
 			logger.info("Parent for undeleting identified.");
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
@@ -357,9 +437,8 @@ public class ParentController {
 			if (account != null) {
 				userAccountDao.undeleteAccount(loggedUser, account);
 				logger.info("Account undeleted.");
-				//return new ResponseEntity<UserAccountEntity>(account, HttpStatus.OK);
+				return new ResponseEntity<UserAccountEntity>(account, HttpStatus.OK);
 			}
-			user.getAccounts();
 			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<UserEntity>(user, HttpStatus.OK);
 		} catch (NumberFormatException e) {
@@ -387,14 +466,14 @@ public class ParentController {
 			user = parentRepository.findByIdAndStatusLike(id, 1);
 			if (user == null) {
 				logger.info("---------------- Parent didn't find.");
-		        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+		        return new ResponseEntity<>("Parent didn't find.", HttpStatus.BAD_REQUEST);
 		      }
 			logger.info("Parent for deleting identified.");
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
 			if (id == loggedUser.getId()) {
 				logger.info("---------------- Selected Id is ID of logged User: Cann't delete yourself.");
-				return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+				return new ResponseEntity<>("Selected Id is ID of logged User: Cann't delete yourself.", HttpStatus.BAD_REQUEST);
 		      }	
 			parentDao.deleteParent(loggedUser, user);
 			logger.info("Parent deleted.");
@@ -403,9 +482,8 @@ public class ParentController {
 			if (account != null) {
 				userAccountDao.deleteAccount(loggedUser, account);
 				logger.info("Account deleted.");
-				//return new ResponseEntity<UserAccountEntity>(account, HttpStatus.OK);
+				return new ResponseEntity<UserAccountEntity>(account, HttpStatus.OK);
 			}
-			user.getAccounts();
 			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<UserEntity>(user, HttpStatus.OK);
 		} catch (NumberFormatException e) {

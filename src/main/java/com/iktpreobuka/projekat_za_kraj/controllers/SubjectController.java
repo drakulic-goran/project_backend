@@ -2,7 +2,6 @@ package com.iktpreobuka.projekat_za_kraj.controllers;
 
 import java.security.Principal;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,16 +28,13 @@ import com.fasterxml.jackson.annotation.JsonView;
 import com.iktpreobuka.projekat_za_kraj.controllers.util.RESTError;
 import com.iktpreobuka.projekat_za_kraj.entities.StudentEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.SubjectEntity;
-import com.iktpreobuka.projekat_za_kraj.entities.TeacherEntity;
-import com.iktpreobuka.projekat_za_kraj.entities.TeacherSubjectEntity;
-import com.iktpreobuka.projekat_za_kraj.entities.UserAccountEntity;
+import com.iktpreobuka.projekat_za_kraj.entities.UserEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.dto.StudentSubjectsDto;
 import com.iktpreobuka.projekat_za_kraj.entities.dto.SubjectDto;
 import com.iktpreobuka.projekat_za_kraj.repositories.SubjectRepository;
-import com.iktpreobuka.projekat_za_kraj.repositories.TeacherRepository;
-import com.iktpreobuka.projekat_za_kraj.repositories.TeacherSubjectRepository;
 import com.iktpreobuka.projekat_za_kraj.repositories.UserAccountRepository;
 import com.iktpreobuka.projekat_za_kraj.security.Views;
+import com.iktpreobuka.projekat_za_kraj.services.SubjectDao;
 
 @Controller
 @RestController
@@ -49,23 +45,12 @@ public class SubjectController {
 	private SubjectRepository subjectRepository;
 	
 	@Autowired
-	private TeacherRepository teacherRepository;
-	
-	/*@Autowired
-	private ParentRepository parentRepository;
-
-	@Autowired
-	private StudentRepository studentRepository;*/
-
-	@Autowired
 	private UserAccountRepository userAccountRepository;
 
 	@Autowired
-	private TeacherSubjectRepository teacherSubjectRepository;
-
-	/*@Autowired
-	private AdminRepository adminRepository;*/
-
+	private SubjectDao subjectDao;
+	
+	
 	private final Logger logger = (Logger) LoggerFactory.getLogger(this.getClass());
 	
 	private String createErrorMessage(BindingResult result) { 
@@ -76,15 +61,14 @@ public class SubjectController {
 	@JsonView(Views.Admin.class)
 	@RequestMapping(method = RequestMethod.GET)
 	public ResponseEntity<?> getAll(Principal principal) {
-		logger.info("This is an info message: /project/subjects/getAll started.");
-		String loggedUserName = principal.getName();
-		logger.info("Logged user: " + loggedUserName);
+		logger.info("################ /project/subjects/getAll started.");
+		logger.info("Logged user: " + principal.getName());
 		try {
 			Iterable<SubjectEntity> subjects= subjectRepository.findByStatusLike(1);
-			logger.info("This is an info message: Get finished OK.");
+			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<Iterable<SubjectEntity>>(subjects, HttpStatus.OK);
 		} catch(Exception e) {
-			logger.error("This is an exception message:" + e.getMessage());
+			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
 			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
@@ -93,18 +77,16 @@ public class SubjectController {
 	@JsonView(Views.Teacher.class)
 	@RequestMapping(method = RequestMethod.GET, value = "/teacher")
 	public ResponseEntity<?> getAllForTeacher(Principal principal) {
-		logger.info("This is an info message: /project/subjects/teacher/getAllForTeacher started.");
-		String loggedUserName = principal.getName();
-		logger.info("Logged user: " + loggedUserName);
+		logger.info("################ /project/subjects/teacher/getAllForTeacher started.");
+		logger.info("Logged user: " + principal.getName());
 		try {
-			UserAccountEntity loggedUser = userAccountRepository.getByUsername(loggedUserName);
-			//UserEntity user = teacherRepository.getByUserAccount(loggedUser);
-			//TeacherEntity user= teacherRepository.getById(loggedUser.getUser().getId());
-			Iterable<SubjectEntity> subjects= subjectRepository.findByTeacher(loggedUser.getUser().getId());
-			logger.info("This is an info message: Get finished OK.");
+			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
+			logger.info("Logged user identified.");
+			Iterable<SubjectEntity> subjects= subjectRepository.findByTeacher(loggedUser.getId());
+			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<Iterable<SubjectEntity>>(subjects, HttpStatus.OK);
 		} catch(Exception e) {
-			logger.error("This is an exception message:" + e.getMessage());
+			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
 			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
@@ -113,17 +95,13 @@ public class SubjectController {
 	@JsonView(Views.Parent.class)
 	@RequestMapping(method = RequestMethod.GET, value = "/parent")
 	public ResponseEntity<?> getAllForParent(Principal principal) {
-		logger.info("This is an info message: /project/subjects/parent/getAllForParent started.");
-		String loggedUserName = principal.getName();
-		logger.info("Logged user: " + loggedUserName);
+		logger.info("################ /project/subjects/parent/getAllForParent started.");
+		logger.info("Logged user: " + principal.getName());
 		try {
-			UserAccountEntity loggedUser = userAccountRepository.getByUsername(loggedUserName);
-			//UserEntity user = parentRepository.getByUserAccount(loggedUser);
-			//UserEntity user= loggedUser.getUser();
-			List<StudentSubjectsDto> subjects= subjectRepository.findByParent(loggedUser.getUser().getId());
-			//Map<SubjectEntity, StudentEntity> subjects = subjectRepository.findByParent(user);
+			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
+			logger.info("Logged user identified.");
+			List<StudentSubjectsDto> subjects= subjectRepository.findByParent(loggedUser.getId());
 			Map<StudentEntity, List<SubjectEntity>> subjectsByStudent = new HashMap<StudentEntity, List<SubjectEntity>>();
-			//Map<StudentEntity, List<SubjectEntity>> subjectsByStudent = new HashMap<StudentEntity, List<SubjectEntity>>();
 			for (StudentSubjectsDto  entry : subjects) {
 				SubjectEntity subject = entry.getSubject();
 			    StudentEntity student = entry.getStudent();
@@ -134,11 +112,10 @@ public class SubjectController {
 			    }
 			    subjectsss.add(subject);
 			}
-			logger.info("This is an info message: Get finished OK.");
-			//return new ResponseEntity<Iterable<SubjectEntity>>(subjects, HttpStatus.OK);
+			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<Map<StudentEntity, List<SubjectEntity>>>(subjectsByStudent, HttpStatus.OK);
 		} catch(Exception e) {
-			logger.error("This is an exception message:" + e.getMessage());
+			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
 			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
@@ -147,18 +124,16 @@ public class SubjectController {
 	@JsonView(Views.Student.class)
 	@RequestMapping(method = RequestMethod.GET, value = "/student")
 	public ResponseEntity<?> getAllForStudent(Principal principal) {
-		logger.info("This is an info message: /project/subjects/student/getAllForStudent started.");
-		String loggedUserName = principal.getName();
-		logger.info("Logged user: " + loggedUserName);
+		logger.info("################ /project/subjects/student/getAllForStudent started.");
+		logger.info("Logged user: " + principal.getName());
 		try {
-			UserAccountEntity loggedUser = userAccountRepository.getByUsername(loggedUserName);
-			//UserEntity user = studentRepository.getByUserAccount(loggedUser);
-			//UserEntity user= loggedUser.getUser();
-			Iterable<SubjectEntity> subjects= subjectRepository.findByStudent(loggedUser.getUser().getId());
-			logger.info("This is an info message: Get finished OK.");
+			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
+			logger.info("Logged user identified.");
+			Iterable<SubjectEntity> subjects= subjectRepository.findByStudent(loggedUser.getId());
+			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<Iterable<SubjectEntity>>(subjects, HttpStatus.OK);
 		} catch(Exception e) {
-			logger.error("This is an exception message:" + e.getMessage());
+			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
 			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
@@ -167,33 +142,28 @@ public class SubjectController {
 	@JsonView(Views.Admin.class)
 	@RequestMapping(method = RequestMethod.POST)
 	public ResponseEntity<?> addNew(@Valid @RequestBody SubjectDto newSubject, Principal principal, BindingResult result) {
-		logger.info("This is an info message: /project/subjects/addNew started.");
-		String loggedUserName = principal.getName();
-		logger.info("Logged user: " + loggedUserName);
+		logger.info("################ /project/subjects/addNew started.");
+		logger.info("Logged user: " + principal.getName());
 		if (result.hasErrors()) { 
-			logger.info("This is an info message: Validation has errors - " + createErrorMessage(result));
+			logger.info("---------------- Validation has errors: " + createErrorMessage(result));
 			return new ResponseEntity<>(createErrorMessage(result), HttpStatus.BAD_REQUEST); 
 			}
 		if (newSubject == null) {
-			logger.info("This is an info message: New subject is null.");
-	        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+			logger.info("---------------- New subject is null.");
+	        return new ResponseEntity<>("New subject is null.", HttpStatus.BAD_REQUEST);
 	      }
 		SubjectEntity subject = new SubjectEntity();
 		try {
-			if (newSubject.getSubjectName() != null || newSubject.getWeekClassesNumber() != null) {
-				subject.setSubjectName(newSubject.getSubjectName());
-				subject.setWeekClassesNumber(newSubject.getWeekClassesNumber());
-				subject.setStatusActive();
-				UserAccountEntity loggedUser = userAccountRepository.getByUsername(loggedUserName);
-				//AdminEntity user = adminRepository.getByUserAccount(loggedUser);
-				//AdminEntity user = (AdminEntity) loggedUser.getUser();
-				subject.setCreatedById(loggedUser.getUser().getId());
-				subjectRepository.save(subject);
-				logger.info("This is an info message: Subject created.");
+			if (newSubject.getSubjectName() != null && !newSubject.getSubjectName().equals("") && !newSubject.getSubjectName().equals(" ") && newSubject.getWeekClassesNumber() != null && !newSubject.getWeekClassesNumber().equals("") && !newSubject.getWeekClassesNumber().equals(" ")) {
+				UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
+				logger.info("Logged user identified.");
+				subject = subjectDao.addNewSubject(loggedUser, newSubject);
+				logger.info("Subject created.");
 			}
+			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<>(subject, HttpStatus.OK);
 		} catch (Exception e) {
-			logger.error("This is an exception message:" + e.getMessage());
+			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
 			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
@@ -202,117 +172,140 @@ public class SubjectController {
 	@JsonView(Views.Admin.class)
 	@RequestMapping(method = RequestMethod.PUT, value = "/{id}")
 	public ResponseEntity<?> modify(@PathVariable String id, @Valid @RequestBody SubjectDto updateSubject, Principal principal, BindingResult result) {
-		logger.info("This is an info message: /project/departments/modify started.");
-		String loggedUserName = principal.getName();
-		logger.info("Logged user: " + loggedUserName);
+		logger.info("################ /project/departments/modify started.");
+		logger.info("Logged user: " + principal.getName());
 		if (result.hasErrors()) { 
-			logger.info("This is an info message: Validation has errors - " + createErrorMessage(result));
+			logger.info("---------------- Validation has errors - " + createErrorMessage(result));
 			return new ResponseEntity<>(createErrorMessage(result), HttpStatus.BAD_REQUEST); 
 			}
 		if (updateSubject == null) {
-			logger.info("This is an info message: New department is null.");
-	        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+			logger.info("---------------- New subject is null.");
+	        return new ResponseEntity<>("New subject is null.", HttpStatus.BAD_REQUEST);
 	      }
 		try {
 			SubjectEntity subject = subjectRepository.findById(Integer.parseInt(id)).orElse(null);
 			if (subject==null || subject.getStatus()!=1) {
-				logger.info("This is an info message: Searched subject not exist.");
-				return new ResponseEntity<Object>(null, HttpStatus.OK);
+				logger.info("---------------- Subject not exist.");
+				return new ResponseEntity<>("Subject not exist.", HttpStatus.OK);
 			}
 			if (updateSubject.getSubjectName() != null || updateSubject.getWeekClassesNumber() != null) {
-				if (updateSubject.getSubjectName() != null && !updateSubject.getSubjectName().equals(" ") && !updateSubject.getSubjectName().equals(""))
-					subject.setSubjectName(updateSubject.getSubjectName());
-				if (updateSubject.getWeekClassesNumber() != null || !updateSubject.getWeekClassesNumber().equals(" ") || !updateSubject.getWeekClassesNumber().equals(""))
-					subject.setWeekClassesNumber(updateSubject.getWeekClassesNumber());
-				UserAccountEntity loggedUser = userAccountRepository.getByUsername(loggedUserName);
-				//AdminEntity user = adminRepository.getByUserAccount(loggedUser);
-				//AdminEntity user = (AdminEntity) loggedUser.getUser();
-				subject.setUpdatedById(loggedUser.getUser().getId());
-				subjectRepository.save(subject);
-				logger.info("This is an info message: Subject modified.");
+				UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
+				logger.info("Logged user identified.");
+				subjectDao.modifySubject(loggedUser, subject, updateSubject);
+				logger.info("Subject modified.");
 			}
+			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<>(subject, HttpStatus.OK);
 		} catch (Exception e) {
-			logger.error("This is an exception message:" + e.getMessage());
+			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
 			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
 
 	@Secured("ROLE_ADMIN")
 	@JsonView(Views.Admin.class)
-	@RequestMapping(method = RequestMethod.PUT, value = "/change/{id}/name/{name}")
-	public ResponseEntity<?> modifySubjectName(@PathVariable String id, @PathVariable String name, Principal principal) {
-		logger.info("This is an info message: /project/subjects/modifySubjectName started.");
-		String loggedUserName = principal.getName();
-		logger.info("Logged user: " + loggedUserName);
-		if (name == null) {
-			logger.info("This is an info message: New name is null.");
-	        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-	      }
-		try {
-			SubjectEntity subject = subjectRepository.findById(Integer.parseInt(id)).orElse(null);
-			if (subject==null || subject.getStatus()!=1) {
-				logger.info("This is an info message: Searched subject not exist.");
-				return new ResponseEntity<Object>(null, HttpStatus.OK);
+	@RequestMapping(method = RequestMethod.PUT, value = "/{id}/add-class-add-subject-add-teacherswithdepartments")
+	public ResponseEntity<?> addClassesAndOrTeachersAndOrTeachersWithDepartmentsToSubject(@PathVariable Integer id, @Valid @RequestBody SubjectDto updateSubject, Principal principal, BindingResult result) {
+		logger.info("################ /project/teacher/{id}/add-class-add-subject-add-teacherswithdepartments/addClassesAndOrTeachersAndOrTeachersWithDepartmentsToSubject started.");
+		logger.info("Logged user: " + principal.getName());
+		if (result.hasErrors()) { 
+			logger.info("---------------- Validation has errors - " + createErrorMessage(result));
+			return new ResponseEntity<>(createErrorMessage(result), HttpStatus.BAD_REQUEST); 
 			}
-			UserAccountEntity loggedUser = userAccountRepository.getByUsername(loggedUserName);
-			//AdminEntity user= adminRepository.getByUserAccount(loggedUser);
-			//AdminEntity user = (AdminEntity) loggedUser.getUser();
-			subject.setSubjectName(name);
-			subject.setUpdatedById(loggedUser.getUser().getId());
-			subjectRepository.save(subject);
-			logger.info("This is an info message: Subject modified.");
-			return new ResponseEntity<SubjectEntity>(subject, HttpStatus.OK);
-		} catch (NumberFormatException e) {
-			logger.error("This is an number format exception message:" + e.getMessage());
-			return new ResponseEntity<RESTError>(new RESTError(2, "Number format exception occurred: "+ e.getLocalizedMessage()), HttpStatus.NOT_ACCEPTABLE);
+		if (updateSubject == null) {
+			logger.info("---------------- Data is null.");
+	        return new ResponseEntity<>("Data is null.", HttpStatus.BAD_REQUEST);
+	      }
+		if (updateSubject.getSubjectName() != null || updateSubject.getWeekClassesNumber() != null) {
+			logger.info("---------------- Update have non acceptable atrributes.");
+	        return new ResponseEntity<>("Update have non acceptable atrributes.", HttpStatus.BAD_REQUEST);
+		}
+		SubjectEntity subject = new SubjectEntity();
+		try {
+			subject = subjectRepository.findByIdAndStatusLike(id, 1);
+			if (subject == null) {
+				logger.info("---------------- Subject didn't find.");
+		        return new ResponseEntity<>("Subject didn't find.", HttpStatus.BAD_REQUEST);
+		      }
+			logger.info("Subject identified.");
+			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
+			logger.info("Logged user identified.");
+			if (updateSubject.getTeachers() != null) {
+				subjectDao.addTeachersToSubject(loggedUser, subject, updateSubject.getTeachers());
+				logger.info("Teacher/s added.");
+			}
+			if (updateSubject.getClasses() != null) {
+				subjectDao.addClassToSubject(loggedUser, updateSubject.getClasses(), subject, updateSubject.getLearningProgram());
+				logger.info("Class/es added.");
+			}
+			if (updateSubject.getSubject_teachers()!= null) {
+				subjectDao.addTeacherAndDepartmentToSubject(loggedUser, subject, updateSubject.getSubject_teachers(), updateSubject.getSchoolYear());
+				logger.info("Teachers/s in department/s added.");
+			}
+			logger.info("---------------- Finished OK.");
+			return new ResponseEntity<>(subject, HttpStatus.OK);
 		} catch (Exception e) {
-			logger.error("This is an exception message:" + e.getMessage());
+			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
 			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
+
+	@Secured("ROLE_ADMIN")
+	@JsonView(Views.Admin.class)
+	@RequestMapping(method = RequestMethod.PUT, value = "/{id}/remove-class-remove-subject-remove-teacherswithdepartments")
+	public ResponseEntity<?> removeClassesAndOrTeachersAndOrTeachersWithDepartmentsFromSubject(@PathVariable Integer id, @Valid @RequestBody SubjectDto updateSubject, Principal principal, BindingResult result) {
+		logger.info("################ /project/teacher/{id}/remove-class-remove-subject-remove-teacherswithdepartments/removeClassesAndOrTeachersAndOrTeachersWithDepartmentsFromSubject started.");
+		logger.info("Logged user: " + principal.getName());
+		if (result.hasErrors()) { 
+			logger.info("---------------- Validation has errors - " + createErrorMessage(result));
+			return new ResponseEntity<>(createErrorMessage(result), HttpStatus.BAD_REQUEST); 
+			}
+		if (updateSubject == null) {
+			logger.info("---------------- Data is null.");
+	        return new ResponseEntity<>("Data is null.", HttpStatus.BAD_REQUEST);
+	      }
+		if (updateSubject.getSubjectName() != null || updateSubject.getWeekClassesNumber() != null) {
+			logger.info("---------------- Update have non acceptable atrributes.");
+	        return new ResponseEntity<>("Update have non acceptable atrributes.", HttpStatus.BAD_REQUEST);
+		}
+		SubjectEntity subject = new SubjectEntity();
+		try {
+			subject = subjectRepository.findByIdAndStatusLike(id, 1);
+			if (subject == null) {
+				logger.info("---------------- Subject didn't find.");
+		        return new ResponseEntity<>("Subject didn't find.", HttpStatus.BAD_REQUEST);
+		      }
+			logger.info("Subject identified.");
+			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
+			logger.info("Logged user identified.");
+			if (updateSubject.getTeachers() != null) {
+				subjectDao.removeTeachersFromSubject(loggedUser, subject, updateSubject.getTeachers());
+				logger.info("Teacher/s added.");
+			}
+			if (updateSubject.getClasses() != null) {
+				subjectDao.removeClassFromSubject(loggedUser, updateSubject.getClasses(), subject);
+				logger.info("Class/es added.");
+			}
+			if (updateSubject.getSubject_teachers()!= null) {
+				subjectDao.removeTeacherAndDepartmentFromSubject(loggedUser, subject, updateSubject.getSubject_teachers());
+				logger.info("Teachers/s in department/s added.");
+			}
+			logger.info("---------------- Finished OK.");
+			return new ResponseEntity<>(subject, HttpStatus.OK);
+		} catch (Exception e) {
+			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+
 	
-	@Secured("ROLE_ADMIN")
-	@JsonView(Views.Admin.class)
-	@RequestMapping(method = RequestMethod.PUT, value = "/change/{id}/weekclassesnumber/{number}")
-	public ResponseEntity<?> modifySubjectWeekClassesNumber(@PathVariable String id, @PathVariable Integer number, Principal principal) {
-		logger.info("This is an info message: /project/subjects/modifySubjectWeekClassesNumber started.");
-		String loggedUserName = principal.getName();
-		logger.info("Logged user: " + loggedUserName);
-		if (number == null) {
-			logger.info("This is an info message: New number of classes in a week is null.");
-	        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-	      }
-		try {
-			SubjectEntity subject = subjectRepository.findById(Integer.parseInt(id)).orElse(null);
-			if (subject==null || subject.getStatus()!=1) {
-				logger.info("This is an info message: Searched subject not exist.");
-				return new ResponseEntity<Object>(null, HttpStatus.OK);
-			}
-			UserAccountEntity loggedUser = userAccountRepository.getByUsername(loggedUserName);
-			//AdminEntity user= adminRepository.getByUserAccount(loggedUser);
-			//AdminEntity user = (AdminEntity) loggedUser.getUser();
-			subject.setWeekClassesNumber(number);
-			subject.setUpdatedById(loggedUser.getUser().getId());
-			subjectRepository.save(subject);
-			logger.info("This is an info message: Subject modified.");
-			return new ResponseEntity<SubjectEntity>(subject, HttpStatus.OK);
-		} catch (NumberFormatException e) {
-			logger.error("This is an number format exception message:" + e.getMessage());
-			return new ResponseEntity<RESTError>(new RESTError(2, "Number format exception occurred: "+ e.getLocalizedMessage()), HttpStatus.NOT_ACCEPTABLE);
-		} catch (Exception e) {
-			logger.error("This is an exception message:" + e.getMessage());
-			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
-		}
-	}
-
+	/*
 	@Secured("ROLE_ADMIN")
 	@JsonView(Views.Admin.class)
 	@RequestMapping(method = RequestMethod.POST, value = "/subject/{id}/teacher/{t_id}")
 	public ResponseEntity<?> addTeacherToSubject(@PathVariable String id, @PathVariable String t_id, Principal principal) {
-		logger.info("This is an info message: /project/subjects/modifySubjectWeekClassesNumber started.");
-		String loggedUserName = principal.getName();
-		logger.info("Logged user: " + loggedUserName);
+		logger.info("################ /project/subjects/modifySubjectWeekClassesNumber started.");
+		logger.info("Logged user: " + principal.getName());
 		try {
 			SubjectEntity subject = subjectRepository.findById(Integer.parseInt(id)).orElse(null);
 			if (subject==null || subject.getStatus()!=1) {
@@ -324,66 +317,43 @@ public class SubjectController {
 				logger.info("This is an info message: Searched teacher not exist.");
 				return new ResponseEntity<TeacherEntity>(teacher, HttpStatus.OK);
 			}
-			//Integer loggedUserId = userAccountRepository.getByUsername(loggedUserName).getId();
-			UserAccountEntity loggedUser = userAccountRepository.getByUsername(loggedUserName);
-			//AdminEntity user= adminRepository.getByUserAccount(loggedUser);
-			//AdminEntity user = (AdminEntity) loggedUser.getUser();
-			Date assignmentDate = new Date();
-			/*teacher.addSubject(subject, assignmentDate);
-			teacherRepository.save(teacher);
-			subjectRepository.save(subject);*/
-			TeacherSubjectEntity teacherSubject = new TeacherSubjectEntity(teacher, subject, assignmentDate, loggedUser.getUser().getId());
-			teacherSubjectRepository.save(teacherSubject);
-			teacher.getSubjects().add(teacherSubject);
-			subject.getTeachers().add(teacherSubject);
-			teacherRepository.save(teacher);
-			subjectRepository.save(subject);
-			/* teacher.getSubjects().add(teacherSubject);
-			subject.getTeachers().add(teacherSubject);*/
-			// teacher.addSubject(subject, assignmentDate);
-			/* TeacherSubjectEntity teacherSubject = //new TeacherSubjectEntity(teacher, subject, assignmentDate);
-			teacher.addSubject(subject, assignmentDate);
-			teacherSubjectRepository.save(teacherSubject);*/
-			//teacherRepository.save(teacher);
-			//subjectRepository.save(subject);
-			logger.info("This is an info message: Subject added to teacher.");
+			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
+			logger.info("Logged user identified.");
+
+			logger.info("Subject added to teacher.");
+			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<TeacherSubjectEntity>(teacherSubject, HttpStatus.OK);
 		} catch (NumberFormatException e) {
-			logger.error("This is an number format exception message:" + e.getMessage());
+			logger.error("++++++++++++++++ Number format exception occurred: " + e.getMessage());
 			return new ResponseEntity<RESTError>(new RESTError(2, "Number format exception occurred: "+ e.getLocalizedMessage()), HttpStatus.NOT_ACCEPTABLE);
 		} catch (Exception e) {
-			logger.error("This is an exception message:" + e.getMessage());
+			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
 			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
-
+*/
 	@Secured("ROLE_ADMIN")
 	@JsonView(Views.Admin.class)
 	@RequestMapping(method = RequestMethod.PUT, value = "/undelete/{id}")
 	public ResponseEntity<?> unDelete(@PathVariable String id, Principal principal) {
-		logger.info("This is an info message: /project/subjects/unDelete started.");
-		String loggedUserName = principal.getName();
-		logger.info("Logged user: " + loggedUserName);
+		logger.info("################ /project/subjects/unDelete started.");
+		logger.info("Logged user: " + principal.getName());
 		try {
-			SubjectEntity subject = subjectRepository.findById(Integer.parseInt(id)).orElse(null);
-			if (subject==null || subject.getStatus()==1 || subject.getStatus()==-1) {
-				logger.info("This is an info message: Searched subject not exist, subject is allready active or subject is archived.");
-				return new ResponseEntity<Object>(null, HttpStatus.OK);
+			SubjectEntity subject = subjectRepository.findByIdAndStatusLike(Integer.parseInt(id), 0);
+			if (subject==null || subject.getStatus()!=0) {
+				logger.info("Subject not exist.");
+				return new ResponseEntity<>("---------------- Subject not exist.", HttpStatus.BAD_REQUEST);
 			}
-			UserAccountEntity loggedUser = userAccountRepository.getByUsername(loggedUserName);
-			//AdminEntity user= adminRepository.getByUserAccount(loggedUser);
-			//AdminEntity user = (AdminEntity) loggedUser.getUser();
-			subject.setStatusActive();
-			subject.setUpdatedById(loggedUser.getUser().getId());
-			subjectRepository.save(subject);
-			//subjectRepository.deleteById(Integer.parseInt(id));
-			logger.info("This is an info message: Subject activated.");
+			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
+			logger.info("Logged user identified.");
+			subjectDao.undeleteSubject(loggedUser, subject);
+			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<SubjectEntity>(subject, HttpStatus.OK);
 		} catch (NumberFormatException e) {
-			logger.error("This is an number format exception message:" + e.getMessage());
+			logger.error("++++++++++++++++ Number format exception occurred: " + e.getMessage());
 			return new ResponseEntity<RESTError>(new RESTError(2, "Number format exception occurred: "+ e.getLocalizedMessage()), HttpStatus.NOT_ACCEPTABLE);
 		} catch (Exception e) {
-			logger.error("This is an exception message:" + e.getMessage());
+			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
 			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
@@ -392,29 +362,24 @@ public class SubjectController {
 	@JsonView(Views.Admin.class)
 	@RequestMapping(method = RequestMethod.PUT, value = "/archive/{id}")
 	public ResponseEntity<?> archive(@PathVariable String id, Principal principal) {
-		logger.info("This is an info message: /project/subjects/archive started.");
-		String loggedUserName = principal.getName();
-		logger.info("Logged user: " + loggedUserName);
+		logger.info("################ /project/subjects/archive started.");
+		logger.info("Logged user: " + principal.getName());
 		try {
 			SubjectEntity subject = subjectRepository.findById(Integer.parseInt(id)).orElse(null);
-			if (subject==null || subject.getStatus()==-1 || subject.getStatus()==1) {
-				logger.info("This is an info message: Searched subject not exist, subject is archived or subject is active.");
-				return new ResponseEntity<Object>(null, HttpStatus.OK);
+			if (subject==null || subject.getStatus()==-1) {
+				logger.info("Subject not exist.");
+				return new ResponseEntity<>("---------------- Subject not exist.", HttpStatus.BAD_REQUEST);
 			}
-			UserAccountEntity loggedUser = userAccountRepository.getByUsername(loggedUserName);
-			//AdminEntity user= adminRepository.getByUserAccount(loggedUser);
-			//AdminEntity user = (AdminEntity) loggedUser.getUser();
-			subject.setStatusArchived();
-			subject.setUpdatedById(loggedUser.getUser().getId());
-			subjectRepository.save(subject);
-			//subjectRepository.deleteById(Integer.parseInt(id));
-			logger.info("This is an info message: Subject deactivated.");
+			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
+			logger.info("Logged user identified.");
+			subjectDao.archiveSubject(loggedUser, subject);
+			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<SubjectEntity>(subject, HttpStatus.OK);
 		} catch (NumberFormatException e) {
-			logger.error("This is an number format exception message:" + e.getMessage());
+			logger.error("++++++++++++++++ Number format exception occurred: " + e.getMessage());
 			return new ResponseEntity<RESTError>(new RESTError(2, "Number format exception occurred: "+ e.getLocalizedMessage()), HttpStatus.NOT_ACCEPTABLE);
 		} catch (Exception e) {
-			logger.error("This is an exception message:" + e.getMessage());
+			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
 			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
@@ -423,29 +388,24 @@ public class SubjectController {
 	@JsonView(Views.Admin.class)
 	@RequestMapping(method = RequestMethod.DELETE, value = "/{id}")
 	public ResponseEntity<?> delete(@PathVariable String id, Principal principal) {
-		logger.info("This is an info message: /project/subjects/delete started.");
-		String loggedUserName = principal.getName();
-		logger.info("Logged user: " + loggedUserName);
+		logger.info("################ /project/subjects/delete started.");
+		logger.info("Logged user: " + principal.getName());
 		try {
-			SubjectEntity subject = subjectRepository.findById(Integer.parseInt(id)).orElse(null);
-			if (subject==null  || subject.getStatus()==-1) {
-				logger.info("This is an info message: Searched subject not exist.");
-				return new ResponseEntity<Object>(null, HttpStatus.OK);
+			SubjectEntity subject = subjectRepository.findByIdAndStatusLike(Integer.parseInt(id), 1);
+			if (subject==null  || subject.getStatus()!=1) {
+				logger.info("Subject not exist.");
+				return new ResponseEntity<>("Subject not exist.", HttpStatus.BAD_REQUEST);
 			}
-			UserAccountEntity loggedUser = userAccountRepository.getByUsername(loggedUserName);
-			//AdminEntity user= adminRepository.getByUserAccount(loggedUser);
-			//AdminEntity user = (AdminEntity) loggedUser.getUser();
-			subject.setStatusInactive();;
-			subject.setUpdatedById(loggedUser.getUser().getId());
-			subjectRepository.save(subject);
-			//subjectRepository.deleteById(Integer.parseInt(id));
-			logger.info("This is an info message: Subject deleted.");
+			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
+			logger.info("Logged user identified.");
+			subjectDao.deleteSubject(loggedUser, subject);
+			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<SubjectEntity>(subject, HttpStatus.OK);
 		} catch (NumberFormatException e) {
-			logger.error("This is an number format exception message:" + e.getMessage());
+			logger.error("++++++++++++++++ Number format exception occurred: " + e.getMessage());
 			return new ResponseEntity<RESTError>(new RESTError(2, "Number format exception occurred: "+ e.getLocalizedMessage()), HttpStatus.NOT_ACCEPTABLE);
 		} catch (Exception e) {
-			logger.error("This is an exception message:" + e.getMessage());
+			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
 			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}

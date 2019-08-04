@@ -51,26 +51,23 @@ public class ParentDaoImpl implements ParentDao {
 
 	@Override
 	public UserEntity addNewParent(UserEntity loggedUser, ParentDto newParent) throws Exception {
-			try {
-				if (newParent.getjMBG() != null && parentRepository.getByJMBG(newParent.getjMBG()) != null) {
-				     throw new Exception("JMBG already exists.");
-				}
-				if (newParent.getEmail() != null && parentRepository.getByEmail(newParent.getEmail()) != null) {
-				     throw new Exception("E-mail already exists.");
-				}
-			} catch (Exception e) {
-				throw new Exception("addNewParent TeacherDto check failed.");
+		try {
+			if (newParent.getFirstName() == null || newParent.getLastName() == null || newParent.getGender() == null || newParent.getjMBG() == null || newParent.getEmail() == null) {
+			     throw new Exception("Some data is null.");
 			}
-			UserEntity temporaryUser = new TeacherEntity();
-			try {
-				temporaryUser = userRepository.findByJMBG(newParent.getjMBG());
-				if (temporaryUser != null && (!temporaryUser.getFirstName().equals(newParent.getFirstName()) || !temporaryUser.getLastName().equals(newParent.getLastName()) || !temporaryUser.getGender().toString().equals(newParent.getGender()) || !temporaryUser.getjMBG().equals(newParent.getjMBG()))) {
-					throw new Exception("User exists, but import data not same as exist user data.");
-				}
-			} catch (Exception e1) {
-				throw new Exception("addNewParent Exist user check failed.");
+		} catch (Exception e) {
+			throw new Exception("TeacherDto check failed.");
+		}
+		UserEntity temporaryUser = new TeacherEntity();
+		try {
+			temporaryUser = userRepository.findByJMBG(newParent.getjMBG());
+			if (temporaryUser != null && (!temporaryUser.getFirstName().equals(newParent.getFirstName()) || !temporaryUser.getLastName().equals(newParent.getLastName()) || !temporaryUser.getGender().toString().equals(newParent.getGender()) || !temporaryUser.getjMBG().equals(newParent.getjMBG()))) {
+				throw new Exception("User exists, but import data not same as exist user data.");
 			}
-			ParentEntity user = new ParentEntity();
+		} catch (Exception e1) {
+			throw new Exception("addNewParent Exist user check failed.");
+		}
+		ParentEntity user = new ParentEntity();
 		try {
 			if (temporaryUser == null) {
 				try {
@@ -100,14 +97,8 @@ public class ParentDaoImpl implements ParentDao {
 	@Override
 	public void modifyParent(UserEntity loggedUser, ParentEntity parent, ParentDto updateParent) throws Exception {
 		try {
-			if (updateParent.getEmail() != null && parentRepository.getByEmail(updateParent.getEmail()) != null) {
-			     throw new Exception("E-mail already exists.");
-			}
-			if (updateParent.getjMBG() != null && !updateParent.getjMBG().equals(" ") && !updateParent.getjMBG().equals("") && userRepository.getByJMBG(updateParent.getjMBG()) != null) {
-			     throw new Exception("JMBG already exists.");
-			}
-			if (updateParent.getAccessRole() != null && !updateParent.getAccessRole().equals("ROLE_PARENT")) {
-			     throw new Exception("Access role must be ROLE_PARENT.");
+			if (updateParent.getFirstName() == null && updateParent.getLastName() == null && updateParent.getGender() == null && updateParent.getjMBG() == null && updateParent.getEmail() == null) {
+			     throw new Exception("All data is null.");
 			}
 		} catch (Exception e1) {
 			throw new Exception("modifyParent ParentDto check failed.");
@@ -122,7 +113,7 @@ public class ParentDaoImpl implements ParentDao {
 				parent.setLastName(updateParent.getLastName());
 				i++;
 			}
-			if (updateParent.getjMBG() != null && !updateParent.getjMBG().equals(parent.getjMBG()) && !updateParent.getjMBG().equals(" ") && !updateParent.getjMBG().equals("")) {
+			if (updateParent.getjMBG() != null && !updateParent.getjMBG().equals(parent.getjMBG()) && !updateParent.getjMBG().equals(" ") && !updateParent.getjMBG().equals("") ) {
 				parent.setjMBG(updateParent.getjMBG());
 				i++;
 			}
@@ -166,23 +157,35 @@ public class ParentDaoImpl implements ParentDao {
 	}
 	
 	@Override
-	public void archiveDeletedParent(UserEntity loggedUser, ParentEntity parent) throws Exception {
+	public void archiveParent(UserEntity loggedUser, ParentEntity parent) throws Exception {
 		try {
 			parent.setStatusArchived();
 			parent.setUpdatedById(loggedUser.getId());
 			parentRepository.save(parent);
 		} catch (Exception e) {
-			throw new Exception("ArchiveDeletedParent failed on saving.");
+			throw new Exception("ArchiveParent failed on saving.");
 		}		
 	}
 
 	@Override
-	public void addStudentToParent(ParentEntity parent, StudentEntity student) throws Exception {
+	public void addStudentToParent(UserEntity loggedUser, ParentEntity parent, StudentEntity student) throws Exception {
 		try {
 			parent.getStudents().add(student);
+			parent.setUpdatedById(loggedUser.getId());
 			parentRepository.save(parent);
 		} catch (Exception e) {
 			throw new Exception("AddStudentToParent failed on saving.");
+		}
+	}
+	
+	@Override
+	public void removeStudentFromParent(UserEntity loggedUser, ParentEntity parent, StudentEntity student) throws Exception {
+		try {
+			parent.getStudents().remove(student);
+			parent.setUpdatedById(loggedUser.getId());
+			parentRepository.save(parent);
+		} catch (Exception e) {
+			throw new Exception("removeStudentFromParent failed on saving.");
 		}
 	}
 	

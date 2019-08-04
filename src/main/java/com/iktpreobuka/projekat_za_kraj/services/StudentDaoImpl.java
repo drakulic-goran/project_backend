@@ -7,12 +7,14 @@ import org.springframework.stereotype.Service;
 
 import com.iktpreobuka.projekat_za_kraj.entities.DepartmentEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.ParentEntity;
+import com.iktpreobuka.projekat_za_kraj.entities.StudentDepartmentEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.StudentEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.TeacherEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.UserEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.dto.StudentDto;
 import com.iktpreobuka.projekat_za_kraj.enumerations.EGender;
 import com.iktpreobuka.projekat_za_kraj.enumerations.EUserRole;
+import com.iktpreobuka.projekat_za_kraj.repositories.StudentDepartmentRepository;
 import com.iktpreobuka.projekat_za_kraj.repositories.StudentRepository;
 import com.iktpreobuka.projekat_za_kraj.repositories.UserRepository;
 
@@ -24,6 +26,9 @@ public class StudentDaoImpl implements StudentDao {
 
 	@Autowired
 	private UserRepository userRepository;
+	
+	@Autowired
+	private StudentDepartmentRepository studentDepartmentRepository;
 
 	/*@Override
 	public StudentEntity findById(Integer id) throws Exception {
@@ -55,14 +60,11 @@ public class StudentDaoImpl implements StudentDao {
 	@Override
 	public UserEntity addNewStudent(UserEntity loggedUser, StudentDto newStudent) throws Exception {
 		try {
-			if (newStudent.getjMBG() != null && studentRepository.getByJMBG(newStudent.getjMBG()) != null) {
-			     throw new Exception("JMBG already exists.");
-			}
-			if (newStudent.getSchoolIdentificationNumber() != null && studentRepository.getBySchoolIdentificationNumber(newStudent.getSchoolIdentificationNumber()) != null) {
-		         throw new Exception("School identification number already exists.");
+			if (newStudent.getFirstName() == null || newStudent.getLastName() == null || newStudent.getEnrollmentDate() == null || newStudent.getGender() == null || newStudent.getjMBG() != null || newStudent.getSchoolIdentificationNumber() != null ) {
+		         throw new Exception("Some data is null.");
 			}
 		} catch (Exception e) {
-			throw new Exception("addNewStudent StudentDto check failed.");
+			throw new Exception("StudentDto check failed.");
 		}
 		UserEntity temporaryUser = new TeacherEntity();
 		try {
@@ -71,7 +73,7 @@ public class StudentDaoImpl implements StudentDao {
 				throw new Exception("User exists, but import data not same as exist user data.");
 			}
 		} catch (Exception e1) {
-			throw new Exception("addNewStudent Exist user check failed.");
+			throw new Exception("Exist user check failed.");
 		}
 		StudentEntity user = new StudentEntity();
 		try {
@@ -102,12 +104,13 @@ public class StudentDaoImpl implements StudentDao {
 
 	@Override
 	public void modifyStudent(UserEntity loggedUser, StudentEntity student, StudentDto updateStudent) throws Exception {
-		if (updateStudent.getjMBG() != null && !updateStudent.getjMBG().equals(" ") && !updateStudent.getjMBG().equals("") && userRepository.getByJMBG(updateStudent.getjMBG()) != null) {
-	         throw new Exception("JMBG already exists.");
+		try {
+			if (updateStudent.getFirstName() == null && updateStudent.getLastName() == null && updateStudent.getEnrollmentDate() == null && updateStudent.getGender() == null && updateStudent.getjMBG() != null && updateStudent.getSchoolIdentificationNumber() != null ) {
+			     throw new Exception("All data is null.");
+			}
+		} catch (Exception e1) {
+			throw new Exception("StudentDto check failed.");
 		}
-		if (updateStudent.getAccessRole() != null && !updateStudent.getAccessRole().equals("ROLE_STUDENT")) {
-	         throw new Exception("Access role must be ROLE_STUDENT.");
-		}		
 		try {
 			Integer i = 0;
 			System.out.println(i);
@@ -147,6 +150,13 @@ public class StudentDaoImpl implements StudentDao {
 	@Override
 	public void deleteStudent(UserEntity loggedUser, StudentEntity student) throws Exception {
 		try {
+			for (StudentDepartmentEntity sd : student.getDepartments()) {
+				if (sd.getStatus() == 1) {
+					sd.setStatusInactive();
+					sd.setUpdatedById(loggedUser.getId());
+					studentDepartmentRepository.save(sd);
+				}
+			}
 			student.setStatusInactive();
 			student.setUpdatedById(loggedUser.getId());
 			studentRepository.save(student);
@@ -167,8 +177,15 @@ public class StudentDaoImpl implements StudentDao {
 	}
 	
 	@Override
-	public void archiveDeletedStudent(UserEntity loggedUser, StudentEntity student) throws Exception {
+	public void archiveStudent(UserEntity loggedUser, StudentEntity student) throws Exception {
 		try {
+			for (StudentDepartmentEntity sd : student.getDepartments()) {
+				if (sd.getStatus() == 1) {
+					sd.setStatusArchived();
+					sd.setUpdatedById(loggedUser.getId());
+					studentDepartmentRepository.save(sd);
+				}
+			}
 			student.setStatusArchived();
 			student.setUpdatedById(loggedUser.getId());
 			studentRepository.save(student);
@@ -178,22 +195,71 @@ public class StudentDaoImpl implements StudentDao {
 	}
 	
 	@Override
-	public void addParentToStudent(StudentEntity student, ParentEntity parent) throws Exception {
+	public void addParentToStudent(UserEntity loggedUser, StudentEntity student, ParentEntity parent) throws Exception {
 		try {
 			student.getParents().add(parent);
+			student.setUpdatedById(loggedUser.getId());
 			studentRepository.save(student);
 		} catch (Exception e) {
 			throw new Exception("addParentToStudent failed on saving.");
 		}
 	}
 	
-	public void addDepartmentToStudent(StudentEntity student, DepartmentEntity department) throws Exception {
+	@Override
+	public void removeParentFromStudent(UserEntity loggedUser, StudentEntity student, ParentEntity parent) throws Exception {
 		try {
-			student.setStudent_department(department);
+			student.getParents().remove(parent);
+			student.setUpdatedById(loggedUser.getId());
 			studentRepository.save(student);
+		} catch (Exception e) {
+			throw new Exception("addParentToStudent failed on saving.");
+		}
+	}
+	
+	@Override
+	public void addDepartmentToStudent(UserEntity loggedUser, StudentEntity student, DepartmentEntity department, String transfer_date) throws Exception {
+		try {
+			if (department !=null && department.getStatus() ==1 && student !=null && student.getStatus() ==1 && transfer_date !=null && !transfer_date.equals("") && !transfer_date.equals(" ")) {
+				boolean contains = false;
+				for (StudentDepartmentEntity sd : student.getDepartments()) {
+					if (sd.getStatus() == 1)
+						if (sd.getDepartment() == department) {
+							contains = true;
+						} else {
+							sd.setStatusInactive();
+							sd.setUpdatedById(loggedUser.getId());
+							studentDepartmentRepository.save(sd);
+						}
+				}
+				if (!contains) {
+					StudentDepartmentEntity studentDepartment = new StudentDepartmentEntity(student, department, Date.valueOf(transfer_date), loggedUser.getId());
+					studentDepartmentRepository.save(studentDepartment);
+					student.getDepartments().add(studentDepartment);
+					student.setUpdatedById(loggedUser.getId());
+					studentRepository.save(student);
+				}
+			}			
 		} catch (Exception e) {
 			throw new Exception("addDepartmentToStudent failed on saving.");
 		}		
 	}
+	
+	@Override
+	public void removeDepartmentFromStudent(UserEntity loggedUser, StudentEntity student, DepartmentEntity department) throws Exception {
+		try {
+			if (department !=null && department.getStatus() ==1 && student !=null && student.getStatus() ==1) {
+				for (StudentDepartmentEntity ds : student.getDepartments()) {
+					if (ds.getStatus() == 1 && ds.getDepartment() == department) {
+						ds.setStatusInactive();
+						ds.setUpdatedById(loggedUser.getId());
+						studentDepartmentRepository.save(ds);
+					}
+				}
+			}
+		} catch (Exception e) {
+			throw new Exception("removeDepartmentFromStudent failed on saving.");
+		}		
+	}
+
 	
 }

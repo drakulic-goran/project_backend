@@ -14,7 +14,7 @@ public interface UserAccountDao {
 	public void modifyAccountPassword(UserEntity loggedUser, UserAccountEntity account, String password) throws Exception;
 	public void deleteAccount(UserEntity loggedUser, UserAccountEntity account) throws Exception;
 	public void undeleteAccount(UserEntity loggedUser, UserAccountEntity account) throws Exception;
-	public void archiveDeleteAccount(UserEntity loggedUser, UserAccountEntity account) throws Exception;
+	public void archiveAccount(UserEntity loggedUser, UserAccountEntity account) throws Exception;
 	public void modifyAccount(UserEntity loggedUser, UserAccountEntity account, ParentDto updateParent) throws Exception;
 	public void modifyAccount(UserEntity loggedUser, UserAccountEntity account, String username, String password) throws Exception;
 	

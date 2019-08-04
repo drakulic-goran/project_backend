@@ -10,7 +10,7 @@ import com.iktpreobuka.projekat_za_kraj.entities.dto.DepartmentDto;
 
 public interface DepartmentDao {
 
-	public void addStudentToDepartment(UserEntity loggedUser, StudentEntity student, DepartmentEntity department) throws Exception;
+	public void addStudentToDepartment(UserEntity loggedUser, StudentEntity student, DepartmentEntity department, String transfer_date) throws Exception;
 
 	public DepartmentEntity addNewDepartment(UserEntity loggedUser, DepartmentDto newDepartment) throws Exception;
 
@@ -28,8 +28,12 @@ public interface DepartmentDao {
 
 	public void addTeacherAndSubjectToDepartment(UserEntity loggedUser, TeacherEntity teacher, DepartmentEntity department, SubjectEntity subject, String school_year) throws Exception;
 
-	//public void addParentToStudent(StudentEntity student, ParentEntity parent) throws Exception;
+	public void removePrimaryTeacherFromDepartment(UserEntity loggedUser, TeacherEntity teacher, DepartmentEntity department) throws Exception;
 
-	//public void addDepartmentToStudent(StudentEntity student, DepartmentEntity department) throws Exception;
+	public void removeTeacherAndSubjectFromDepartment(UserEntity loggedUser, TeacherEntity teacher, DepartmentEntity department, SubjectEntity subject) throws Exception;
+
+	public void removeClassFromDepartment(UserEntity loggedUser, ClassEntity class_, DepartmentEntity department) throws Exception;
+
+	public void removeStudentFromDepartment(UserEntity loggedUser, StudentEntity student, DepartmentEntity department) throws Exception;
 
 }

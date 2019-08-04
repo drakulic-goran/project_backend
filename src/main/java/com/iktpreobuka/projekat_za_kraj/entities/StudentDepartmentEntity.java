@@ -1,5 +1,7 @@
 package com.iktpreobuka.projekat_za_kraj.entities;
 
+import java.util.Date;
+
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -15,17 +17,17 @@ import javax.persistence.Version;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonView;
 import com.iktpreobuka.projekat_za_kraj.security.Views;
 
 @Entity
-@Table(name = "department_class", uniqueConstraints=@UniqueConstraint(columnNames= {"class_id", "department_id", "school_year"}))
+@Table(name = "student_department", uniqueConstraints=@UniqueConstraint(columnNames= {"student_id", "department_id", "transfer_date"}))
 @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
-public class DepartmentClassEntity {
+public class StudentDepartmentEntity {
 
 	private static final Integer STATUS_INACTIVE = 0;
 	private static final Integer STATUS_ACTIVE = 1;
@@ -34,17 +36,16 @@ public class DepartmentClassEntity {
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	@JsonView(Views.Admin.class)
-	@Column(name="department_class_id")
+	@Column(name="student_department_id")
 	private Integer id;
 		
 	@JsonIgnore
 	@JsonView(Views.Student.class)
 	@ManyToOne(cascade = CascadeType.REFRESH, fetch = FetchType.LAZY)
-	@JoinColumn(name = "class_id")
-	@NotNull (message = "Class must be provided.")
-	private ClassEntity clas;
+	@JoinColumn(name = "student_id")
+	@NotNull (message = "Student must be provided.")
+	private StudentEntity student;
 
-	
 	@JsonIgnore
 	@JsonView(Views.Admin.class)
 	@ManyToOne(cascade = CascadeType.REFRESH, fetch = FetchType.LAZY)
@@ -52,12 +53,11 @@ public class DepartmentClassEntity {
 	@NotNull (message = "Department must be provided.")
 	private DepartmentEntity department;
 	
-	
 	@JsonView(Views.Student.class)
-	@Column(name="school_year", nullable=false)
-	@NotNull (message = "School year must be provided.")
-	@Pattern(regexp = "^(20|[3-9][0-9])[0-9]{2}\\-(20|[3-9][0-9])[0-9]{2}$", message="School year is not valid, must be in format YYYY-YYYY.")
-	private String schoolYear;
+	@Column(name="transfer_date", nullable=false)
+	@NotNull (message = "Transfer date must be provided.")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
+	private Date transferDate;
 	@JsonView(Views.Admin.class)
 	@Max(1)
     @Min(-1)
@@ -74,23 +74,22 @@ public class DepartmentClassEntity {
 	private Integer version;
 
 	
-	public DepartmentClassEntity() {
+	public StudentDepartmentEntity() {
 		super();
 	}
 
-	public DepartmentClassEntity(@NotNull(message = "Class must be provided.") ClassEntity class_,
-			@NotNull(message = "Subject must be provided.") DepartmentEntity department,
-			@NotNull(message = "School year must be provided.") @Pattern(regexp = "^(20|[3-9][0-9])\\d{2}\\-(20|[3-9][0-9])\\\\d{2}$", message = "School year is not valid, must be in format YYYY-YYYY.") String schoolYear,
+	public StudentDepartmentEntity(@NotNull(message = "Student must be provided.") StudentEntity student,
+			@NotNull(message = "Department must be provided.") DepartmentEntity department,
+			@NotNull(message = "Transfer date must be provided.") Date transferDate,
 			Integer createdById) {
 		super();
-		this.clas = class_;
+		this.student = student;
 		this.department = department;
-		this.schoolYear = schoolYear;
+		this.transferDate = transferDate;
 		this.status = getStatusActive();
 		this.createdById = createdById;
 	}
 
-	
 	public Integer getId() {
 		return id;
 	}
@@ -99,12 +98,12 @@ public class DepartmentClassEntity {
 		this.id = id;
 	}
 
-	public ClassEntity getClass_() {
-		return clas;
+	public StudentEntity getStudent() {
+		return student;
 	}
 
-	public void setClass_(ClassEntity class_) {
-		this.clas = class_;
+	public void setStudent(StudentEntity student) {
+		this.student = student;
 	}
 
 	public DepartmentEntity getDepartment() {
@@ -115,12 +114,12 @@ public class DepartmentClassEntity {
 		this.department = department;
 	}
 
-	public String getSchoolYear() {
-		return schoolYear;
+	public Date getTransferDate() {
+		return transferDate;
 	}
 
-	public void setSchoolYear(String schoolYear) {
-		this.schoolYear = schoolYear;
+	public void setTransferDate(Date transferDate) {
+		this.transferDate = transferDate;
 	}
 
 	public Integer getCreatedById() {

@@ -32,6 +32,7 @@ import com.iktpreobuka.projekat_za_kraj.entities.dto.TeacherDto;
 import com.iktpreobuka.projekat_za_kraj.enumerations.EUserRole;
 import com.iktpreobuka.projekat_za_kraj.repositories.TeacherRepository;
 import com.iktpreobuka.projekat_za_kraj.repositories.UserAccountRepository;
+import com.iktpreobuka.projekat_za_kraj.repositories.UserRepository;
 import com.iktpreobuka.projekat_za_kraj.security.Views;
 import com.iktpreobuka.projekat_za_kraj.services.TeacherDao;
 import com.iktpreobuka.projekat_za_kraj.services.UserAccountDao;
@@ -49,6 +50,9 @@ public class TeacherController {
 
 	@Autowired
 	private TeacherRepository teacherRepository;
+	
+	@Autowired
+	private UserRepository userRepository;
 	
 	@Autowired
 	private UserAccountRepository userAccountRepository;
@@ -178,14 +182,26 @@ public class TeacherController {
 			}
 		if (newTeacher == null) {
 			logger.info("---------------- New teacher is null.");
-	        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+	        return new ResponseEntity<>("New teacher is null.", HttpStatus.BAD_REQUEST);
 	      }
 		if (newTeacher.getFirstName() == null || newTeacher.getLastName() == null || newTeacher.getCertificate() == null || newTeacher.getEmploymentDate() == null || newTeacher.getGender() == null || newTeacher.getjMBG() == null || newTeacher.getAccessRole() != "ROLE_TEACHER") {
-			logger.info("---------------- Some or all Teacher atributes is null or school role is wrong.");
-			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+			logger.info("---------------- Some atributes is null.");
+			return new ResponseEntity<>("Some atributes is null", HttpStatus.BAD_REQUEST);
 		}
 		UserEntity user = new TeacherEntity();
 		try {
+			if (newTeacher.getjMBG() != null && userRepository.getByJMBG(newTeacher.getjMBG()) != null) {
+				logger.info("---------------- JMBG already exists.");
+		        return new ResponseEntity<>("JMBG already exists.", HttpStatus.BAD_REQUEST);
+			}
+			if (newTeacher.getAccessRole() != null && !newTeacher.getAccessRole().equals("ROLE_TEACHER")) {
+				logger.info("---------------- Access role must be ROLE_TEACHER.");
+		        return new ResponseEntity<>("Access role must be ROLE_TEACHER.", HttpStatus.BAD_REQUEST);
+			}		
+			if (newTeacher.getUsername() != null && userAccountRepository.getByUsername(newTeacher.getUsername()) != null) {
+				logger.info("---------------- Username already exists.");
+		        return new ResponseEntity<>("Username already exists.", HttpStatus.BAD_REQUEST);
+		      }
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
 			user = teacherDao.addNewTeacher(loggedUser, newTeacher);
@@ -193,9 +209,8 @@ public class TeacherController {
 			if (newTeacher.getUsername() != null && newTeacher.getPassword() != null && newTeacher.getConfirmedPassword() != null && newTeacher.getPassword().equals(newTeacher.getConfirmedPassword())) {
 				UserAccountEntity account = userAccountDao.addNewUserAccount(loggedUser, user, newTeacher.getUsername(), EUserRole.ROLE_TEACHER, newTeacher.getPassword());
 				logger.info("Account created.");
-				//return new ResponseEntity<>(account, HttpStatus.OK);
+				return new ResponseEntity<>(account, HttpStatus.OK);
 			}
-			user.getAccounts();
 			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<>(user, HttpStatus.OK);
 		} catch (Exception e) {
@@ -220,14 +235,26 @@ public class TeacherController {
 			}
 		if (updateTeacher == null) {
 			logger.info("---------------- New teacher is null.");
-	        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+	        return new ResponseEntity<>("New teacher data is null.", HttpStatus.BAD_REQUEST);
 	      }
 		TeacherEntity user = new TeacherEntity();
 		try {
+			if (updateTeacher.getjMBG() != null && userRepository.getByJMBG(updateTeacher.getjMBG()) != null) {
+				logger.info("---------------- JMBG already exists.");
+		        return new ResponseEntity<>("JMBG already exists.", HttpStatus.BAD_REQUEST);
+			}
+			if (updateTeacher.getAccessRole() != null && !updateTeacher.getAccessRole().equals("ROLE_TEACHER")) {
+				logger.info("---------------- Access role must be ROLE_TEACHER.");
+		        return new ResponseEntity<>("Access role must be ROLE_TEACHER.", HttpStatus.BAD_REQUEST);
+			}		
+			if (updateTeacher.getUsername() != null && userAccountRepository.getByUsername(updateTeacher.getUsername()) != null) {
+				logger.info("---------------- Username already exists.");
+		        return new ResponseEntity<>("Username already exists.", HttpStatus.BAD_REQUEST);
+		      }
 			user = teacherRepository.findByIdAndStatusLike(id, 1);
 			if (user == null) {
 				logger.info("---------------- Teacher didn't find.");
-		        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+		        return new ResponseEntity<>("Teacher didn't find.", HttpStatus.BAD_REQUEST);
 		      }
 			logger.info("Teacher identified.");
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
@@ -238,12 +265,18 @@ public class TeacherController {
 			}
 			UserAccountEntity account = userAccountRepository.findByUserAndAccessRoleLikeAndStatusLike(user, EUserRole.ROLE_TEACHER, 1);
 			logger.info("Admin's user account identified.");
-			if (account != null && (updateTeacher.getUsername() != null || (updateTeacher.getPassword() != null && updateTeacher.getConfirmedPassword() != null && updateTeacher.getPassword().equals(updateTeacher.getConfirmedPassword())))) {
-				userAccountDao.modifyAccount(loggedUser, account, updateTeacher.getUsername(), updateTeacher.getPassword());
+			if (account != null) {
+				if (updateTeacher.getUsername() != null && !updateTeacher.getUsername().equals("") && !updateTeacher.getUsername().equals(" ") && userAccountRepository.getByUsername(updateTeacher.getUsername()) != null) {
+					userAccountDao.modifyAccountUsername(loggedUser, account, updateTeacher.getUsername());
+					logger.info("Username modified.");					
+				}
+				if (updateTeacher.getPassword() != null && !updateTeacher.getPassword().equals("") && !updateTeacher.getPassword().equals(" ") && updateTeacher.getConfirmedPassword() != null && updateTeacher.getPassword().equals(updateTeacher.getConfirmedPassword())) {
+					userAccountDao.modifyAccountPassword(loggedUser, account, updateTeacher.getPassword());
+					logger.info("Password modified.");
+				}
 				logger.info("Account modified.");
-				//return new ResponseEntity<>(account, HttpStatus.OK);
+				return new ResponseEntity<>(account, HttpStatus.OK);
 			}
-			user.getAccounts();
 			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<>(user, HttpStatus.OK);
 		} catch (Exception e) {
@@ -263,19 +296,19 @@ public class TeacherController {
 			return new ResponseEntity<>(createErrorMessage(result), HttpStatus.BAD_REQUEST); 
 			}
 		if (updateTeacher == null) {
-			logger.info("---------------- New teacher is null.");
-	        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+			logger.info("---------------- Data is null.");
+	        return new ResponseEntity<>("Data is null.", HttpStatus.BAD_REQUEST);
 	      }
 		if (updateTeacher.getFirstName() != null || updateTeacher.getLastName() != null || updateTeacher.getCertificate() != null || updateTeacher.getEmploymentDate() != null|| updateTeacher.getGender() != null || updateTeacher.getjMBG() != null || updateTeacher.getUsername() != null || updateTeacher.getPassword() != null || updateTeacher.getConfirmedPassword() != null) {
-			logger.info("---------------- Update have non acceptable Teacher atrributes.");
-	        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+			logger.info("---------------- Update have non acceptable atrributes.");
+	        return new ResponseEntity<>("Update have non acceptable atrributes.", HttpStatus.BAD_REQUEST);
 		}
 		TeacherEntity user = new TeacherEntity();
 		try {
 			user = teacherRepository.findByIdAndStatusLike(id, 1);
 			if (user == null) {
 				logger.info("---------------- Teacher didn't find.");
-		        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+		        return new ResponseEntity<>("Teacher didn't find.", HttpStatus.BAD_REQUEST);
 		      }
 			logger.info("Teacher identified.");
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
@@ -300,33 +333,79 @@ public class TeacherController {
 		}
 	}
 
+	@Secured("ROLE_ADMIN")
+	@JsonView(Views.Admin.class)
+	@RequestMapping(method = RequestMethod.PUT, value = "/{id}/remove/subject-primarydepartment-subjectswithdepartments")
+	public ResponseEntity<?> removeSubjectsAndOrPrimaryDepartmentAndOrSubjectsWithDepartments(@PathVariable Integer id, @Valid @RequestBody TeacherDto updateTeacher, Principal principal, BindingResult result) {
+		logger.info("################ /project/teacher/{id}/remove/subject-primarydepartment-subjectswithdepartments/addSubjectsAndOrPrimaryDepartmentAndOrSubjectsWithDepartments started.");
+		logger.info("Logged user: " + principal.getName());
+		if (result.hasErrors()) { 
+			logger.info("---------------- Validation has errors - " + createErrorMessage(result));
+			return new ResponseEntity<>(createErrorMessage(result), HttpStatus.BAD_REQUEST); 
+			}
+		if (updateTeacher == null) {
+			logger.info("---------------- Data is null.");
+	        return new ResponseEntity<>("Data is null.", HttpStatus.BAD_REQUEST);
+	      }
+		if (updateTeacher.getFirstName() != null || updateTeacher.getLastName() != null || updateTeacher.getCertificate() != null || updateTeacher.getEmploymentDate() != null|| updateTeacher.getGender() != null || updateTeacher.getjMBG() != null || updateTeacher.getUsername() != null || updateTeacher.getPassword() != null || updateTeacher.getConfirmedPassword() != null) {
+			logger.info("---------------- Update have non acceptable atrributes.");
+	        return new ResponseEntity<>("Update have non acceptable atrributes.", HttpStatus.BAD_REQUEST);
+		}
+		TeacherEntity user = new TeacherEntity();
+		try {
+			user = teacherRepository.findByIdAndStatusLike(id, 1);
+			if (user == null) {
+				logger.info("---------------- Teacher didn't find.");
+		        return new ResponseEntity<>("Teacher didn't find.", HttpStatus.BAD_REQUEST);
+		      }
+			logger.info("Teacher identified.");
+			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
+			logger.info("Logged user identified.");
+			if (updateTeacher.getSubjects() != null) {
+				teacherDao.removeSubjectsFromTeacher(loggedUser, user, updateTeacher.getSubjects());
+				logger.info("Subject/s added.");
+			}
+			if (updateTeacher.getPrimaryDepartment() != null) {
+				teacherDao.removePrimaryDepartmentFromTeacher(loggedUser, user, updateTeacher.getPrimaryDepartment());
+				logger.info("Primary department added.");
+			}
+			if (updateTeacher.getSubject_at_department()!= null) {
+				teacherDao.removeSubjectsInDepartmentsFromTeacher(loggedUser, user, updateTeacher.getSubject_at_department());
+				logger.info("Subject/s in department/s added.");
+			}
+			logger.info("---------------- Finished OK.");
+			return new ResponseEntity<>(user, HttpStatus.OK);
+		} catch (Exception e) {
+			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
 
 	@Secured("ROLE_ADMIN")
 	@JsonView(Views.Admin.class)
-	@RequestMapping(method = RequestMethod.PUT, value = "/archivedeleted/{id}")
-	public ResponseEntity<?> archiveDeleted(@PathVariable Integer id, Principal principal) {
-		logger.info("################ /project/teacher/archivedeleted/archiveDeleted started.");
+	@RequestMapping(method = RequestMethod.PUT, value = "/archive/{id}")
+	public ResponseEntity<?> archive(@PathVariable Integer id, Principal principal) {
+		logger.info("################ /project/teacher/archive/archive started.");
 		logger.info("Logged user: " + principal.getName());
 		TeacherEntity user = new TeacherEntity();
 		try {
-			user = teacherRepository.findByIdAndStatusLike(id, 0);
-			if (user == null) {
+			user = teacherRepository.getById(id);
+			if (user == null || user.getStatus() == -1) {
 				logger.info("---------------- Teacher didn't find.");
-		        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+		        return new ResponseEntity<>("Teacher didn't find.", HttpStatus.BAD_REQUEST);
 		      }
 			logger.info("Teacher for archiving identified.");
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
-			teacherDao.archiveDeletedTeacher(loggedUser, user);
+			teacherDao.archiveTeacher(loggedUser, user);
 			logger.info("Teacher archived.");
 			UserAccountEntity account = userAccountRepository.findByUserAndAccessRoleLikeAndStatusLike(user, EUserRole.ROLE_TEACHER, 1);
 			logger.info("Teacher's user account identified.");
 			if (account != null) {
-				userAccountDao.archiveDeleteAccount(loggedUser, account);
+				userAccountDao.archiveAccount(loggedUser, account);
 				logger.info("Account archived.");
-				//return new ResponseEntity<UserAccountEntity>(account, HttpStatus.OK);
+				return new ResponseEntity<UserAccountEntity>(account, HttpStatus.OK);
 			}
-			user.getAccounts();
 			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<UserEntity>(user, HttpStatus.OK);
 		} catch (NumberFormatException e) {
@@ -354,7 +433,7 @@ public class TeacherController {
 			user = teacherRepository.findByIdAndStatusLike(id, 0);
 			if (user == null) {
 				logger.info("---------------- Teacher didn't find.");
-		        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+		        return new ResponseEntity<>("Teacher didn't find.", HttpStatus.BAD_REQUEST);
 		      }
 			logger.info("Teacher for undeleting identified.");
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
@@ -366,9 +445,8 @@ public class TeacherController {
 			if (account != null) {
 				userAccountDao.undeleteAccount(loggedUser, account);
 				logger.info("Account undeleted.");
-				//return new ResponseEntity<UserAccountEntity>(account, HttpStatus.OK);
+				return new ResponseEntity<UserAccountEntity>(account, HttpStatus.OK);
 			}
-			user.getAccounts();
 			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<UserEntity>(user, HttpStatus.OK);
 		} catch (NumberFormatException e) {
@@ -396,14 +474,14 @@ public class TeacherController {
 			user = teacherRepository.findByIdAndStatusLike(id, 1);
 			if (user == null) {
 				logger.info("---------------- Teacher didn't find.");
-		        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+		        return new ResponseEntity<>("Teacher didn't find.", HttpStatus.BAD_REQUEST);
 		      }
 			logger.info("Teacher for deleting identified.");
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
 			if (id == loggedUser.getId()) {
 				logger.info("---------------- Selected Id is ID of logged User: Cann't delete yourself.");
-				return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+				return new ResponseEntity<>("Selected Id is ID of logged User: Cann't delete yourself.", HttpStatus.BAD_REQUEST);
 		      }	
 			teacherDao.deleteTeacher(loggedUser, user);
 			logger.info("Teacher deleted.");
@@ -412,9 +490,8 @@ public class TeacherController {
 			if (account != null) {
 				userAccountDao.deleteAccount(loggedUser, account);
 				logger.info("Account deleted.");
-				//return new ResponseEntity<UserAccountEntity>(account, HttpStatus.OK);
+				return new ResponseEntity<UserAccountEntity>(account, HttpStatus.OK);
 			}
-			user.getAccounts();
 			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<UserEntity>(user, HttpStatus.OK);
 		} catch (NumberFormatException e) {

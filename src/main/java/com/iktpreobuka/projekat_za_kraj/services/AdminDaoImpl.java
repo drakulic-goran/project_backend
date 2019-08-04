@@ -24,14 +24,11 @@ public class AdminDaoImpl implements AdminDao {
 	@Override
 	public UserEntity addNewAdmin(UserEntity loggedUser, AdminDto newAdmin) throws Exception {
 			try {
-				if (newAdmin.getjMBG() != null && adminRepository.getByJMBG(newAdmin.getjMBG()) != null) {
-				     throw new Exception("JMBG already exists.");
-				}
-				if (newAdmin.getEmail() != null && adminRepository.getByEmail(newAdmin.getEmail()) != null) {
-				     throw new Exception("E-mail already exists.");
+				if (newAdmin.getFirstName() == null || newAdmin.getLastName() == null || newAdmin.getGender() == null || newAdmin.getjMBG() == null || newAdmin.getEmail() == null || newAdmin.getMobilePhoneNumber() == null) {
+				     throw new Exception("Some data is null.");
 				}
 			} catch (Exception e) {
-				throw new Exception("AddNewAdmin AdminDto check failed.");
+				throw new Exception("AdminDto check failed.");
 			}
 			UserEntity temporaryUser = new AdminEntity();
 			try {
@@ -40,7 +37,7 @@ public class AdminDaoImpl implements AdminDao {
 					throw new Exception("User exists, but import data not same as exist user data.");
 				}
 			} catch (Exception e1) {
-				throw new Exception("AddNewAdmin Exist user check failed.");
+				throw new Exception("Exist user check failed.");
 			}
 			AdminEntity user = new AdminEntity();
 		try {
@@ -72,17 +69,11 @@ public class AdminDaoImpl implements AdminDao {
 	@Override
 	public void modifyAdmin(UserEntity loggedUser, AdminEntity admin, AdminDto updateAdmin) throws Exception {
 		try {
-			if (updateAdmin.getEmail() != null && adminRepository.getByEmail(updateAdmin.getEmail()) != null) {
-			     throw new Exception("E-mail already exists.");
-			}
-			if (updateAdmin.getjMBG() != null && !updateAdmin.getjMBG().equals(" ") && !updateAdmin.getjMBG().equals("") && userRepository.getByJMBG(updateAdmin.getjMBG()) != null) {
-			     throw new Exception("JMBG already exists.");
-			}
-			if (updateAdmin.getAccessRole() != null && updateAdmin.getAccessRole() != "ROLE_ADMIN") {
-			     throw new Exception("Access role must be ROLE_ADMIN.");
+			if (updateAdmin.getFirstName() == null && updateAdmin.getLastName() == null && updateAdmin.getEmail() == null && updateAdmin.getMobilePhoneNumber() == null && updateAdmin.getGender() == null && updateAdmin.getjMBG() == null) {
+			     throw new Exception("All data is null.");
 			}
 		} catch (Exception e1) {
-			throw new Exception("modifyAdmin AdminDto check failed.");
+			throw new Exception("AdminDto check failed.");
 		}
 		try {
 			Integer i = 0;

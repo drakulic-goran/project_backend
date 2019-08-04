@@ -22,10 +22,14 @@ public interface StudentDao {
 
 	public void undeleteStudent(UserEntity loggedUser, StudentEntity student) throws Exception;
 
-	public void archiveDeletedStudent(UserEntity loggedUser, StudentEntity student) throws Exception;
+	public void archiveStudent(UserEntity loggedUser, StudentEntity student) throws Exception;
 
-	public void addParentToStudent(StudentEntity student, ParentEntity parent) throws Exception;
+	public void addParentToStudent(UserEntity loggedUser, StudentEntity student, ParentEntity parent) throws Exception;
+	
+	public void removeParentFromStudent(UserEntity loggedUser, StudentEntity student, ParentEntity parent) throws Exception;
 
-	public void addDepartmentToStudent(StudentEntity student, DepartmentEntity department) throws Exception;
+	public void addDepartmentToStudent(UserEntity loggedUser, StudentEntity student, DepartmentEntity department, String transfer_date) throws Exception;
 
+	public void removeDepartmentFromStudent(UserEntity loggedUser, StudentEntity student, DepartmentEntity department) throws Exception;
+	
 }

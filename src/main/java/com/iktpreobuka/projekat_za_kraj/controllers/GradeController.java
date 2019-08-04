@@ -157,7 +157,7 @@ public class GradeController {
 					return new ResponseEntity<Object>(null, HttpStatus.OK);
 				}
 				logger.info("Teacher: " + teacher.getId().toString());
-				TeacherSubjectDepartmentEntity teacherDepartments = teacherSubjectDepartmentRepository.getByTeachingTeacherAndTeachingSubjectAndTeachingDepartment(teacher, subject, student.getStudent_department());
+				TeacherSubjectDepartmentEntity teacherDepartments = teacherSubjectDepartmentRepository.getByTeachingTeacherAndTeachingSubjectAndTeachingDepartment(teacher, subject, student);
 				if (teacherDepartments==null) {
 					logger.info("This is an info message: It is not student teacher.");
 					return new ResponseEntity<Object>(null, HttpStatus.OK);

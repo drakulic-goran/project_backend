@@ -34,7 +34,7 @@ public interface StudentRepository extends CrudRepository<StudentEntity, Integer
 	public List<StudentEntity> findByParent(Integer parentId);
 	
 	// starije @Query("select s from StudentEntity s join s.student_department sd join PrimaryTeacherEntity pt join TeacherEntity t where pt.primary_department=d.id and pt.primary_teacher=t.id and t.id=:teacherId")
-	@Query("select new com.iktpreobuka.projekat_za_kraj.entities.dto.StudentDto(s.firstName, s.lastName, s.schoolIdentificationNumber, c.classLabel, de.departmentLabel) from StudentEntity s join s.student_department de join de.classes cl join cl.clas c join de.teachers d join d.primary_teacher t where t.id=:teacher and s.status=1 and cl.status=1 and d.status=1")
+	@Query("select new com.iktpreobuka.projekat_za_kraj.entities.dto.StudentDto(s.firstName, s.lastName, s.schoolIdentificationNumber, c.classLabel, de.departmentLabel) from StudentEntity s join s.departments dep join dep.department de join de.classes cl join cl.clas c join de.teachers d join d.primary_teacher t where t.id=:teacher and dep.status=1 and s.status=1 and cl.status=1 and d.status=1")
 	public List<StudentDto> findByPrimaryTeacher(Integer teacher);
 
 	public void save(@Valid StudentDto newUser);

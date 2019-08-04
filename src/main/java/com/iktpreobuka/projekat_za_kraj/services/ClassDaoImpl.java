@@ -30,11 +30,11 @@ public class ClassDaoImpl implements ClassDao {
 	@Override
 	public ClassEntity addNewClass(UserEntity loggedUser, ClassDto newClass) throws Exception {
 		try {
-			if (newClass.getClassLabel() != null && classRepository.getByClassLabel(EClass.valueOf(newClass.getClassLabel())) != null) {
-			     throw new Exception("Class label already exists.");
+			if (newClass.getClassLabel() != null) {
+			     throw new Exception("Some data is null.");
 			}
 		} catch (Exception e) {
-			throw new Exception("addNewClass ClassDto check failed.");
+			throw new Exception("ClassDto check failed.");
 		}
 		ClassEntity clas = new ClassEntity();
 		try {
@@ -44,18 +44,18 @@ public class ClassDaoImpl implements ClassDao {
 			classRepository.save(clas);
 			return clas;
 		} catch (Exception e) {
-			throw new Exception("addNewStudent save failed.");
+			throw new Exception("addNewClass save failed.");
 		}
 	}
 	
 	@Override
 	public void modifyClass(UserEntity loggedUser, ClassEntity class_, ClassDto updateClass) throws Exception {
 		try {
-			if (updateClass.getClassLabel() != null && classRepository.getByClassLabel(EClass.valueOf(updateClass.getClassLabel())) != null) {
-			     throw new Exception("Class label already exists.");
+			if (updateClass.getClassLabel() == null) {
+			     throw new Exception("All data is null.");
 			}
 		} catch (Exception e) {
-			throw new Exception("modifyClass ClassDto check failed.");
+			throw new Exception("ClassDto check failed.");
 		}
 		try {
 			if (updateClass.getClassLabel() != null && !updateClass.getClassLabel().equals(" ") && !updateClass.getClassLabel().equals("")) {
@@ -84,6 +84,7 @@ public class ClassDaoImpl implements ClassDao {
 				ClassSubjectEntity classSubject = new ClassSubjectEntity(class_, subject, name, loggedUser.getId());
 				classSubjectRepository.save(classSubject);
 				class_.getSubjects().add(classSubject);
+				class_.setUpdatedById(loggedUser.getId());
 				classRepository.save(class_);
 			}
 		} catch (Exception e) {
@@ -98,6 +99,7 @@ public class ClassDaoImpl implements ClassDao {
 				for (ClassSubjectEntity cs : class_.getSubjects()) {
 					if (cs.getSubject() == subject && cs.getStatus() == 1) {
 						cs.setStatusInactive();
+						cs.setUpdatedById(loggedUser.getId());
 						classSubjectRepository.save(cs);
 					}
 				}
@@ -119,6 +121,7 @@ public class ClassDaoImpl implements ClassDao {
 							contains = true;
 						} else {
 							ds.setStatusInactive();
+							ds.setUpdatedById(loggedUser.getId());
 							departmentClassRepository.save(ds);
 						}
 					}
@@ -129,6 +132,7 @@ public class ClassDaoImpl implements ClassDao {
 				DepartmentClassEntity departmentClass = new DepartmentClassEntity(class_, department, schoolYear, loggedUser.getId());
 				departmentClassRepository.save(departmentClass);
 				class_.getDepartments().add(departmentClass);
+				class_.setUpdatedById(loggedUser.getId());
 				classRepository.save(class_);
 			}
 		} catch (Exception e) {
@@ -142,6 +146,7 @@ public class ClassDaoImpl implements ClassDao {
 				for (DepartmentClassEntity ds : class_.getDepartments()) {
 					if (ds.getStatus() == 1 && ds.getDepartment() == department) {
 						ds.setStatusInactive();
+						ds.setUpdatedById(loggedUser.getId());
 						departmentClassRepository.save(ds);
 					}
 				}
@@ -154,8 +159,6 @@ public class ClassDaoImpl implements ClassDao {
 	@Override
 	public void deleteClass(UserEntity loggedUser, ClassEntity class_) throws Exception {
 		try {
-			class_.setStatusInactive();
-			class_.setUpdatedById(loggedUser.getId());
 			for (DepartmentClassEntity ds : class_.getDepartments()) {
 				if (ds.getStatus() == 1) {
 					ds.setStatusInactive();
@@ -170,6 +173,8 @@ public class ClassDaoImpl implements ClassDao {
 					classSubjectRepository.save(cs);
 				}
 			}
+			class_.setStatusInactive();
+			class_.setUpdatedById(loggedUser.getId());
 			classRepository.save(class_);
 		} catch (Exception e) {
 			throw new Exception("deleteClass failed on saving.");
@@ -190,8 +195,6 @@ public class ClassDaoImpl implements ClassDao {
 	@Override
 	public void archiveClass(UserEntity loggedUser, ClassEntity class_) throws Exception {
 		try {
-			class_.setStatusArchived();;
-			class_.setUpdatedById(loggedUser.getId());
 			for (DepartmentClassEntity ds : class_.getDepartments()) {
 				if (ds.getStatus() != -1) {
 					ds.setStatusArchived();;
@@ -206,6 +209,8 @@ public class ClassDaoImpl implements ClassDao {
 					classSubjectRepository.save(cs);
 				}
 			}
+			class_.setStatusArchived();;
+			class_.setUpdatedById(loggedUser.getId());
 			classRepository.save(class_);
 		} catch (Exception e) {
 			throw new Exception("archiveClass failed on saving.");

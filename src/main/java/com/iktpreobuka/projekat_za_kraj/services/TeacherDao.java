@@ -23,12 +23,18 @@ public interface TeacherDao {
 
 	public void undeleteTeacher(UserEntity loggedUser, TeacherEntity teacher) throws Exception;
 
-	public void archiveDeletedTeacher(UserEntity loggedUser, TeacherEntity teacher) throws Exception;
+	public void archiveTeacher(UserEntity loggedUser, TeacherEntity teacher) throws Exception;
 
 	public void addSubjectsToTeacher(UserEntity loggedUser, TeacherEntity user, List<String> subjects) throws Exception;
+	
+	public void removeSubjectsFromTeacher(UserEntity loggedUser, TeacherEntity user, List<String> subjects) throws Exception;
 
 	public void addPrimaryDepartmentToTeacher(UserEntity loggedUser, TeacherEntity user, String primaryDepartment) throws Exception;
+	
+	public void removePrimaryDepartmentFromTeacher(UserEntity loggedUser, TeacherEntity user, String primaryDepartment) throws Exception;
 
 	public void addSubjectsInDepartmentsToTeacher(UserEntity loggedUser, TeacherEntity user, List<Pair<String, String>> subject_at_department, String schoolYear) throws Exception;
+	
+	public void removeSubjectsInDepartmentsFromTeacher(UserEntity loggedUser, TeacherEntity user, List<Pair<String, String>> subject_at_department) throws Exception;
 
 }

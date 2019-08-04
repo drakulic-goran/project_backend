@@ -84,8 +84,8 @@ public class TeacherDaoImpl implements TeacherDao {
 	@Override
 	public UserEntity addNewTeacher(UserEntity loggedUser, TeacherDto newTeacher) throws Exception {
 			try {
-				if (newTeacher.getjMBG() != null && teacherRepository.getByJMBG(newTeacher.getjMBG()) != null) {
-				     throw new Exception("JMBG already exists.");
+				if (newTeacher.getFirstName() == null || newTeacher.getLastName() == null || newTeacher.getCertificate() == null || newTeacher.getEmploymentDate() == null || newTeacher.getGender() == null || newTeacher.getjMBG() == null ) {
+				     throw new Exception("Some data is null.");
 				}
 			} catch (Exception e) {
 				throw new Exception("addNewTeacher TeacherDto check failed.");
@@ -131,11 +131,8 @@ public class TeacherDaoImpl implements TeacherDao {
 	@Override
 	public void modifyTeacher(UserEntity loggedUser, TeacherEntity teacher, TeacherDto updateTeacher) throws Exception {
 		try {
-			if (updateTeacher.getjMBG() != null && !updateTeacher.getjMBG().equals(" ") && !updateTeacher.getjMBG().equals("") && userRepository.getByJMBG(updateTeacher.getjMBG()) != null) {
-			     throw new Exception("JMBG already exists.");
-			}
-			if (updateTeacher.getAccessRole() != null && updateTeacher.getAccessRole() != "ROLE_TEACHER") {
-			     throw new Exception("Access role must be ROLE_TEACHER.");
+			if (updateTeacher.getFirstName() == null && updateTeacher.getLastName() == null && updateTeacher.getCertificate() == null && updateTeacher.getEmploymentDate() == null && updateTeacher.getGender() == null && updateTeacher.getjMBG() == null ) {
+			     throw new Exception("All data is null.");
 			}
 		} catch (Exception e1) {
 			throw new Exception("modifyTeacher TeacherDto check failed.");
@@ -180,6 +177,27 @@ public class TeacherDaoImpl implements TeacherDao {
 	@Override
 	public void deleteTeacher(UserEntity loggedUser, TeacherEntity teacher) throws Exception {
 		try {
+			for (TeacherSubjectEntity ts : teacher.getSubjects()) {
+				if (ts.getStatus() == 1) {
+					ts.setStatusInactive();;
+					ts.setUpdatedById(loggedUser.getId());
+					teacherSubjectRepository.save(ts);
+				}
+			}
+			for (PrimaryTeacherDepartmentEntity ptd : teacher.getDepartments()) {
+				if (ptd.getStatus() == 1) {
+					ptd.setStatusInactive();
+					ptd.setUpdatedById(loggedUser.getId());
+					primaryTeacherDepartmentRepository.save(ptd);
+				}
+			}
+			for (TeacherSubjectDepartmentEntity tsd : teacher.getSubjects_departments()) {
+				if (tsd.getStatus() == 1) {
+					tsd.setStatusInactive();
+					tsd.setUpdatedById(loggedUser.getId());
+					teacherSubjectDepartmentRepository.save(tsd);
+				}
+			}
 			teacher.setStatusInactive();
 			teacher.setUpdatedById(loggedUser.getId());
 			teacherRepository.save(teacher);
@@ -200,8 +218,29 @@ public class TeacherDaoImpl implements TeacherDao {
 	}
 	
 	@Override
-	public void archiveDeletedTeacher(UserEntity loggedUser, TeacherEntity teacher) throws Exception {
+	public void archiveTeacher(UserEntity loggedUser, TeacherEntity teacher) throws Exception {
 		try {
+			for (TeacherSubjectEntity ts : teacher.getSubjects()) {
+				if (ts.getStatus() == 1) {
+					ts.setStatusArchived();;
+					ts.setUpdatedById(loggedUser.getId());
+					teacherSubjectRepository.save(ts);
+				}
+			}
+			for (PrimaryTeacherDepartmentEntity ptd : teacher.getDepartments()) {
+				if (ptd.getStatus() == 1) {
+					ptd.setStatusArchived();
+					ptd.setUpdatedById(loggedUser.getId());
+					primaryTeacherDepartmentRepository.save(ptd);
+				}
+			}
+			for (TeacherSubjectDepartmentEntity tsd : teacher.getSubjects_departments()) {
+				if (tsd.getStatus() == 1) {
+					tsd.setStatusArchived();
+					tsd.setUpdatedById(loggedUser.getId());
+					teacherSubjectDepartmentRepository.save(tsd);
+				}
+			}
 			teacher.setStatusArchived();
 			teacher.setUpdatedById(loggedUser.getId());
 			teacherRepository.save(teacher);
@@ -213,22 +252,24 @@ public class TeacherDaoImpl implements TeacherDao {
 	@Override
 	public void addSubjectsToTeacher(UserEntity loggedUser, TeacherEntity user, List<String> subjects) throws Exception {
 		try {
-			for (String s : subjects) {
-				SubjectEntity sub = subjectRepository.getById(Integer.parseInt(s));
-				boolean contains = false;
-				if (sub != null) {
+			if (user !=null && user.getStatus() ==1 && subjects !=null && !subjects.equals("") && !subjects.equals(" ")) {
+				for (String s : subjects) {
+					SubjectEntity sub = subjectRepository.findByIdAndStatusLike(Integer.parseInt(s), 1);
+					if (sub==null)
+						throw new Exception("Subject not exist.");
+					boolean contains = false;
 					for (TeacherSubjectEntity ts : user.getSubjects()) {
 						if (ts.getSubject() == sub && ts.getStatus() == 1) {
 							contains = true;
 						}
 					}
-				} else
-					contains = true;
-				if (!contains) {
-					TeacherSubjectEntity teaching = new TeacherSubjectEntity(user, sub, new Date(), loggedUser.getId());
-					teacherSubjectRepository.save(teaching);
-					user.getSubjects().add(teaching);
-					teacherRepository.save(user);
+					if (!contains) {
+						TeacherSubjectEntity teaching = new TeacherSubjectEntity(user, sub, new Date(), loggedUser.getId());
+						teacherSubjectRepository.save(teaching);
+						user.getSubjects().add(teaching);
+						user.setUpdatedById(loggedUser.getId());
+						teacherRepository.save(user);
+					}
 				}
 			}
 		} catch (Exception e) {
@@ -237,70 +278,152 @@ public class TeacherDaoImpl implements TeacherDao {
 	}
 	
 	@Override
-	public void addPrimaryDepartmentToTeacher(UserEntity loggedUser, TeacherEntity user, String primaryDepartment) throws Exception {
+	public void removeSubjectsFromTeacher(UserEntity loggedUser, TeacherEntity user, List<String> subjects) throws Exception {
 		try {
-			DepartmentEntity dep = departmentRepository.getById(Integer.parseInt(primaryDepartment));
-			boolean contains = false;
-			if (dep != null) {
-				for (PrimaryTeacherDepartmentEntity de : user.getDepartments()) {
-					if (de.getDepartment() == dep && de.getStatus() == 1) {
-						contains = true;
+			if (user !=null && user.getStatus() ==1 && subjects !=null && !subjects.equals("") && !subjects.equals(" ")) {
+				for (String s : subjects) {
+					SubjectEntity sub = subjectRepository.findByIdAndStatusLike(Integer.parseInt(s), 1);
+					if (sub==null)
+						throw new Exception("Subject not exist.");
+					for (TeacherSubjectEntity ts : user.getSubjects()) {
+						if (ts.getSubject() == sub && ts.getStatus() == 1) {
+							ts.setStatusInactive();
+							ts.setUpdatedById(loggedUser.getId());
+							teacherSubjectRepository.save(ts);
+						}
 					}
 				}
-			} else
-				contains = true;
-			if (!contains) {
-				PrimaryTeacherDepartmentEntity pt = new PrimaryTeacherDepartmentEntity(user, dep, new Date(), loggedUser.getId());
-				primaryTeacherDepartmentRepository.save(pt);
-				user.getDepartments().add(pt);
-				teacherRepository.save(user);
+			}
+		} catch (Exception e) {
+			throw new Exception("removeSubjectsFromTeacher failed on saving.");
+		}
+	}
+
+	@Override
+	public void addPrimaryDepartmentToTeacher(UserEntity loggedUser, TeacherEntity user, String primaryDepartment) throws Exception {
+		try {
+			if (user !=null && user.getStatus() ==1 && primaryDepartment !=null && !primaryDepartment.equals("") && !primaryDepartment.equals(" ")) {
+				DepartmentEntity dep = departmentRepository.findByIdAndStatusLike(Integer.parseInt(primaryDepartment), 1);
+				if (dep==null)
+					throw new Exception("Department not exist.");
+				boolean contains = false;
+				for (PrimaryTeacherDepartmentEntity de : user.getDepartments()) {
+					if (de.getStatus() == 1) {
+						if (de.getDepartment() == dep) {
+							contains = true;
+						} else {
+							de.setStatusInactive();
+							de.setUpdatedById(loggedUser.getId());
+							primaryTeacherDepartmentRepository.save(de);
+						}
+					}
+				}
+				if (!contains) {
+					PrimaryTeacherDepartmentEntity pt = new PrimaryTeacherDepartmentEntity(user, dep, new Date(), loggedUser.getId());
+					primaryTeacherDepartmentRepository.save(pt);
+					user.getDepartments().add(pt);
+					user.setUpdatedById(loggedUser.getId());
+					teacherRepository.save(user);
+				}
 			}
 		} catch (Exception e) {
 			throw new Exception("addPrimaryDepartmentToTeacher failed on saving.");
 		}
 	}
-	
+
+	@Override
+	public void removePrimaryDepartmentFromTeacher(UserEntity loggedUser, TeacherEntity user, String primaryDepartment) throws Exception {
+		try {
+			if (user !=null && user.getStatus() ==1 && primaryDepartment !=null && !primaryDepartment.equals("") && !primaryDepartment.equals(" ")) {
+				DepartmentEntity dep = departmentRepository.findByIdAndStatusLike(Integer.parseInt(primaryDepartment), 1);
+				if (dep==null)
+					throw new Exception("Department not exist.");
+				for (PrimaryTeacherDepartmentEntity de : user.getDepartments()) {
+					if (de.getStatus() == 1 && de.getDepartment() == dep) {
+						de.setStatusInactive();
+						de.setUpdatedById(loggedUser.getId());
+						primaryTeacherDepartmentRepository.save(de);
+					}
+				}
+			}
+		} catch (Exception e) {
+			throw new Exception("removePrimaryDepartmentFromTeacher failed on saving.");
+		}
+	}
+
 	@Override
 	public void addSubjectsInDepartmentsToTeacher(UserEntity loggedUser, TeacherEntity user, List<Pair<String, String>> subject_at_department, String schoolYear) throws Exception {
 		try {
-			for (Pair<String, String> sd : subject_at_department) {
-				SubjectEntity sub = subjectRepository.getById(Integer.parseInt(sd.left));
-				DepartmentEntity dep = departmentRepository.getById(Integer.parseInt(sd.right));
-				boolean contains = true;
-				if (sub != null) {
-					for (TeacherSubjectEntity ts : user.getSubjects()) {
-						if (ts.getSubject() == sub && ts.getStatus() == 1) {
-							contains = false;
-						}
-					}
-				} 
-				if (dep != null && !contains) {
-					for (DepartmentClassEntity ds : dep.getClasses()) {
-						if (ds.getStatus() == 1) {
-							for (ClassSubjectEntity cs : ds.getClass_().getSubjects()) {
-								if (cs.getSubject() == sub && cs.getStatus() == 1) {
-									contains = false;
-								}
-							}
-						}
-					}
-				}
-				if (!contains) {
+			if (user !=null && user.getStatus() ==1 && subject_at_department !=null && !subject_at_department.equals("") && !subject_at_department.equals(" ") && schoolYear !=null && !schoolYear.equals("") && !schoolYear.equals(" ")) {
+				for (Pair<String, String> sd : subject_at_department) {
+					SubjectEntity sub = subjectRepository.findByIdAndStatusLike(Integer.parseInt(sd.left), 1);
+					if (sub==null)
+						throw new Exception("Subject not exist.");
+					DepartmentEntity dep = departmentRepository.findByIdAndStatusLike(Integer.parseInt(sd.right), 1);
+					if (dep==null)
+						throw new Exception("Department not exist.");
+					boolean contains = false;
 					for (TeacherSubjectDepartmentEntity tsd : user.getSubjects_departments()) {
 						if (tsd.getTeaching_department() == dep && tsd.getTeaching_subject() == sub && tsd.getStatus() == 1) {
 							contains = true;
 						}
 					}
-				}
-				if (!contains) {
-					TeacherSubjectDepartmentEntity teaching = new TeacherSubjectDepartmentEntity(dep, sub, user, schoolYear, loggedUser.getId());
-					teacherSubjectDepartmentRepository.save(teaching);
-					user.getSubjects_departments().add(teaching);
-					teacherRepository.save(user);
+					if (!contains) {
+						contains = true;
+						for (TeacherSubjectEntity ts : user.getSubjects()) {
+							if (ts.getSubject() == sub && ts.getStatus() == 1) {
+								contains = false;
+							}
+						}
+					}
+					if (!contains) {
+						contains = true;
+						for (DepartmentClassEntity ds : dep.getClasses()) {
+							if (ds.getStatus() == 1) {
+								for (ClassSubjectEntity cs : ds.getClass_().getSubjects()) {
+									if (cs.getSubject() == sub && cs.getStatus() == 1) {
+										contains = false;
+									}
+								}
+							}
+						}
+					}
+					if (!contains) {
+						TeacherSubjectDepartmentEntity teaching = new TeacherSubjectDepartmentEntity(dep, sub, user, schoolYear, loggedUser.getId());
+						teacherSubjectDepartmentRepository.save(teaching);
+						user.getSubjects_departments().add(teaching);
+						user.setUpdatedById(loggedUser.getId());
+						teacherRepository.save(user);
+					}
 				}
 			}
 		} catch (Exception e) {
 			throw new Exception("addSubjectsInDepartmentsToTeacher failed on saving.");
+		}
+	}
+	
+	@Override
+	public void removeSubjectsInDepartmentsFromTeacher(UserEntity loggedUser, TeacherEntity user, List<Pair<String, String>> subject_at_department) throws Exception {
+		try {
+			if (user !=null && user.getStatus() ==1 && subject_at_department !=null && !subject_at_department.equals("") && !subject_at_department.equals(" ")) {
+				for (Pair<String, String> sd : subject_at_department) {
+					SubjectEntity sub = subjectRepository.findByIdAndStatusLike(Integer.parseInt(sd.left), 1);
+					if (sub==null)
+						throw new Exception("Subject not exist.");
+					DepartmentEntity dep = departmentRepository.findByIdAndStatusLike(Integer.parseInt(sd.right), 1);
+					if (dep==null)
+						throw new Exception("Department not exist.");
+					for (TeacherSubjectDepartmentEntity tsd : user.getSubjects_departments()) {
+						if (tsd.getTeaching_department() == dep && tsd.getTeaching_subject() == sub && tsd.getStatus() == 1) {
+							tsd.setStatusInactive();
+							tsd.setUpdatedById(loggedUser.getId());
+							teacherSubjectDepartmentRepository.save(tsd);
+						}
+					}
+				}
+			}
+		} catch (Exception e) {
+			throw new Exception("removeSubjectsInDepartmentsFromTeacher failed on saving.");
 		}
 	}
 

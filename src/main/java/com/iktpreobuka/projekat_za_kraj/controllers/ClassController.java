@@ -27,6 +27,7 @@ import com.iktpreobuka.projekat_za_kraj.entities.DepartmentEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.SubjectEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.UserEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.dto.ClassDto;
+import com.iktpreobuka.projekat_za_kraj.enumerations.EClass;
 import com.iktpreobuka.projekat_za_kraj.repositories.ClassRepository;
 import com.iktpreobuka.projekat_za_kraj.repositories.DepartmentRepository;
 import com.iktpreobuka.projekat_za_kraj.repositories.SubjectRepository;
@@ -170,7 +171,7 @@ public class ClassController {
 			ClassEntity class_ = classRepository.findByIdAndStatusLike(Integer.parseInt(id), 1);
 			if (class_==null) { 
 				logger.info("---------------- Searched class not exist.");
-		        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+		        return new ResponseEntity<>("Searched class not exist", HttpStatus.BAD_REQUEST);
 			}
 			Iterable<SubjectEntity> classes= classRepository.findSubjectsByClass(class_);
 			logger.info("---------------- Finished OK.");
@@ -193,15 +194,19 @@ public class ClassController {
 			}
 		if (newClass == null || newClass.getClassLabel() == null) {
 			logger.info("---------------- Some data is null.");
-	        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+	        return new ResponseEntity<>("Some data is null.", HttpStatus.BAD_REQUEST);
 	      }
 		ClassEntity class_ = new ClassEntity();
 		try {
+			if (newClass.getClassLabel() != null && classRepository.getByClassLabel(EClass.valueOf(newClass.getClassLabel())) != null) {
+				logger.info("---------------- Class label already exists.");
+		        return new ResponseEntity<>("Class label already exists.", HttpStatus.BAD_REQUEST);
+			}
 			if (newClass.getClassLabel() != null && !newClass.getClassLabel().equals(" ") && !newClass.getClassLabel().equals("")) {
 				UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 				logger.info("Logged user identified.");
 				class_ = classDao.addNewClass(loggedUser, newClass);
-				logger.info("Class creatd.");
+				logger.info("Class created.");
 			}
 			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<>(class_, HttpStatus.OK);
@@ -215,7 +220,7 @@ public class ClassController {
 	@JsonView(Views.Admin.class)
 	@RequestMapping(method = RequestMethod.PUT, value = "/{id}")
 	public ResponseEntity<?> modify(@PathVariable String id, @Valid @RequestBody ClassDto updateClass, Principal principal, BindingResult result) {
-		logger.info("################ /project/class/modify started.");
+		logger.info("################ /project/class/{id}/modify started.");
 		logger.info("Logged user: " + principal.getName());
 		if (result.hasErrors()) { 
 			logger.info("---------------- Validation has errors - " + createErrorMessage(result));
@@ -223,14 +228,18 @@ public class ClassController {
 			}
 		if (id == null || updateClass == null || updateClass.getClassLabel() == null) {
 			logger.info("---------------- Some data is null.");
-	        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+	        return new ResponseEntity<>("Some data is null.", HttpStatus.BAD_REQUEST);
 	      }
 		ClassEntity class_ = new ClassEntity();
 		try {
+			if (updateClass.getClassLabel() != null && classRepository.getByClassLabel(EClass.valueOf(updateClass.getClassLabel())) != null) {
+				logger.info("---------------- Class label already exists.");
+		        return new ResponseEntity<>("Class label already exists.", HttpStatus.BAD_REQUEST);
+			}
 			class_ = classRepository.findByIdAndStatusLike(Integer.parseInt(id), 1);
 			if (class_==null) { 
-				logger.info("---------------- Searched class not exist.");
-		        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+				logger.info("---------------- Class not exist.");
+		        return new ResponseEntity<>("Class not exist.", HttpStatus.BAD_REQUEST);
 			}
 			if (updateClass.getClassLabel() != null && !updateClass.getClassLabel().equals(" ") && !updateClass.getClassLabel().equals("")) {
 				UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
@@ -294,19 +303,19 @@ public class ClassController {
 		logger.info("Logged user: " + principal.getName());
 		if (id == null || s_id == null || name == null) {
 			logger.info("---------------- Some data is null.");
-	        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+	        return new ResponseEntity<>("Some data is null.", HttpStatus.BAD_REQUEST);
 	      }
 		ClassEntity class_ = new ClassEntity();
 		try {
 			class_ = classRepository.findByIdAndStatusLike(Integer.parseInt(id), 1);
 			if (class_==null) {
-				logger.info("---------------- Searched class not exist.");
-		        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+				logger.info("---------------- Class not exist.");
+		        return new ResponseEntity<>("Class not exist.", HttpStatus.BAD_REQUEST);
 			} 
 			SubjectEntity subject = subjectRepository.findById(Integer.parseInt(s_id)).orElse(null);
 			if (subject==null) {
-				logger.info("---------------- Searched subject not exist.");
-		        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+				logger.info("---------------- Subject not exist.");
+		        return new ResponseEntity<>("Subject not exist.", HttpStatus.BAD_REQUEST);
 			}
 			if (name != null && !name.equals(" ") && !name.equals("")) {
 				UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
@@ -329,23 +338,23 @@ public class ClassController {
 	@JsonView(Views.Admin.class)
 	@RequestMapping(method = RequestMethod.PUT, value = "/{id}/remove-subject/{s_id}")
 	public ResponseEntity<?> removeSubjectFromClass(@PathVariable String id, @PathVariable String s_id, Principal principal) {
-		logger.info("################ /project/class/{id}/subject/{s_id}/removeSubjectFromClass started.");
+		logger.info("################ /project/class/{id}/remove-subject/{s_id}/removeSubjectFromClass started.");
 		logger.info("Logged user: " + principal.getName());
 		if (id == null || s_id == null) {
 			logger.info("---------------- Some data is null.");
-	        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+	        return new ResponseEntity<>("Some data is null.", HttpStatus.BAD_REQUEST);
 	      }
 		ClassEntity class_ = new ClassEntity();
 		try {
 			class_ = classRepository.findByIdAndStatusLike(Integer.parseInt(id), 1);
 			if (class_==null) {
-				logger.info("---------------- Searched class not exist.");
-		        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+				logger.info("---------------- Class not exist.");
+		        return new ResponseEntity<>("Class not exist.", HttpStatus.BAD_REQUEST);
 			} 
 			SubjectEntity subject = subjectRepository.findById(Integer.parseInt(s_id)).orElse(null);
 			if (subject==null) {
-				logger.info("---------------- Searched subject not exist.");
-		        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+				logger.info("---------------- Subject not exist.");
+		        return new ResponseEntity<>("Subject not exist.", HttpStatus.BAD_REQUEST);
 			}
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
@@ -369,19 +378,19 @@ public class ClassController {
 		logger.info("Logged user: " + principal.getName());
 		if (id == null || d_id == null || schoolyear == null) {
 			logger.info("---------------- Some data is null.");
-	        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+	        return new ResponseEntity<>("Some data is null.", HttpStatus.BAD_REQUEST);
 	      }
 		ClassEntity class_ = new ClassEntity();
 		try {
 			class_ = classRepository.findByIdAndStatusLike(Integer.parseInt(id), 1);
 			if (class_==null) {
 				logger.info("---------------- Class not exist.");
-		        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+		        return new ResponseEntity<>("Class not exist.", HttpStatus.BAD_REQUEST);
 			} 
 			DepartmentEntity department = departmentRepository.findByIdAndStatusLike(Integer.parseInt(d_id), 1);
 			if (department==null) {
 				logger.info("---------------- Department not exist.");
-		        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+		        return new ResponseEntity<>("Department not exist.", HttpStatus.BAD_REQUEST);
 			}
 			if (schoolyear != null && !schoolyear.equals(" ") && !schoolyear.equals("")) {
 				UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
@@ -408,19 +417,19 @@ public class ClassController {
 		logger.info("Logged user: " + principal.getName());
 		if (id == null || d_id == null) {
 			logger.info("---------------- Some data is null.");
-	        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+	        return new ResponseEntity<>("Some data is null.", HttpStatus.BAD_REQUEST);
 	      }
 		ClassEntity class_ = new ClassEntity();
 		try {
 			class_ = classRepository.findByIdAndStatusLike(Integer.parseInt(id), 1);
 			if (class_==null) {
-				logger.info("---------------- Searched class not exist.");
-		        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+				logger.info("---------------- Class not exist.");
+		        return new ResponseEntity<>("Class not exist.", HttpStatus.BAD_REQUEST);
 			} 
 			DepartmentEntity department = departmentRepository.findByIdAndStatusLike(Integer.parseInt(d_id), 1);
 			if (department==null) {
-				logger.info("---------------- Searched departmnet not exist.");
-		        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+				logger.info("---------------- Departmnet not exist.");
+		        return new ResponseEntity<>("Departmnet not exist.", HttpStatus.BAD_REQUEST);
 			}
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
@@ -443,15 +452,15 @@ public class ClassController {
 		logger.info("################ /project/class/arhive/{id}/arhive started.");
 		logger.info("Logged user: " + principal.getName());
 		if (id == null) {
-			logger.info("This is an info message: Class is null.");
-	        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+			logger.info("---------------- Class is null.");
+	        return new ResponseEntity<>("Class is null.", HttpStatus.BAD_REQUEST);
 	      }
 		ClassEntity class_ = new ClassEntity();
 		try {
 			class_ = classRepository.getById(Integer.parseInt(id));
 			if (class_==null || class_.getStatus()==-1) {
 				logger.info("---------------- Class not exist.");
-		        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+		        return new ResponseEntity<>("Class not exist.", HttpStatus.BAD_REQUEST);
 			}
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
@@ -475,14 +484,14 @@ public class ClassController {
 		logger.info("Logged user: " + principal.getName());
 		if (id == null) {
 			logger.info("---------------- Class is null.");
-	        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+	        return new ResponseEntity<>("Class is null.", HttpStatus.BAD_REQUEST);
 	      }
 		ClassEntity class_ = new ClassEntity();
 		try {
 			class_ = classRepository.findByIdAndStatusLike(Integer.parseInt(id), 0);
 			if (class_==null || class_.getStatus()!=0) {
 				logger.info("---------------- Class not exist.");
-		        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+		        return new ResponseEntity<>("Class not exist.", HttpStatus.BAD_REQUEST);
 			}
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
@@ -506,14 +515,14 @@ public class ClassController {
 		logger.info("Logged user: " + principal.getName());
 		if (id == null) {
 			logger.info("---------------- Class is null.");
-	        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+	        return new ResponseEntity<>("Class is null.", HttpStatus.BAD_REQUEST);
 	      }
 		ClassEntity class_ = new ClassEntity();
 		try {
 			class_ = classRepository.findByIdAndStatusLike(Integer.parseInt(id), 1);
 			if (class_==null || class_.getStatus()!=1) {
 				logger.info("---------------- Class not exist.");
-		        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+		        return new ResponseEntity<>("Class not exist.", HttpStatus.BAD_REQUEST);
 			}
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");

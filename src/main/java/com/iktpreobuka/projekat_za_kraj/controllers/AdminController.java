@@ -32,6 +32,7 @@ import com.iktpreobuka.projekat_za_kraj.entities.dto.AdminDto;
 import com.iktpreobuka.projekat_za_kraj.enumerations.EUserRole;
 import com.iktpreobuka.projekat_za_kraj.repositories.AdminRepository;
 import com.iktpreobuka.projekat_za_kraj.repositories.UserAccountRepository;
+import com.iktpreobuka.projekat_za_kraj.repositories.UserRepository;
 import com.iktpreobuka.projekat_za_kraj.security.Views;
 import com.iktpreobuka.projekat_za_kraj.services.AdminDao;
 import com.iktpreobuka.projekat_za_kraj.services.UserAccountDao;
@@ -52,6 +53,9 @@ public class AdminController {
 	
 	@Autowired
 	private UserAccountRepository userAccountRepository;
+	
+	@Autowired
+	private UserRepository userRepository;
 
 	@Autowired 
 	private UserCustomValidator userValidator;
@@ -180,14 +184,30 @@ public class AdminController {
 			}
 		if (newAdmin == null) {
 			logger.info("---------------- New admin is null.");
-	        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+	        return new ResponseEntity<>("New admin is null", HttpStatus.BAD_REQUEST);
 	      }
 		if (newAdmin.getFirstName() == null || newAdmin.getLastName() == null || newAdmin.getEmail() == null || newAdmin.getMobilePhoneNumber() == null|| newAdmin.getGender() == null || newAdmin.getjMBG() == null) {
-			logger.info("---------------- Some or all Admin atributes is null.");
-			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+			logger.info("---------------- Some or all atributes is null.");
+			return new ResponseEntity<>("Some or all atributes is null.", HttpStatus.BAD_REQUEST);
 		}
 		UserEntity user = new AdminEntity();
 		try {
+			if (newAdmin.getjMBG() != null && userRepository.getByJMBG(newAdmin.getjMBG()) != null) {
+				logger.info("---------------- JMBG already exist.");
+				return new ResponseEntity<>("JMBG already exist.", HttpStatus.BAD_REQUEST);
+			}
+			if (newAdmin.getEmail() != null && adminRepository.getByEmail(newAdmin.getEmail()) != null) {
+				logger.info("---------------- Email already exist.");
+				return new ResponseEntity<>("Email already exist.", HttpStatus.BAD_REQUEST);
+			}
+			if (newAdmin.getAccessRole() != null && !newAdmin.getAccessRole().equals("ROLE_ADMIN")) {
+				logger.info("---------------- Access role must be ROLE_ADMIN.");
+		        return new ResponseEntity<>("Access role must be ROLE_ADMIN.", HttpStatus.BAD_REQUEST);
+			}		
+			if (newAdmin.getUsername() != null && userAccountRepository.getByUsername(newAdmin.getUsername()) != null) {
+				logger.info("---------------- Username already exists.");
+		        return new ResponseEntity<>("Username already exists.", HttpStatus.BAD_REQUEST);
+		    }
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
 			user = adminDao.addNewAdmin(loggedUser, newAdmin);
@@ -221,14 +241,30 @@ public class AdminController {
 			}
 		if (updateAdmin == null) {
 			logger.info("---------------- New Aadmin is null.");
-	        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+	        return new ResponseEntity<>("New Aadmin is null.", HttpStatus.BAD_REQUEST);
 	      }
 		AdminEntity user = new AdminEntity();
 		try {
+			if (updateAdmin.getjMBG() != null && userRepository.getByJMBG(updateAdmin.getjMBG()) != null) {
+				logger.info("---------------- JMBG already exist.");
+				return new ResponseEntity<>("JMBG already exist.", HttpStatus.BAD_REQUEST);
+			}
+			if (updateAdmin.getEmail() != null && adminRepository.getByEmail(updateAdmin.getEmail()) != null) {
+				logger.info("---------------- Email already exist.");
+				return new ResponseEntity<>("Email already exist.", HttpStatus.BAD_REQUEST);
+			}
+			if (updateAdmin.getAccessRole() != null && !updateAdmin.getAccessRole().equals("ROLE_ADMIN")) {
+				logger.info("---------------- Access role must be ROLE_ADMIN.");
+		        return new ResponseEntity<>("Access role must be ROLE_ADMIN.", HttpStatus.BAD_REQUEST);
+			}		
+			if (updateAdmin.getUsername() != null && userAccountRepository.getByUsername(updateAdmin.getUsername()) != null) {
+				logger.info("---------------- Username already exists.");
+		        return new ResponseEntity<>("Username already exists.", HttpStatus.BAD_REQUEST);
+		    }
 			user = adminRepository.findByIdAndStatusLike(id, 1);
 			if (user == null) {
 				logger.info("---------------- Admin didn't find.");
-		        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+		        return new ResponseEntity<>("Admin didn't find.", HttpStatus.BAD_REQUEST);
 		      }
 			logger.info("Admin identified.");
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
@@ -239,12 +275,18 @@ public class AdminController {
 			}
 			UserAccountEntity account = userAccountRepository.findByUserAndAccessRoleLikeAndStatusLike(user, EUserRole.ROLE_ADMIN, 1);
 			logger.info("Admin's user account identified.");
-			if (account != null && (updateAdmin.getUsername() != null || (updateAdmin.getPassword() != null && updateAdmin.getConfirmedPassword() != null && updateAdmin.getPassword().equals(updateAdmin.getConfirmedPassword())))) {
-				userAccountDao.modifyAccount(loggedUser, account, updateAdmin.getUsername(), updateAdmin.getPassword());
-				logger.info("---------------- Finished OK.");
+			if (account != null) {
+				if (updateAdmin.getUsername() != null && !updateAdmin.getUsername().equals("") && !updateAdmin.getUsername().equals(" ") && userAccountRepository.getByUsername(updateAdmin.getUsername()) != null) {
+					userAccountDao.modifyAccountUsername(loggedUser, account, updateAdmin.getUsername());
+					logger.info("Username modified.");					
+				}
+				if (updateAdmin.getPassword() != null && !updateAdmin.getPassword().equals("") && !updateAdmin.getPassword().equals(" ") && updateAdmin.getConfirmedPassword() != null && updateAdmin.getPassword().equals(updateAdmin.getConfirmedPassword())) {
+					userAccountDao.modifyAccountPassword(loggedUser, account, updateAdmin.getPassword());
+					logger.info("Password modified.");
+				}
+				logger.info("Account modified.");
 				return new ResponseEntity<>(account, HttpStatus.OK);
 			}
-			user.getAccounts();
 			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<>(user, HttpStatus.OK);
 		} catch (Exception e) {
@@ -264,7 +306,7 @@ public class AdminController {
 			user = adminRepository.getById(id);
 			if (user == null || user.getStatus() == -1) {
 				logger.info("---------------- Admin didn't find.");
-		        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+		        return new ResponseEntity<>("Admin didn't find.", HttpStatus.BAD_REQUEST);
 		      }
 			logger.info("Admin for archiving identified.");
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
@@ -274,11 +316,10 @@ public class AdminController {
 			UserAccountEntity account = userAccountRepository.findByUserAndAccessRoleLikeAndStatusLike(user, EUserRole.ROLE_ADMIN, 1);
 			logger.info("Admin's user account identified.");
 			if (account != null) {
-				userAccountDao.archiveDeleteAccount(loggedUser, account);
+				userAccountDao.archiveAccount(loggedUser, account);
 				logger.info("---------------- Finished OK.");
 				return new ResponseEntity<UserAccountEntity>(account, HttpStatus.OK);
 			}
-			user.getAccounts();
 			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<UserEntity>(user, HttpStatus.OK);
 		} catch (NumberFormatException e) {
@@ -306,7 +347,7 @@ public class AdminController {
 			user = adminRepository.findByIdAndStatusLike(id, 0);
 			if (user == null) {
 				logger.info("---------------- Admin didn't find.");
-		        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+		        return new ResponseEntity<>("Admin didn't find.", HttpStatus.BAD_REQUEST);
 		      }
 			logger.info("Admin for undeleting identified.");
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
@@ -320,7 +361,6 @@ public class AdminController {
 				logger.info("---------------- Finished OK.");
 				return new ResponseEntity<UserAccountEntity>(account, HttpStatus.OK);
 			}
-			user.getAccounts();
 			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<UserEntity>(user, HttpStatus.OK);
 		} catch (NumberFormatException e) {
@@ -348,14 +388,14 @@ public class AdminController {
 			user = adminRepository.findByIdAndStatusLike(id, 1);
 			if (user == null) {
 				logger.info("---------------- Admin didn't find.");
-		        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+		        return new ResponseEntity<>("Admin didn't find.", HttpStatus.BAD_REQUEST);
 		      }
 			logger.info("Admin for deleting identified.");
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
 			if (id == loggedUser.getId()) {
 				logger.info("---------------- Selected Id is ID of logged User: Cann't delete yourself.");
-				return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+				return new ResponseEntity<>("Selected Id is ID of logged User: Cann't delete yourself.", HttpStatus.BAD_REQUEST);
 		      }	
 			adminDao.deleteAdmin(loggedUser, user);
 			logger.info("Admin deleted.");
@@ -366,7 +406,6 @@ public class AdminController {
 				logger.info("---------------- Finished OK.");
 				return new ResponseEntity<UserAccountEntity>(account, HttpStatus.OK);
 			}
-			user.getAccounts();
 			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<UserEntity>(user, HttpStatus.OK);
 		} catch (NumberFormatException e) {
@@ -382,6 +421,5 @@ public class AdminController {
 			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
-	
 
 }
