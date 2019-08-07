@@ -27,7 +27,7 @@ public class StudentDto {
 	//@Size(min=8, message = "School identification number must be {min} characters long.")
 	private String schoolIdentificationNumber;
 	@JsonView(Views.Parent.class)
-	@Pattern(regexp = "^([0][1-9]|[1|2][0-9]|[3][0|1])[./-]([0][1-9]|[1][0-2])[./-]([1-2][0-9]{3})$", message="Enrollment date is not valid, must be in dd-MM-yyyy format.")
+	//@Pattern(regexp = "^([0][1-9]|[1|2][0-9]|[3][0|1])[./-]([0][1-9]|[1][0-2])[./-]([1-2][0-9]{3})$", message="Enrollment date is not valid, must be in dd-MM-yyyy format.")
 	private String enrollmentDate;
 	
 	@JsonView(Views.Student.class)

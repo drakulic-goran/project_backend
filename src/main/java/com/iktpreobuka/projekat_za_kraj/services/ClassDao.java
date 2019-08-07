@@ -1,6 +1,8 @@
 package com.iktpreobuka.projekat_za_kraj.services;
 
 import com.iktpreobuka.projekat_za_kraj.entities.ClassEntity;
+import com.iktpreobuka.projekat_za_kraj.entities.ClassSubjectEntity;
+import com.iktpreobuka.projekat_za_kraj.entities.DepartmentClassEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.DepartmentEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.SubjectEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.UserEntity;
@@ -12,9 +14,9 @@ public interface ClassDao {
 
 	public void modifyClass(UserEntity loggedUser, ClassEntity class_, ClassDto updateClass) throws Exception;
 
-	public void addSubjectToClass(UserEntity loggedUser, ClassEntity class_, SubjectEntity subject, String name) throws Exception;
+	public ClassSubjectEntity addSubjectToClass(UserEntity loggedUser, ClassEntity class_, SubjectEntity subject, String name) throws Exception;
 
-	public void addDepartmentToClass(UserEntity loggedUser, ClassEntity class_, DepartmentEntity department, String schoolYear) throws Exception;
+	public DepartmentClassEntity addDepartmentToClass(UserEntity loggedUser, ClassEntity class_, DepartmentEntity department, String schoolYear) throws Exception;
 
 	public void deleteClass(UserEntity loggedUser, ClassEntity class_) throws Exception;
 
@@ -22,8 +24,8 @@ public interface ClassDao {
 
 	public void archiveClass(UserEntity loggedUser, ClassEntity class_) throws Exception;
 
-	public void removeSubjectFromClass(UserEntity loggedUser, ClassEntity class_, SubjectEntity subject) throws Exception;
+	public ClassSubjectEntity removeSubjectFromClass(UserEntity loggedUser, ClassEntity class_, SubjectEntity subject) throws Exception;
 
-	public void removeDepartmentFromClass(UserEntity loggedUser, ClassEntity class_, DepartmentEntity department, String schoolyear) throws Exception;
+	public DepartmentClassEntity removeDepartmentFromClass(UserEntity loggedUser, ClassEntity class_, DepartmentEntity department) throws Exception;
 
 }

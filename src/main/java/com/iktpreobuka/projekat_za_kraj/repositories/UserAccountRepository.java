@@ -15,5 +15,9 @@ public interface UserAccountRepository extends CrudRepository<UserAccountEntity,
 	@Query("select ua.user from UserAccountEntity ua where ua.username=:username and ua.status=:status")
 	public UserEntity findUserByUsernameAndStatusLike(String username, Integer status);
 	public UserAccountEntity findByUserAndAccessRoleLikeAndStatusLike(UserEntity user, EUserRole eUserRole, Integer status);
+	public Iterable<UserAccountEntity> findByStatusLike(Integer status);
+	public UserAccountEntity findByIdAndStatusLike(Integer id, Integer status);
+	public UserAccountEntity findByUserAndAccessRoleAndStatusLike(UserEntity user, EUserRole role, Integer status);
+	public UserAccountEntity findByUsernameAndStatusLike(String name, Integer Status);
 
 }

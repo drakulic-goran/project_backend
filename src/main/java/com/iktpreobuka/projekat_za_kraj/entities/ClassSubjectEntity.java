@@ -38,14 +38,14 @@ public class ClassSubjectEntity {
 	
 	@JsonIgnore
 	@JsonView(Views.Admin.class)
-	@ManyToOne(cascade = CascadeType.REFRESH, fetch = FetchType.LAZY)
+	@ManyToOne(cascade = CascadeType.REFRESH, fetch = FetchType.EAGER)
 	@JoinColumn(name = "class_id", nullable=false)
 	@NotNull (message = "Class must be provided.")
 	private ClassEntity clas;
 	
 	@JsonIgnore
 	@JsonView(Views.Admin.class)
-	@ManyToOne(cascade = CascadeType.REFRESH, fetch = FetchType.LAZY)
+	@ManyToOne(cascade = CascadeType.REFRESH, fetch = FetchType.EAGER)
 	@JoinColumn(name = "subject_id", nullable=false)
 	@NotNull (message = "Subject must be provided.")
 	private SubjectEntity subject;

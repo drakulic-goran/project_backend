@@ -23,7 +23,7 @@ public class GradeDto {
 	@Max(value=5, message = "Grade value must be {value} or lower!")
 	private Integer gradeValue;
 	@JsonView(Views.Student.class)
-	@Pattern(regexp = "^([0][1-9]|[1|2][0-9]|[3][0|1])[./-]([0][1-9]|[1][0-2])[./-]([1-2][0-9]{3})$", message="Employment date is not valid, must be in dd-MM-yyyy format.")
+	@Pattern(regexp = "^([0][1-9]|[1|2][0-9]|[3][0|1])[./-]([0][1-9]|[1][0-2])[./-]([1-2][0-9]{3})$", message="Grade date is not valid, must be in dd-MM-yyyy format.")
 	private String gradeMadeDate;
 	@JsonView(Views.Student.class)
 	@Pattern(regexp="^(FIRST_MIDTERM|SECOND_MIDTERM)$",message="Semester is not valid, must be FIRST_MIDTERM or SECOND_MIDTERM")

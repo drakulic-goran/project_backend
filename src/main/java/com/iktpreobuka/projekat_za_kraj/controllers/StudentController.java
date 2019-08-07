@@ -27,6 +27,7 @@ import com.iktpreobuka.projekat_za_kraj.controllers.util.RESTError;
 import com.iktpreobuka.projekat_za_kraj.controllers.util.UserCustomValidator;
 import com.iktpreobuka.projekat_za_kraj.entities.DepartmentEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.ParentEntity;
+import com.iktpreobuka.projekat_za_kraj.entities.StudentDepartmentEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.StudentEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.UserAccountEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.UserEntity;
@@ -200,7 +201,7 @@ public class StudentController {
 		}
 		UserEntity user = new StudentEntity();
 		try {
-			if (newStudent.getjMBG() != null && userRepository.getByJMBG(newStudent.getjMBG()) != null) {
+			if (newStudent.getjMBG() != null && studentRepository.getByJMBG(newStudent.getjMBG()) != null) {
 				logger.info("---------------- JMBG already exist.");
 				return new ResponseEntity<>("JMBG already exist.", HttpStatus.BAD_REQUEST);
 			}
@@ -389,9 +390,9 @@ public class StudentController {
 			logger.info("---------------- Some data is null.");
 	        return new ResponseEntity<>("Some data is null.", HttpStatus.BAD_REQUEST);
 	      }
-		StudentEntity user = new StudentEntity();
+		StudentDepartmentEntity sde = new StudentDepartmentEntity();
 		try {
-			user = studentRepository.findByIdAndStatusLike(id, 1);
+			StudentEntity user = studentRepository.findByIdAndStatusLike(id, 1);
 			if (user == null) {
 				logger.info("---------------- Student didn't find.");
 		        return new ResponseEntity<>("Student didn't find.", HttpStatus.BAD_REQUEST);
@@ -406,11 +407,11 @@ public class StudentController {
 			if (transferdate != null && !transferdate.equals(" ") && !transferdate.equals("")) {
 				UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 				logger.info("Logged user identified.");
-				studentDao.addDepartmentToStudent(loggedUser, user, department, transferdate);
+				sde = studentDao.addDepartmentToStudent(loggedUser, user, department, transferdate);
 				logger.info("Department added to student.");
 			}
 			logger.info("---------------- Finished OK.");
-			return new ResponseEntity<UserEntity>(user, HttpStatus.OK);
+			return new ResponseEntity<StudentDepartmentEntity>(sde, HttpStatus.OK);
 		} catch (NumberFormatException e) {
 			logger.error("++++++++++++++++ Number format exception occurred: " + e.getMessage());
 			return new ResponseEntity<RESTError>(new RESTError(2, "Number format exception occurred: "+ e.getLocalizedMessage()), HttpStatus.NOT_ACCEPTABLE);
@@ -430,9 +431,9 @@ public class StudentController {
 			logger.info("---------------- Some data is null.");
 	        return new ResponseEntity<>("Some data is null.", HttpStatus.BAD_REQUEST);
 	      }
-		StudentEntity user = new StudentEntity();
+		StudentDepartmentEntity sde = new StudentDepartmentEntity();
 		try {
-			user = studentRepository.findByIdAndStatusLike(id, 1);
+			StudentEntity user = studentRepository.findByIdAndStatusLike(id, 1);
 			if (user == null) {
 				logger.info("---------------- Student didn't find.");
 		        return new ResponseEntity<>("Student didn't find.", HttpStatus.BAD_REQUEST);
@@ -446,10 +447,10 @@ public class StudentController {
 			logger.info("Department identified.");
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
-			studentDao.removeDepartmentFromStudent(loggedUser, user, department);
+			sde = studentDao.removeDepartmentFromStudent(loggedUser, user, department);
 			logger.info("Department removed from student.");
 			logger.info("---------------- Finished OK.");
-			return new ResponseEntity<UserEntity>(user, HttpStatus.OK);
+			return new ResponseEntity<StudentDepartmentEntity>(sde, HttpStatus.OK);
 		} catch (NumberFormatException e) {
 			logger.error("++++++++++++++++ Number format exception occurred: " + e.getMessage());
 			return new ResponseEntity<RESTError>(new RESTError(2, "Number format exception occurred: "+ e.getLocalizedMessage()), HttpStatus.NOT_ACCEPTABLE);
@@ -475,6 +476,10 @@ public class StudentController {
 			logger.info("Student for archiving identified.");
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
+			if (id == loggedUser.getId()) {
+				logger.info("---------------- Selected Id is ID of logged User: Cann't archive yourself.");
+				return new ResponseEntity<>("Selected Id is ID of logged User: Cann't archive yourself.", HttpStatus.BAD_REQUEST);
+		      }	
 			studentDao.archiveStudent(loggedUser, user);
 			logger.info("Student archived.");
 			UserAccountEntity account = userAccountRepository.findByUserAndAccessRoleLikeAndStatusLike(user, EUserRole.ROLE_STUDENT, 1);

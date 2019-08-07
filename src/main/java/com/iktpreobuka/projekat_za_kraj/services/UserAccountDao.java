@@ -17,5 +17,8 @@ public interface UserAccountDao {
 	public void archiveAccount(UserEntity loggedUser, UserAccountEntity account) throws Exception;
 	public void modifyAccount(UserEntity loggedUser, UserAccountEntity account, ParentDto updateParent) throws Exception;
 	public void modifyAccount(UserEntity loggedUser, UserAccountEntity account, String username, String password) throws Exception;
+	public void modifyAccountUserAndAccessRole(UserEntity loggedUser, UserAccountEntity account, UserEntity user, EUserRole role) throws Exception;
+	public void modifyAccountUser(UserEntity loggedUser, UserAccountEntity account, UserEntity user) throws Exception;
+	public void modifyAccountAccessRole(UserEntity loggedUser, UserAccountEntity account, EUserRole role) throws Exception;
 	
 }

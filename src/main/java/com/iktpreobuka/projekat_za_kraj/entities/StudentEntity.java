@@ -10,6 +10,8 @@ import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
@@ -35,8 +37,10 @@ public class StudentEntity extends UserEntity {
 	private static final Integer STATUS_ARCHIVED = -1;
 
 	@JsonView(Views.Teacher.class)
-	@JsonIgnore
-	@ManyToMany(mappedBy = "students", fetch = FetchType.LAZY, cascade = { CascadeType.REFRESH})
+	//@JsonIgnore
+	//@ManyToMany(mappedBy = "students", fetch = FetchType.LAZY, cascade = { CascadeType.REFRESH})
+	@ManyToMany(cascade = CascadeType.REFRESH, fetch = FetchType.LAZY)
+    @JoinTable(name = "parent_student", joinColumns = { @JoinColumn(name = "student_id") }, inverseJoinColumns = { @JoinColumn(name = "parent_id") })
 	private Set<ParentEntity> parents = new HashSet<>();
 	
 	@JsonView(Views.Student.class)

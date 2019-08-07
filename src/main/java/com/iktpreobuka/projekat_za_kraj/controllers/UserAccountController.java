@@ -1,0 +1,436 @@
+package com.iktpreobuka.projekat_za_kraj.controllers;
+
+import java.security.Principal;
+import java.util.stream.Collectors;
+
+import javax.validation.Valid;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
+import org.springframework.stereotype.Controller;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.ObjectError;
+import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.InitBinder;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.fasterxml.jackson.annotation.JsonView;
+import com.iktpreobuka.projekat_za_kraj.controllers.util.RESTError;
+import com.iktpreobuka.projekat_za_kraj.controllers.util.UserCustomValidator;
+import com.iktpreobuka.projekat_za_kraj.entities.AdminEntity;
+import com.iktpreobuka.projekat_za_kraj.entities.ParentEntity;
+import com.iktpreobuka.projekat_za_kraj.entities.StudentEntity;
+import com.iktpreobuka.projekat_za_kraj.entities.TeacherEntity;
+import com.iktpreobuka.projekat_za_kraj.entities.UserAccountEntity;
+import com.iktpreobuka.projekat_za_kraj.entities.UserEntity;
+import com.iktpreobuka.projekat_za_kraj.entities.dto.UserAccountDto;
+import com.iktpreobuka.projekat_za_kraj.enumerations.EUserRole;
+import com.iktpreobuka.projekat_za_kraj.repositories.UserAccountRepository;
+import com.iktpreobuka.projekat_za_kraj.repositories.UserRepository;
+import com.iktpreobuka.projekat_za_kraj.security.Views;
+import com.iktpreobuka.projekat_za_kraj.services.UserAccountDao;
+
+@Controller
+@RestController
+@RequestMapping(value= "/project/account")
+public class UserAccountController {
+
+	@Autowired
+	private UserAccountDao userAccountDao;
+
+	@Autowired
+	private UserAccountRepository userAccountRepository;
+	
+	@Autowired
+	private UserRepository userRepository;
+
+	@Autowired 
+	private UserCustomValidator userValidator;
+
+	@InitBinder
+	protected void initBinder(final WebDataBinder binder) { 
+		binder.addValidators(userValidator); 
+		}
+
+	
+	private final Logger logger = (Logger) LoggerFactory.getLogger(this.getClass());
+	
+	private String createErrorMessage(BindingResult result) { 
+		return result.getAllErrors().stream().map(ObjectError::getDefaultMessage).collect(Collectors.joining(" "));
+		}
+
+	@Secured("ROLE_ADMIN")
+	@JsonView(Views.Admin.class)
+	@RequestMapping(method = RequestMethod.GET)
+	public ResponseEntity<?> getAll(Principal principal) {
+		logger.info("################ /project/account/getAll started.");
+		logger.info("Logged username: " + principal.getName());
+		try {
+			Iterable<UserAccountEntity> accounts= userAccountRepository.findByStatusLike(1);
+			logger.info("---------------- Finished OK.");
+			return new ResponseEntity<Iterable<UserAccountEntity>>(accounts, HttpStatus.OK);
+		} catch(Exception e) {
+			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+	
+	@Secured("ROLE_ADMIN")
+	@JsonView(Views.Admin.class)
+	@RequestMapping(method = RequestMethod.GET, value = "/{id}")
+	public ResponseEntity<?> getAll(@PathVariable Integer id, Principal principal) {
+		logger.info("################ /project/account/getAll started.");
+		logger.info("Logged username: " + principal.getName());
+		try {
+			UserAccountEntity account= userAccountRepository.findByIdAndStatusLike(id, 1);
+			logger.info("---------------- Finished OK.");
+			return new ResponseEntity<UserAccountEntity>(account, HttpStatus.OK);
+		} catch(Exception e) {
+			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+
+	
+	@Secured("ROLE_ADMIN")
+	@JsonView(Views.Admin.class)
+	@RequestMapping(method = RequestMethod.GET, value = "/deleted")
+	public ResponseEntity<?> getAllDeleted(Principal principal) {
+		logger.info("################ /project/account/deleted/getAllDeleted started.");
+		logger.info("Logged username: " + principal.getName());
+		try {
+			Iterable<UserAccountEntity> accounts= userAccountRepository.findByStatusLike(0);
+			logger.info("---------------- Finished OK.");
+			return new ResponseEntity<Iterable<UserAccountEntity>>(accounts, HttpStatus.OK);
+		} catch(Exception e) {
+			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+	
+	@Secured("ROLE_ADMIN")
+	@JsonView(Views.Admin.class)
+	@RequestMapping(method = RequestMethod.GET, value = "/deleted/{id}")
+	public ResponseEntity<?> getAllDeleted(@PathVariable Integer id, Principal principal) {
+		logger.info("################ /project/account/deleted/getAllDeleted started.");
+		logger.info("Logged username: " + principal.getName());
+		try {
+			UserAccountEntity account= userAccountRepository.findByIdAndStatusLike(id, 0);
+			logger.info("---------------- Finished OK.");
+			return new ResponseEntity<UserAccountEntity>(account, HttpStatus.OK);
+		} catch(Exception e) {
+			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+
+	@Secured("ROLE_ADMIN")
+	@JsonView(Views.Admin.class)
+	@RequestMapping(method = RequestMethod.GET, value = "/archived")
+	public ResponseEntity<?> getAllArchived(Principal principal) {
+		logger.info("################ /project/account/archived/getAllArchived started.");
+		logger.info("Logged username: " + principal.getName());
+		try {
+			Iterable<UserAccountEntity> accounts= userAccountRepository.findByStatusLike(-1);
+			logger.info("---------------- Finished OK.");
+			return new ResponseEntity<Iterable<UserAccountEntity>>(accounts, HttpStatus.OK);
+		} catch(Exception e) {
+			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+
+	@Secured("ROLE_ADMIN")
+	@JsonView(Views.Admin.class)
+	@RequestMapping(method = RequestMethod.GET, value = "/archived/{id}")
+	public ResponseEntity<?> getAllArchived(@PathVariable Integer id, Principal principal) {
+		logger.info("################ /project/account/archived/getAllArchived started.");
+		logger.info("Logged username: " + principal.getName());
+		try {
+			UserAccountEntity account= userAccountRepository.findByIdAndStatusLike(id, -1);
+			logger.info("---------------- Finished OK.");
+			return new ResponseEntity<UserAccountEntity>(account, HttpStatus.OK);
+		} catch(Exception e) {
+			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+
+	@Secured("ROLE_ADMIN")
+	@JsonView(Views.Admin.class)
+	@RequestMapping(method = RequestMethod.POST)
+	public ResponseEntity<?> addNew(@Valid @RequestBody UserAccountDto newUserAccount, Principal principal, BindingResult result) {
+		logger.info("################ /project/account/addNew started.");
+		logger.info("Logged user: " + principal.getName());
+		if (result.hasErrors()) { 
+			logger.info("---------------- Validation has errors - " + createErrorMessage(result));
+			return new ResponseEntity<>(createErrorMessage(result), HttpStatus.BAD_REQUEST); 
+			}
+		if (newUserAccount == null) {
+			logger.info("---------------- New user account is null.");
+	        return new ResponseEntity<>("New user account is null", HttpStatus.BAD_REQUEST);
+	      }
+		if (newUserAccount.getUsername() == null || newUserAccount.getAccessRole() == null || (newUserAccount.getPassword() == null && newUserAccount.getConfirmedPassword() == null) || newUserAccount.getUserId() == null) {
+			logger.info("---------------- Some or all atributes is null.");
+			return new ResponseEntity<>("Some or all atributes is null.", HttpStatus.BAD_REQUEST);
+		}
+		UserAccountEntity account = new UserAccountEntity();
+		try {
+			UserEntity user = new UserEntity();
+			EUserRole role = null;
+			if (newUserAccount.getUsername() != null && userAccountRepository.getByUsername(newUserAccount.getUsername()) != null) {
+				logger.info("---------------- Username already exist.");
+		        return new ResponseEntity<>("Username already exist.", HttpStatus.BAD_REQUEST);
+		    }
+			if (newUserAccount.getUserId() != null) {
+				user = userRepository.getById(Integer.parseInt(newUserAccount.getUserId()));
+				Integer userStatus = null;
+				if (user != null) {
+					if (user instanceof AdminEntity && newUserAccount.getAccessRole() == "ROLE_ADMIN") {
+						AdminEntity userWithRole = (AdminEntity) user;
+						userStatus = userWithRole.getStatus();
+						role = EUserRole.ROLE_ADMIN;
+					} else if (user instanceof TeacherEntity && newUserAccount.getAccessRole() == "ROLE_TEACHER") {
+						TeacherEntity userWithRole = (TeacherEntity) user;
+						userStatus = userWithRole.getStatus();
+						role = EUserRole.ROLE_TEACHER;
+					} else if (user instanceof ParentEntity && newUserAccount.getAccessRole() == "ROLE_PARENT") {
+						ParentEntity userWithRole = (ParentEntity) user;
+						userStatus = userWithRole.getStatus();
+						role = EUserRole.ROLE_PARENT;
+					} else if (user instanceof StudentEntity && newUserAccount.getAccessRole() == "ROLE_STUDENT") {
+						StudentEntity userWithRole = (StudentEntity) user;
+						userStatus = userWithRole.getStatus();
+						role = EUserRole.ROLE_STUDENT;						
+					} else {
+						logger.info("---------------- User not exist or wrong access role.");
+						return new ResponseEntity<>("User not exist or wrong access role.", HttpStatus.BAD_REQUEST);
+					}
+				}
+				if (user == null || userStatus == null || userStatus != 1) {
+					logger.info("---------------- User not exist.");
+					return new ResponseEntity<>("User not exist.", HttpStatus.BAD_REQUEST);
+				}
+			}		
+			if (user != null && role !=null && userAccountRepository.findByUserAndAccessRoleAndStatusLike(user, role, 1) != null) {
+				logger.info("---------------- User already have account for that role.");
+		        return new ResponseEntity<>("User already have account for that role.", HttpStatus.BAD_REQUEST);
+		    }
+			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
+			logger.info("Logged user identified.");
+			if (newUserAccount.getUsername() != null && newUserAccount.getPassword() != null && newUserAccount.getConfirmedPassword() != null && newUserAccount.getPassword().equals(newUserAccount.getConfirmedPassword())) {
+				account = userAccountDao.addNewUserAccount(loggedUser, user, newUserAccount.getUsername(), role, newUserAccount.getPassword());
+			}
+			logger.info("---------------- Finished OK.");
+			return new ResponseEntity<>(account, HttpStatus.OK);
+		} catch (NumberFormatException e) {
+			logger.error("++++++++++++++++ Number format exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(2, "Number format exception occurred: "+ e.getLocalizedMessage()), HttpStatus.NOT_ACCEPTABLE);
+		} catch (Exception e) {
+			logger.error("++++++++++++++++ This is an exception message: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+	
+	@Secured("ROLE_ADMIN")
+	@JsonView(Views.Admin.class)
+	@RequestMapping(method = RequestMethod.PUT, value = "/{id}")
+	public ResponseEntity<?> modify(@PathVariable Integer id, @Valid @RequestBody UserAccountDto updateUserAccount, Principal principal, BindingResult result) {
+		logger.info("################ /project/account/{id}/modify started.");
+		logger.info("Logged user: " + principal.getName());
+		if (result.hasErrors()) { 
+			logger.info("---------------- Validation has errors - " + createErrorMessage(result));
+			return new ResponseEntity<>(createErrorMessage(result), HttpStatus.BAD_REQUEST); 
+			}
+		if (updateUserAccount == null) {
+			logger.info("---------------- New user account is null.");
+	        return new ResponseEntity<>("New user account is null", HttpStatus.BAD_REQUEST);
+	      }
+		if (updateUserAccount.getUsername() == null && updateUserAccount.getAccessRole() == null && (updateUserAccount.getPassword() == null || updateUserAccount.getConfirmedPassword() == null) && updateUserAccount.getUserId() == null) {
+			logger.info("---------------- All atributes is null.");
+			return new ResponseEntity<>("All atributes is null.", HttpStatus.BAD_REQUEST);
+		}
+		UserAccountEntity account = new UserAccountEntity();
+		try {
+			account = userAccountRepository.findByIdAndStatusLike(id, 1);
+			if (account == null) {
+				logger.info("---------------- User account didn't find.");
+		        return new ResponseEntity<>("User account didn't find.", HttpStatus.BAD_REQUEST);
+		      }
+			logger.info("User account identified.");			
+			UserEntity user = new UserEntity();
+			EUserRole role = null;
+			if (updateUserAccount.getUsername() != null && userAccountRepository.getByUsername(updateUserAccount.getUsername()) != null) {
+				logger.info("---------------- Username already exist.");
+		        return new ResponseEntity<>("Username already exist.", HttpStatus.BAD_REQUEST);
+		    }
+			if (updateUserAccount.getUserId() != null && Integer.parseInt(updateUserAccount.getUserId()) != account.getUser().getId()) {
+				user = userRepository.getById(Integer.parseInt(updateUserAccount.getUserId()));
+				Integer userStatus = null;
+				if (user != null) {
+					if (user instanceof AdminEntity && ((account.getAccessRole() == EUserRole.ROLE_ADMIN && updateUserAccount.getAccessRole() == null) || updateUserAccount.getAccessRole() == "ROLE_ADMIN")) {
+						AdminEntity userWithRole = (AdminEntity) user;
+						userStatus = userWithRole.getStatus();
+						role = EUserRole.ROLE_ADMIN;
+					} else if (user instanceof TeacherEntity && ((account.getAccessRole() == EUserRole.ROLE_TEACHER && updateUserAccount.getAccessRole() == null) || updateUserAccount.getAccessRole() == "ROLE_TEACHER")) {
+						TeacherEntity userWithRole = (TeacherEntity) user;
+						userStatus = userWithRole.getStatus();
+						role = EUserRole.ROLE_TEACHER;
+					} else if (user instanceof ParentEntity && ((account.getAccessRole() == EUserRole.ROLE_PARENT && updateUserAccount.getAccessRole() == null) || updateUserAccount.getAccessRole() == "ROLE_PARENT")) {
+						ParentEntity userWithRole = (ParentEntity) user;
+						userStatus = userWithRole.getStatus();
+						role = EUserRole.ROLE_PARENT;
+					} else if (user instanceof StudentEntity && ((account.getAccessRole() == EUserRole.ROLE_STUDENT && updateUserAccount.getAccessRole() == null) || updateUserAccount.getAccessRole() == "ROLE_STUDENT")) {
+						StudentEntity userWithRole = (StudentEntity) user;
+						userStatus = userWithRole.getStatus();
+						role = EUserRole.ROLE_STUDENT;						
+					} else {
+						logger.info("---------------- User not exist or wrong access role.");
+						return new ResponseEntity<>("User not exist or wrong access role.", HttpStatus.BAD_REQUEST);
+					}
+				}
+				if (user == null || userStatus == null || userStatus != 1) {
+					logger.info("---------------- User not exist.");
+					return new ResponseEntity<>("User not exist.", HttpStatus.BAD_REQUEST);
+				}
+			}		
+			if (user != null && role !=null && userAccountRepository.findByUserAndAccessRoleAndStatusLike(user, role, 1) != null) {
+				logger.info("---------------- User already have account with that role.");
+		        return new ResponseEntity<>("User already have account with that role.", HttpStatus.BAD_REQUEST);
+		    }	
+			if (updateUserAccount.getUserId() == null && updateUserAccount.getAccessRole() != null && userAccountRepository.findByUserAndAccessRoleAndStatusLike(account.getUser(), EUserRole.valueOf(updateUserAccount.getAccessRole()), 1) != null) {
+				logger.info("---------------- Other account of same user with that role already exist.");
+		        return new ResponseEntity<>("Other account of same user with that role already exist.", HttpStatus.BAD_REQUEST);
+		    }	
+			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
+			logger.info("Logged user identified.");
+			if (updateUserAccount.getUsername() != null && !updateUserAccount.getUsername().equals("") && !updateUserAccount.getUsername().equals(" ") && userAccountRepository.getByUsername(updateUserAccount.getUsername()) != null) {
+				userAccountDao.modifyAccountUsername(loggedUser, account, updateUserAccount.getUsername());
+				logger.info("Username modified.");					
+			}
+			if (updateUserAccount.getPassword() != null && !updateUserAccount.getPassword().equals("") && !updateUserAccount.getPassword().equals(" ") && updateUserAccount.getConfirmedPassword() != null && updateUserAccount.getPassword().equals(updateUserAccount.getConfirmedPassword())) {
+				userAccountDao.modifyAccountPassword(loggedUser, account, updateUserAccount.getPassword());
+				logger.info("Password modified.");
+			}
+			if (updateUserAccount.getUserId() != null && updateUserAccount.getAccessRole() != null && user != account.getUser() && role != account.getAccessRole()) {
+				userAccountDao.modifyAccountUserAndAccessRole(loggedUser, account, user, role);
+				logger.info("User and access role modified.");
+			} else if (updateUserAccount.getUserId() != null && user != account.getUser()) {
+				userAccountDao.modifyAccountUser(loggedUser, account, user);
+				logger.info("User modified.");
+			} else if (updateUserAccount.getAccessRole() != null && role != account.getAccessRole()) {
+				userAccountDao.modifyAccountAccessRole(loggedUser, account, EUserRole.valueOf(updateUserAccount.getAccessRole()));
+				logger.info("Access role modified.");
+			}
+			logger.info("---------------- Finished OK.");
+			return new ResponseEntity<>(account, HttpStatus.OK);
+		} catch (NumberFormatException e) {
+			logger.error("++++++++++++++++ Number format exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(2, "Number format exception occurred: "+ e.getLocalizedMessage()), HttpStatus.NOT_ACCEPTABLE);
+		} catch (Exception e) {
+			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+
+	@Secured("ROLE_ADMIN")
+	@JsonView(Views.Admin.class)
+	@RequestMapping(method = RequestMethod.PUT, value = "/archive/{id}")
+	public ResponseEntity<?> archive(@PathVariable Integer id, Principal principal) {
+		logger.info("################ /project/account/archive/archive started.");
+		logger.info("Logged user: " + principal.getName());
+		UserAccountEntity account = new UserAccountEntity();
+		try {
+			account = userAccountRepository.getById(id);
+			if (account == null || account.getStatus() == -1) {
+				logger.info("---------------- User account didn't find.");
+		        return new ResponseEntity<>("User account didn't find.", HttpStatus.BAD_REQUEST);
+		      }
+			logger.info("User account for archiving identified.");
+			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
+			logger.info("Logged user identified.");
+			if (account.getUser().getId() == loggedUser.getId()) {
+				logger.info("---------------- Selected Id is ID of logged User account: Cann't archive your account.");
+				return new ResponseEntity<>("Selected Id is ID of logged User account: Cann't archive your account.", HttpStatus.BAD_REQUEST);
+		      }	
+			userAccountDao.archiveAccount(loggedUser, account);
+			logger.info("---------------- Finished OK.");
+			return new ResponseEntity<UserAccountEntity>(account, HttpStatus.OK);
+		} catch (NumberFormatException e) {
+			logger.error("++++++++++++++++ Number format exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(2, "Number format exception occurred: "+ e.getLocalizedMessage()), HttpStatus.NOT_ACCEPTABLE);
+		} catch (Exception e) {
+			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+
+	@Secured("ROLE_ADMIN")
+	@JsonView(Views.Admin.class)
+	@RequestMapping(method = RequestMethod.PUT, value = "/undelete/{id}")
+	public ResponseEntity<?> unDelete(@PathVariable Integer id, Principal principal) {
+		logger.info("################ /project/account/undelete/{id}/unDelete started.");
+		logger.info("Logged user: " + principal.getName());
+		UserAccountEntity account = new UserAccountEntity();
+		try {
+			account = userAccountRepository.findByIdAndStatusLike(id, 0);
+			if (account == null) {
+				logger.info("---------------- User account didn't find.");
+		        return new ResponseEntity<>("User account didn't find.", HttpStatus.BAD_REQUEST);
+		      }
+			logger.info("User account for undeleting identified.");
+			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
+			logger.info("Logged user identified.");
+			userAccountDao.undeleteAccount(loggedUser, account);
+			logger.info("---------------- Finished OK.");
+			return new ResponseEntity<UserAccountEntity>(account, HttpStatus.OK);
+		} catch (NumberFormatException e) {
+			logger.error("++++++++++++++++ Number format exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(2, "Number format exception occurred: "+ e.getLocalizedMessage()), HttpStatus.NOT_ACCEPTABLE);
+		} catch (Exception e) {
+			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+	
+	@Secured("ROLE_ADMIN")
+	@JsonView(Views.Admin.class)
+	@RequestMapping(method = RequestMethod.DELETE, value = "/{id}")
+	public ResponseEntity<?> delete(@PathVariable Integer id, Principal principal) {
+		logger.info("################ /project/account/{id}/delete started.");
+		logger.info("Logged user: " + principal.getName());
+		UserAccountEntity account = new UserAccountEntity();
+		try {
+			account = userAccountRepository.findByIdAndStatusLike(id, 1);
+			if (account == null) {
+				logger.info("---------------- User account didn't find.");
+		        return new ResponseEntity<>("User account didn't find.", HttpStatus.BAD_REQUEST);
+		      }
+			logger.info("User account for deleting identified.");
+			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
+			logger.info("Logged user identified.");
+			if (account.getUser().getId() == loggedUser.getId()) {
+				logger.info("---------------- Selected Id is ID of logged User account: Cann't delete your account.");
+				return new ResponseEntity<>("Selected Id is ID of logged User account: Cann't delete your account.", HttpStatus.BAD_REQUEST);
+		      }	
+			userAccountDao.deleteAccount(loggedUser, account);
+			logger.info("---------------- Finished OK.");
+			return new ResponseEntity<UserAccountEntity>(account, HttpStatus.OK);
+		} catch (NumberFormatException e) {
+			logger.error("++++++++++++++++ Number format exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(2, "Number format exception occurred: "+ e.getLocalizedMessage()), HttpStatus.NOT_ACCEPTABLE);
+		} catch (Exception e) {
+			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+
+}

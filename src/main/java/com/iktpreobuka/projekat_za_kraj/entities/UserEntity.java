@@ -22,7 +22,6 @@ import javax.validation.constraints.Pattern;
 
 import org.hibernate.annotations.DiscriminatorOptions;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonView;
@@ -50,10 +49,10 @@ public class UserEntity {
 	private static final Integer STATUS_ARCHIVED = -1;*/
     
 	@JsonView(Views.Admin.class)
-	//@JsonIgnore
+	@JsonIgnore
 	@OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = { CascadeType.REFRESH})
 	//@JsonManagedReference
-	@JsonBackReference
+	//@JsonBackReference
 	private List<UserAccountEntity> accounts = new ArrayList<>();
 	/*@JsonView(Views.Admin.class)
 	@OneToOne

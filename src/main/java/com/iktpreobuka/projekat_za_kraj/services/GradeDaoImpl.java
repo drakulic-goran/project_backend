@@ -1,12 +1,17 @@
 package com.iktpreobuka.projekat_za_kraj.services;
 
-import java.util.List;
+import java.util.Date;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.iktpreobuka.projekat_za_kraj.entities.GradeEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.StudentEntity;
+import com.iktpreobuka.projekat_za_kraj.entities.TeacherEntity;
+import com.iktpreobuka.projekat_za_kraj.entities.TeacherSubjectDepartmentEntity;
+import com.iktpreobuka.projekat_za_kraj.entities.UserEntity;
+import com.iktpreobuka.projekat_za_kraj.entities.dto.GradeDto;
+import com.iktpreobuka.projekat_za_kraj.enumerations.ESemester;
 import com.iktpreobuka.projekat_za_kraj.repositories.GradeRepository;
 
 @Service
@@ -16,41 +21,102 @@ public class GradeDaoImpl implements GradeDao {
    private GradeRepository gradeRepository;
    
    @Override
-   public List<GradeEntity> findGradeValueByStudentAndSubject(StudentEntity studentId, Integer subjectId) {
-      return gradeRepository.findByStudent(studentId);
-   }
-   
-  /* @Override
-   public AccountEntity addDateOfActivationToAccount(Integer id, String doa) throws Exception {
-      AccountEntity account = findAccountById(id);
-      if (account == null) {
-         throw new Exception();
-      }
-      SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
-      try {
-         Date dateOfActivation = formatter.parse(doa);
-         account.setAccountActivated(dateOfActivation);
-      } catch (Exception e) {
-         throw new Exception();
-      }
-      return account;
+   public GradeEntity addNewGrade(TeacherEntity teacher, StudentEntity student, TeacherSubjectDepartmentEntity teacherDepartments, GradeDto newGrade) throws Exception {
+	   try {
+		if (teacher ==null || student==null || teacherDepartments==null || newGrade == null || newGrade.getSemester() == null || newGrade.getGradeValue() == null) {
+			     throw new Exception("Some data is null.");
+		   }
+	   } catch (Exception e) {
+		   throw new Exception("GradeDto check failed.");
+	   }
+	   GradeEntity grade = new GradeEntity();
+	   try {
+			grade.setTeacher_subject_department(teacherDepartments);
+			grade.setStudent(student);
+			grade.setStatusActive();
+			grade.setSemester(ESemester.valueOf(newGrade.getSemester()));
+			grade.setGradeValue(newGrade.getGradeValue());
+			grade.setGradeMadeDate(new Date());
+			grade.setCreatedById(teacher.getId());
+			gradeRepository.save(grade);
+			return grade;
+	   } catch (Exception e) {
+			throw new Exception("addNewGrade save failed.");
+	   }
    }
    
    @Override
-   public AccountEntity addAccKindToAccount(Integer id, String accKind) throws Exception {
-      AccountEntity account = findAccountById(id);
-      if (account == null) {
-         throw new Exception();
-      }
-      try {
-         for (EAccountKind kind : EAccountKind.values()) {
-            if (kind.toString().equalsIgnoreCase(accKind)) {
-               account.setAccountKind(kind);
-            }
-         }
-      } catch (Exception e) {
-         throw new Exception();
-      }
-      return account;
-   } */
+   public GradeEntity modifyGrade(UserEntity loggedUser, GradeEntity grade, Integer gradeValue) throws Exception {
+	   try {
+		if (grade ==null || gradeValue == null) {
+			     throw new Exception("Some data is null.");
+		   }
+	   } catch (Exception e) {
+		   throw new Exception("GradeDto check failed.");
+	   }
+	   try {
+		   grade.setGradeValue(gradeValue);
+		   grade.setGradeMadeDate(new Date());
+		   grade.setUpdatedById(loggedUser.getId());
+		   gradeRepository.save(grade);
+		   return grade;
+	   } catch (Exception e) {
+		   throw new Exception("modifyGrade save failed.");
+	   }
+   }
+   
+   @Override
+   public void setStatusActive(UserEntity loggedUser, GradeEntity grade)  throws Exception {
+	   try {
+		if (grade ==null) {
+			     throw new Exception("Some data is null.");
+		   }
+	   } catch (Exception e) {
+		   throw new Exception("Check failed.");
+	   }
+	   try {
+			grade.setStatusActive();
+			grade.setUpdatedById(loggedUser.getId());
+			gradeRepository.save(grade);
+	   } catch (Exception e) {
+		   throw new Exception("modifyGrade save failed.");
+	   }
+   }
+   
+   @Override
+   public void setStatusArchived(UserEntity loggedUser, GradeEntity grade)  throws Exception {
+	   try {
+		if (grade ==null) {
+			     throw new Exception("Some data is null.");
+		   }
+	   } catch (Exception e) {
+		   throw new Exception("Check failed.");
+	   }
+	   try {
+			grade.setStatusArchived();
+			grade.setUpdatedById(loggedUser.getId());
+			gradeRepository.save(grade);
+	   } catch (Exception e) {
+		   throw new Exception("modifyGrade save failed.");
+	   }
+   }
+   
+   @Override
+   public void setStatusDeleted(UserEntity loggedUser, GradeEntity grade)  throws Exception {
+	   try {
+		if (grade ==null) {
+			     throw new Exception("Some data is null.");
+		   }
+	   } catch (Exception e) {
+		   throw new Exception("Check failed.");
+	   }
+	   try {
+			grade.setStatusInactive();
+			grade.setUpdatedById(loggedUser.getId());
+			gradeRepository.save(grade);
+	   } catch (Exception e) {
+		   throw new Exception("modifyGrade save failed.");
+	   }
+   }
+
 }

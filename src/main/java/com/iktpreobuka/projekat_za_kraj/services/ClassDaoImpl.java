@@ -30,7 +30,7 @@ public class ClassDaoImpl implements ClassDao {
 	@Override
 	public ClassEntity addNewClass(UserEntity loggedUser, ClassDto newClass) throws Exception {
 		try {
-			if (newClass.getClassLabel() != null) {
+			if (newClass.getClassLabel() == null) {
 			     throw new Exception("Some data is null.");
 			}
 		} catch (Exception e) {
@@ -69,7 +69,7 @@ public class ClassDaoImpl implements ClassDao {
 	}
 	
 	@Override
-	public void addSubjectToClass(UserEntity loggedUser, ClassEntity class_, SubjectEntity subject, String name) throws Exception {
+	public ClassSubjectEntity addSubjectToClass(UserEntity loggedUser, ClassEntity class_, SubjectEntity subject, String name) throws Exception {
 		try {
 			boolean contains = false;
 			if (name != null && class_.getStatus() == 1 && subject.getStatus() == 1) {
@@ -80,30 +80,35 @@ public class ClassDaoImpl implements ClassDao {
 				}
 			} else
 				contains = true;
+			ClassSubjectEntity classSubject = null;
 			if (!contains) {
-				ClassSubjectEntity classSubject = new ClassSubjectEntity(class_, subject, name, loggedUser.getId());
+				classSubject = new ClassSubjectEntity(class_, subject, name, loggedUser.getId());
 				classSubjectRepository.save(classSubject);
 				class_.getSubjects().add(classSubject);
 				class_.setUpdatedById(loggedUser.getId());
 				classRepository.save(class_);
 			}
+			return classSubject;
 		} catch (Exception e) {
 			throw new Exception("addSubjectToClass failed on saving.");
 		}
 	}
 	
 	@Override
-	public void removeSubjectFromClass(UserEntity loggedUser, ClassEntity class_, SubjectEntity subject) throws Exception {
+	public ClassSubjectEntity removeSubjectFromClass(UserEntity loggedUser, ClassEntity class_, SubjectEntity subject) throws Exception {
 		try {
+			ClassSubjectEntity cs1 = null;
 			if (class_.getStatus() == 1 && subject.getStatus() == 1) {
 				for (ClassSubjectEntity cs : class_.getSubjects()) {
 					if (cs.getSubject() == subject && cs.getStatus() == 1) {
 						cs.setStatusInactive();
 						cs.setUpdatedById(loggedUser.getId());
 						classSubjectRepository.save(cs);
+						cs1 = cs;
 					}
 				}
 			}
+			return cs1;
 		} catch (Exception e) {
 			throw new Exception("removeSubjectFromClass failed on saving.");
 		}
@@ -111,7 +116,7 @@ public class ClassDaoImpl implements ClassDao {
 	}
 	
 	@Override
-	public void addDepartmentToClass(UserEntity loggedUser, ClassEntity class_, DepartmentEntity department, String schoolYear) throws Exception {
+	public DepartmentClassEntity addDepartmentToClass(UserEntity loggedUser, ClassEntity class_, DepartmentEntity department, String schoolYear) throws Exception {
 		try {
 			boolean contains = false;
 			if (class_.getStatus() == 1 && department.getStatus() == 1) {
@@ -119,38 +124,44 @@ public class ClassDaoImpl implements ClassDao {
 					if (ds.getStatus() == 1) {
 						if (ds.getDepartment() == department) {
 							contains = true;
-						} else {
-							ds.setStatusInactive();
-							ds.setUpdatedById(loggedUser.getId());
-							departmentClassRepository.save(ds);
 						}
 					}
 				}
 			} else
 				contains = true;
+			DepartmentClassEntity departmentClass = null;
 			if (!contains) {
-				DepartmentClassEntity departmentClass = new DepartmentClassEntity(class_, department, schoolYear, loggedUser.getId());
+				for (DepartmentClassEntity d : department.getClasses()) {
+					d.setStatusInactive();
+					d.setUpdatedById(loggedUser.getId());
+					departmentClassRepository.save(d);
+				}
+				departmentClass = new DepartmentClassEntity(class_, department, schoolYear, loggedUser.getId());
 				departmentClassRepository.save(departmentClass);
 				class_.getDepartments().add(departmentClass);
 				class_.setUpdatedById(loggedUser.getId());
 				classRepository.save(class_);
 			}
+			return departmentClass;
 		} catch (Exception e) {
 			throw new Exception("addDepartmentToClass failed on saving.");
 		}
 	}
 	
-	public void removeDepartmentFromClass(UserEntity loggedUser, ClassEntity class_, DepartmentEntity department, String schoolyear) throws Exception {
+	public DepartmentClassEntity removeDepartmentFromClass(UserEntity loggedUser, ClassEntity class_, DepartmentEntity department) throws Exception {
 		try {
+			DepartmentClassEntity dc1 = null;
 			if (class_.getStatus() == 1 && department.getStatus() == 1) {
 				for (DepartmentClassEntity ds : class_.getDepartments()) {
 					if (ds.getStatus() == 1 && ds.getDepartment() == department) {
 						ds.setStatusInactive();
 						ds.setUpdatedById(loggedUser.getId());
 						departmentClassRepository.save(ds);
+						dc1 = ds;
 					}
 				}
 			}
+			return dc1;
 		} catch (Exception e) {
 			throw new Exception("addDepartmentToClass failed on saving.");
 		}

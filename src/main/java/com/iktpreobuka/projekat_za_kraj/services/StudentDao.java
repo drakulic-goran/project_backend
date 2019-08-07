@@ -2,6 +2,7 @@ package com.iktpreobuka.projekat_za_kraj.services;
 
 import com.iktpreobuka.projekat_za_kraj.entities.DepartmentEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.ParentEntity;
+import com.iktpreobuka.projekat_za_kraj.entities.StudentDepartmentEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.StudentEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.UserEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.dto.StudentDto;
@@ -28,8 +29,8 @@ public interface StudentDao {
 	
 	public void removeParentFromStudent(UserEntity loggedUser, StudentEntity student, ParentEntity parent) throws Exception;
 
-	public void addDepartmentToStudent(UserEntity loggedUser, StudentEntity student, DepartmentEntity department, String transfer_date) throws Exception;
+	public StudentDepartmentEntity addDepartmentToStudent(UserEntity loggedUser, StudentEntity student, DepartmentEntity department, String transfer_date) throws Exception;
 
-	public void removeDepartmentFromStudent(UserEntity loggedUser, StudentEntity student, DepartmentEntity department) throws Exception;
+	public StudentDepartmentEntity removeDepartmentFromStudent(UserEntity loggedUser, StudentEntity student, DepartmentEntity department) throws Exception;
 	
 }

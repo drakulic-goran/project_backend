@@ -194,7 +194,7 @@ public class ParentController {
 		}
 		UserEntity user = new ParentEntity();
 		try {
-			if (newParent.getjMBG() != null && userRepository.getByJMBG(newParent.getjMBG()) != null) {
+			if (newParent.getjMBG() != null && parentRepository.getByJMBG(newParent.getjMBG()) != null) {
 				logger.info("---------------- JMBG already exist.");
 				return new ResponseEntity<>("JMBG already exist.", HttpStatus.BAD_REQUEST);
 			}
@@ -389,6 +389,10 @@ public class ParentController {
 			logger.info("Parent for archiving identified.");
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
+			if (id == loggedUser.getId()) {
+				logger.info("---------------- Selected Id is ID of logged User: Cann't archive yourself.");
+				return new ResponseEntity<>("Selected Id is ID of logged User: Cann't archive yourself.", HttpStatus.BAD_REQUEST);
+		      }	
 			parentDao.archiveParent(loggedUser, user);
 			logger.info("Parent archived.");
 			UserAccountEntity account = userAccountRepository.findByUserAndAccessRoleLikeAndStatusLike(user, EUserRole.ROLE_PARENT, 1);

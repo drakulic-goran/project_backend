@@ -7,8 +7,6 @@ import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
-import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.Table;
 import javax.validation.constraints.Max;
@@ -16,6 +14,7 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonView;
 import com.iktpreobuka.projekat_za_kraj.security.Views;
@@ -31,9 +30,10 @@ public class ParentEntity extends UserEntity {
 	private static final Integer STATUS_ARCHIVED = -1;
 
 	@JsonView(Views.Parent.class)
-	//@JsonIgnore
-	@ManyToMany(cascade = CascadeType.REFRESH, fetch = FetchType.LAZY)
-    @JoinTable(name = "parent_student", joinColumns = { @JoinColumn(name = "parent_id") }, inverseJoinColumns = { @JoinColumn(name = "student_id") })
+	@JsonIgnore
+	//@ManyToMany(cascade = CascadeType.REFRESH, fetch = FetchType.LAZY)
+    //@JoinTable(name = "parent_student", joinColumns = { @JoinColumn(name = "parent_id") }, inverseJoinColumns = { @JoinColumn(name = "student_id") })
+	@ManyToMany(mappedBy = "parents", fetch = FetchType.LAZY, cascade = { CascadeType.REFRESH})
 	private Set<StudentEntity> students = new HashSet<>();
 
 	@JsonView(Views.Teacher.class)

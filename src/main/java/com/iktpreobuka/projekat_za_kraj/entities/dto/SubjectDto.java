@@ -9,7 +9,6 @@ import javax.validation.constraints.Pattern;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonView;
 import com.iktpreobuka.projekat_za_kraj.security.Views;
-import com.mysql.cj.conf.ConnectionUrlParser.Pair;
 
 public class SubjectDto {
 	
@@ -29,9 +28,11 @@ public class SubjectDto {
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
 	private Date assignmentDate;
 	@JsonView(Views.Teacher.class)
-	private List<Pair<String, String>> subject_teachers;
+	private String teachingDepartment;
+	@JsonView(Views.Teacher.class)
+	private String teachingTeacher;
 	@JsonView(Views.Student.class)
-	@Pattern(regexp = "^(20|[3-9][0-9])[0-9]{2}\\-(20|[3-9][0-9])[0-9]{2}$", message="School year is not valid, must be in format YYYY-YYYY.")
+	//@Pattern(regexp = "^(20|[3-9][0-9])[0-9]{2}[- \\.\\/]{1}(20|[3-9][0-9])[0-9]{2}$", message="School year is not valid, must be in format YYYY-YYYY.")
 	private String schoolYear;
 
 
@@ -49,14 +50,15 @@ public class SubjectDto {
 	}
 
 	public SubjectDto(List<String> classes, String learningProgram, List<String> teachers, Date assignmentDate,
-			List<Pair<String, String>> subject_teachers,
-			@Pattern(regexp = "^(20|[3-9][0-9])[0-9]{2}\\-(20|[3-9][0-9])[0-9]{2}$", message = "School year is not valid, must be in format YYYY-YYYY.") String schoolYear) {
+			String teachingDepartment, String teachingTeacher,
+			@Pattern(regexp = "^(20|[3-9][0-9])[0-9]{2}[- \\\\.\\\\/]{1}(20|[3-9][0-9])[0-9]{2}$", message = "School year is not valid, must be in format YYYY-YYYY.") String schoolYear) {
 		super();
 		this.classes = classes;
 		this.learningProgram = learningProgram;
 		this.teachers = teachers;
 		this.assignmentDate = assignmentDate;
-		this.subject_teachers = subject_teachers;
+		this.teachingDepartment = teachingDepartment;
+		this.teachingTeacher = teachingTeacher;
 		this.schoolYear = schoolYear;
 	}
 
@@ -100,12 +102,20 @@ public class SubjectDto {
 		this.assignmentDate = assignmentDate;
 	}
 
-	public List<Pair<String, String>> getSubject_teachers() {
-		return subject_teachers;
+	public String getTeachingDepartment() {
+		return teachingDepartment;
 	}
 
-	public void setSubject_teachers(List<Pair<String, String>> subject_teachers) {
-		this.subject_teachers = subject_teachers;
+	public void setTeachingDepartment(String teachingSubject) {
+		this.teachingDepartment = teachingSubject;
+	}
+
+	public String getTeachingTeacher() {
+		return teachingTeacher;
+	}
+
+	public void setTeachingTeacher(String teachingTeacher) {
+		this.teachingTeacher = teachingTeacher;
 	}
 
 	public String getSchoolYear() {

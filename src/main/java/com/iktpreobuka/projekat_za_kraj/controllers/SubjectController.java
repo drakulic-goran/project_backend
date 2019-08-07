@@ -2,9 +2,7 @@ package com.iktpreobuka.projekat_za_kraj.controllers;
 
 import java.security.Principal;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 import javax.validation.Valid;
@@ -31,10 +29,14 @@ import com.iktpreobuka.projekat_za_kraj.entities.SubjectEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.UserEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.dto.StudentSubjectsDto;
 import com.iktpreobuka.projekat_za_kraj.entities.dto.SubjectDto;
+import com.iktpreobuka.projekat_za_kraj.repositories.ClassRepository;
+import com.iktpreobuka.projekat_za_kraj.repositories.DepartmentRepository;
 import com.iktpreobuka.projekat_za_kraj.repositories.SubjectRepository;
+import com.iktpreobuka.projekat_za_kraj.repositories.TeacherRepository;
 import com.iktpreobuka.projekat_za_kraj.repositories.UserAccountRepository;
 import com.iktpreobuka.projekat_za_kraj.security.Views;
 import com.iktpreobuka.projekat_za_kraj.services.SubjectDao;
+import com.mysql.cj.conf.ConnectionUrlParser.Pair;
 
 @Controller
 @RestController
@@ -43,6 +45,15 @@ public class SubjectController {
 	
 	@Autowired
 	private SubjectRepository subjectRepository;
+	
+	@Autowired
+	private TeacherRepository teacherRepository;
+	
+	@Autowired
+	private ClassRepository classRepository;
+	
+	@Autowired
+	private DepartmentRepository departmentRepository;
 	
 	@Autowired
 	private UserAccountRepository userAccountRepository;
@@ -101,7 +112,45 @@ public class SubjectController {
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
 			List<StudentSubjectsDto> subjects= subjectRepository.findByParent(loggedUser.getId());
-			Map<StudentEntity, List<SubjectEntity>> subjectsByStudent = new HashMap<StudentEntity, List<SubjectEntity>>();
+			logger.info("Lista predmeta za decu.");
+
+			List<Pair<StudentEntity, List<SubjectEntity>>> subjectsByStudent = new ArrayList<Pair<StudentEntity, List<SubjectEntity>>>();
+			
+		
+			for (StudentSubjectsDto  entry : subjects) {
+				SubjectEntity subject = entry.getSubject();
+				logger.info("Subject " + subject.toString());
+			    StudentEntity student = entry.getStudent();
+				logger.info("Student " + student.toString());
+				List<SubjectEntity> subjectsss= subjectDao.getSubjectListByStudent(subjectsByStudent, student);
+
+				/*if (!subjectsByStudent.isEmpty()) {
+					for (int i = 0; i < subjectsByStudent.size(); i++) {
+						Pair<StudentEntity, List<SubjectEntity>> temp = subjectsByStudent.get(i);
+						logger.info("temp " + temp.toString());
+						if (temp.left.equals(student)) {
+							subjectsss = temp.right; 
+							logger.info("subjectsss dodela " + subjectsss.toString());
+						}
+						else {
+							logger.info("subjectsss null need to " + subjectsss.toString());
+							subjectsss = null;
+							logger.info("subjectsss null " + subjectsss.toString());
+						}
+					}
+				}  */
+
+				if (subjectsss == null) {
+			        subjectsss = new ArrayList<SubjectEntity>();
+					logger.info("subjectsss nova " + subjectsss.toString());
+			        subjectsByStudent.add(new Pair<StudentEntity, List<SubjectEntity>>(student, subjectsss));
+					logger.info("---------------------subjectsByStudent " + subjectsByStudent.toString());
+			    }
+			    subjectsss.add(subject);
+				logger.info("+++++++++++++++++++subjectsss dodavanje na listu " + subjectsss.toString());
+			}
+
+/*			Map<StudentEntity, List<SubjectEntity>> subjectsByStudent = new HashMap<StudentEntity, List<SubjectEntity>>();
 			for (StudentSubjectsDto  entry : subjects) {
 				SubjectEntity subject = entry.getSubject();
 			    StudentEntity student = entry.getStudent();
@@ -112,8 +161,13 @@ public class SubjectController {
 			    }
 			    subjectsss.add(subject);
 			}
+			
+*/								
+			logger.info("---------------------subjectsByStudent " + subjectsByStudent.toString());
+
 			logger.info("---------------- Finished OK.");
-			return new ResponseEntity<Map<StudentEntity, List<SubjectEntity>>>(subjectsByStudent, HttpStatus.OK);
+			return new ResponseEntity<List<Pair<StudentEntity, List<SubjectEntity>>>>(subjectsByStudent, HttpStatus.OK);
+			//return new ResponseEntity<Map<StudentEntity, List<SubjectEntity>>>(subjectsByStudent, HttpStatus.OK);
 		} catch(Exception e) {
 			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
 			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -230,16 +284,16 @@ public class SubjectController {
 			logger.info("Subject identified.");
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
-			if (updateSubject.getTeachers() != null) {
+			if (updateSubject.getTeachers() != null && updateSubject.getAssignmentDate() == null && teacherRepository.findByIdAndStatusLike(Integer.parseInt(updateSubject.getTeachers().iterator().next()), 1) != null) {
 				subjectDao.addTeachersToSubject(loggedUser, subject, updateSubject.getTeachers());
 				logger.info("Teacher/s added.");
 			}
-			if (updateSubject.getClasses() != null) {
+			if (updateSubject.getClasses() != null && updateSubject.getLearningProgram() != null && classRepository.findByIdAndStatusLike(Integer.parseInt(updateSubject.getClasses().iterator().next()), 1) != null) {
 				subjectDao.addClassToSubject(loggedUser, updateSubject.getClasses(), subject, updateSubject.getLearningProgram());
 				logger.info("Class/es added.");
 			}
-			if (updateSubject.getSubject_teachers()!= null) {
-				subjectDao.addTeacherAndDepartmentToSubject(loggedUser, subject, updateSubject.getSubject_teachers(), updateSubject.getSchoolYear());
+			if (updateSubject.getTeachingDepartment()!= null && updateSubject.getTeachingTeacher()!= null && updateSubject.getSchoolYear() != null && teacherRepository.findByIdAndStatusLike(Integer.parseInt(updateSubject.getTeachingTeacher()), 1) != null && departmentRepository.findByIdAndStatusLike(Integer.parseInt(updateSubject.getTeachingDepartment()), 1) != null) {
+				subjectDao.addTeacherAndDepartmentToSubject(loggedUser, subject, updateSubject.getTeachingDepartment(), updateSubject.getTeachingTeacher(), updateSubject.getSchoolYear());
 				logger.info("Teachers/s in department/s added.");
 			}
 			logger.info("---------------- Finished OK.");
@@ -286,8 +340,8 @@ public class SubjectController {
 				subjectDao.removeClassFromSubject(loggedUser, updateSubject.getClasses(), subject);
 				logger.info("Class/es added.");
 			}
-			if (updateSubject.getSubject_teachers()!= null) {
-				subjectDao.removeTeacherAndDepartmentFromSubject(loggedUser, subject, updateSubject.getSubject_teachers());
+			if (updateSubject.getTeachingDepartment()!= null && updateSubject.getTeachingTeacher()!= null) {
+				subjectDao.removeTeacherAndDepartmentFromSubject(loggedUser, subject, updateSubject.getTeachingDepartment(), updateSubject.getTeachingTeacher());
 				logger.info("Teachers/s in department/s added.");
 			}
 			logger.info("---------------- Finished OK.");

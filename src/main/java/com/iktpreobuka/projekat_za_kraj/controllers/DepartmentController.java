@@ -23,10 +23,14 @@ import org.springframework.web.bind.annotation.RestController;
 import com.fasterxml.jackson.annotation.JsonView;
 import com.iktpreobuka.projekat_za_kraj.controllers.util.RESTError;
 import com.iktpreobuka.projekat_za_kraj.entities.ClassEntity;
+import com.iktpreobuka.projekat_za_kraj.entities.DepartmentClassEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.DepartmentEntity;
+import com.iktpreobuka.projekat_za_kraj.entities.PrimaryTeacherDepartmentEntity;
+import com.iktpreobuka.projekat_za_kraj.entities.StudentDepartmentEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.StudentEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.SubjectEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.TeacherEntity;
+import com.iktpreobuka.projekat_za_kraj.entities.TeacherSubjectDepartmentEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.UserEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.dto.DepartmentClassDto;
 import com.iktpreobuka.projekat_za_kraj.entities.dto.DepartmentDto;
@@ -92,11 +96,11 @@ public class DepartmentController {
 	@Secured({"ROLE_ADMIN"})
 	@JsonView(Views.Admin.class)
 	@RequestMapping(method = RequestMethod.GET, value = "/{id}")
-	public ResponseEntity<?> getById(@PathVariable String id, Principal principal) {
+	public ResponseEntity<?> getById(@PathVariable Integer id, Principal principal) {
 		logger.info("################ /project/department/getById started.");
 		logger.info("Logged user: " + principal.getName());
 		try {
-			Iterable<DepartmentClassDto> department= departmentRepository.findWithClass_departmentByStatusLike(1);
+			Iterable<DepartmentClassDto> department= departmentRepository.findWithClass_departmentByIdAndStatusLike(id, 1);
 			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<Iterable<DepartmentClassDto>>(department, HttpStatus.OK);
 		} catch(Exception e) {
@@ -124,11 +128,11 @@ public class DepartmentController {
 	@Secured({"ROLE_ADMIN"})
 	@JsonView(Views.Admin.class)
 	@RequestMapping(method = RequestMethod.GET, value = "/deleted/{id}")
-	public ResponseEntity<?> getByIdDeleted(@PathVariable String id, Principal principal) {
+	public ResponseEntity<?> getByIdDeleted(@PathVariable Integer id, Principal principal) {
 		logger.info("################ /project/department/getByIdDeleted started.");
 		logger.info("Logged user: " + principal.getName());
 		try {
-			Iterable<DepartmentClassDto> department= departmentRepository.findWithClass_departmentByStatusLike(0);
+			Iterable<DepartmentClassDto> department= departmentRepository.findWithClass_departmentByIdAndStatusLike(id, 0);
 			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<Iterable<DepartmentClassDto>>(department, HttpStatus.OK);
 		} catch(Exception e) {
@@ -156,11 +160,11 @@ public class DepartmentController {
 	@Secured({"ROLE_ADMIN"})
 	@JsonView(Views.Admin.class)
 	@RequestMapping(method = RequestMethod.GET, value = "/archived/{id}")
-	public ResponseEntity<?> getByIdArchived(@PathVariable String id, Principal principal) {
+	public ResponseEntity<?> getByIdArchived(@PathVariable Integer id, Principal principal) {
 		logger.info("################ /project/department/archived/getByIdArchived started.");
 		logger.info("Logged user: " + principal.getName());
 		try {
-			Iterable<DepartmentClassDto> department= departmentRepository.findWithClass_departmentByStatusLike(-1);
+			Iterable<DepartmentClassDto> department= departmentRepository.findWithClass_departmentByIdAndStatusLike(id, -1);
 			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<Iterable<DepartmentClassDto>>(department, HttpStatus.OK);
 		} catch(Exception e) {
@@ -183,7 +187,7 @@ public class DepartmentController {
 			logger.info("---------------- New department is null.");
 	        return new ResponseEntity<>("New department is null.", HttpStatus.BAD_REQUEST);
 	      }
-		if (newDepartment.getDepartment_class() == null || newDepartment.getDepartmentLabel() == null || newDepartment.getEnrollmentYear() == null) {
+		if (newDepartment.getDepartment_class() == null || newDepartment.getSchoolYear() == null || newDepartment.getDepartmentLabel() == null || newDepartment.getEnrollmentYear() == null) {
 			logger.info("---------------- Some data is null.");
 	        return new ResponseEntity<>("Some data is null.", HttpStatus.BAD_REQUEST);
 		}
@@ -232,31 +236,35 @@ public class DepartmentController {
 		try {
 			if (updateDepartment.getDepartmentLabel() != null && updateDepartment.getEnrollmentYear() != null && departmentRepository.findByDepartmentLabelAndEnrollmentYearAndStatusLike(updateDepartment.getDepartmentLabel(), updateDepartment.getEnrollmentYear(), 1) != null) {
 				logger.info("---------------- Department label and enrollment year already exists.");
-		        return new ResponseEntity<>("Department label and enrollment year already exists.", HttpStatus.BAD_REQUEST);
+		        return new ResponseEntity<>("Department label and enrollment year already exists.", HttpStatus.FORBIDDEN);
 			}
 			if (updateDepartment.getDepartmentLabel() != null && updateDepartment.getEnrollmentYear() == null && departmentRepository.findByDepartmentLabelAndEnrollmentYearAndStatusLike(updateDepartment.getDepartmentLabel(), department.getEnrollmentYear(), 1) != null) {
 				logger.info("---------------- Department label already exists.");
-		        return new ResponseEntity<>("Department label already exists.", HttpStatus.BAD_REQUEST);
+		        return new ResponseEntity<>("Department label already exists.", HttpStatus.FORBIDDEN);
 			}
 			department = departmentRepository.findByIdAndStatusLike(Integer.parseInt(id), 1);
 			if (department==null || department.getStatus()!=1) {
 				logger.info("---------------- Department not exist.");
-				return new ResponseEntity<>("Department not exist.", HttpStatus.BAD_REQUEST);
+				return new ResponseEntity<>("Department not exist.", HttpStatus.NOT_FOUND);
 			}
 			logger.info("Department identified.");
 			if (updateDepartment.getDepartmentLabel() == null && updateDepartment.getEnrollmentYear() != null && departmentRepository.findByDepartmentLabelAndEnrollmentYearAndStatusLike(department.getDepartmentLabel(), updateDepartment.getEnrollmentYear(), 1) != null) {
 				logger.info("---------------- Enrollment year already exists.");
-		        return new ResponseEntity<>("Enrollment year already exists.", HttpStatus.BAD_REQUEST);
+		        return new ResponseEntity<>("Enrollment year already exists.", HttpStatus.FORBIDDEN);
+			}
+			if ((updateDepartment.getDepartment_class() != null && updateDepartment.getSchoolYear() == null) || (updateDepartment.getDepartment_class() == null && updateDepartment.getSchoolYear() != null)) {
+				logger.info("---------------- School year and class must be provided together.");
+		        return new ResponseEntity<>("School year and class must be provided together.", HttpStatus.FORBIDDEN);
 			}
 			if (updateDepartment.getDepartment_class() != null && !updateDepartment.getDepartment_class().equals(" ") && !updateDepartment.getDepartment_class().equals("")) {
 				ClassEntity class_ = classRepository.findByClassLabelAndStatusLike(EClass.valueOf(updateDepartment.getDepartment_class()), 1);
 				if (class_==null || class_.getStatus()!=1) {
 					logger.info("---------------- Class not exist.");
-					return new ResponseEntity<>("Class not exist.", HttpStatus.BAD_REQUEST);
+					return new ResponseEntity<>("Class not exist.", HttpStatus.NOT_FOUND);
 				}
 			}
 			logger.info("Class identified.");
-			if (updateDepartment.getDepartment_class() != null || updateDepartment.getDepartmentLabel() != null || updateDepartment.getEnrollmentYear() != null) {
+			if ((updateDepartment.getDepartment_class() != null && updateDepartment.getSchoolYear() != null) || updateDepartment.getDepartmentLabel() != null || updateDepartment.getEnrollmentYear() != null) {
 				UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 				logger.info("Logged user identified.");
 				departmentDao.modifyDepartment(loggedUser, department, updateDepartment);	
@@ -355,16 +363,17 @@ public class DepartmentController {
 	@Secured("ROLE_ADMIN")
 	@JsonView(Views.Admin.class)
 	@RequestMapping(method = RequestMethod.PUT, value = "/{id}/subject/{s_id}/teacher/{t_id}/schoolyear/{school_year}")
-	public ResponseEntity<?> addTeacherAndSubjectToDepartment(@PathVariable Integer id, @PathVariable Integer s_id, @PathVariable Integer t_id, String school_year, Principal principal) {
+	public ResponseEntity<?> addTeacherAndSubjectToDepartment(@PathVariable Integer id, @PathVariable Integer s_id, @PathVariable Integer t_id, @PathVariable String school_year, Principal principal) {
 		logger.info("################ /project/department/{id}/subject/{s_id}/teacher/{t_id}/schoolyear/{school_year}/addTeacherAndSubjectToDepartment started.");
 		logger.info("Logged user: " + principal.getName());
+		logger.info("Data: " + id.toString() + "  " + s_id.toString() + "   " + t_id.toString() + "   " + school_year.toString());
 		if (id == null || t_id == null || s_id == null || school_year == null) {
 			logger.info("---------------- Some data is null.");
 	        return new ResponseEntity<>("Some data is null.", HttpStatus.BAD_REQUEST);
 	      }
-		DepartmentEntity department = new DepartmentEntity();
+		TeacherSubjectDepartmentEntity tsd = new TeacherSubjectDepartmentEntity();
 		try {
-			department = departmentRepository.findByIdAndStatusLike(id, 1);
+			DepartmentEntity department = departmentRepository.findByIdAndStatusLike(id, 1);
 			if (department == null || department.getStatus()!=1) {
 				logger.info("---------------- Department not exist.");
 		        return new ResponseEntity<>("Department not exist.", HttpStatus.BAD_REQUEST);
@@ -385,11 +394,11 @@ public class DepartmentController {
 			if (school_year != null && !school_year.equals(" ") && !school_year.equals("")) {
 				UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 				logger.info("Logged user identified.");
-				departmentDao.addTeacherAndSubjectToDepartment(loggedUser, teacher, department, subject, school_year);
+				tsd = departmentDao.addTeacherAndSubjectToDepartment(loggedUser, teacher, department, subject, school_year);
 				logger.info("Teacher and subject added to department.");
 			}
 			logger.info("---------------- Finished OK.");
-			return new ResponseEntity<DepartmentEntity>(department, HttpStatus.OK);
+			return new ResponseEntity<TeacherSubjectDepartmentEntity>(tsd, HttpStatus.OK);
 		} catch (NumberFormatException e) {
 			logger.error("++++++++++++++++ Number format exception occurred: " + e.getMessage());
 			return new ResponseEntity<RESTError>(new RESTError(2, "Number format exception occurred: "+ e.getLocalizedMessage()), HttpStatus.NOT_ACCEPTABLE);
@@ -409,9 +418,9 @@ public class DepartmentController {
 			logger.info("---------------- Some data is null.");
 	        return new ResponseEntity<>("Some data is null.", HttpStatus.BAD_REQUEST);
 	      }
-		DepartmentEntity department = new DepartmentEntity();
+		TeacherSubjectDepartmentEntity tsd = new TeacherSubjectDepartmentEntity();
 		try {
-			department = departmentRepository.findByIdAndStatusLike(id, 1);
+			DepartmentEntity department = departmentRepository.findByIdAndStatusLike(id, 1);
 			if (department == null || department.getStatus()!=1) {
 				logger.info("---------------- Department not exist.");
 		        return new ResponseEntity<>("Department not exist.", HttpStatus.BAD_REQUEST);
@@ -431,9 +440,9 @@ public class DepartmentController {
 			logger.info("Subject identified.");
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
-			departmentDao.removeTeacherAndSubjectFromDepartment(loggedUser, teacher, department, subject);
+			tsd = departmentDao.removeTeacherAndSubjectFromDepartment(loggedUser, teacher, department, subject);
 			logger.info("---------------- Finished OK.");
-			return new ResponseEntity<DepartmentEntity>(department, HttpStatus.OK);
+			return new ResponseEntity<TeacherSubjectDepartmentEntity>(tsd, HttpStatus.OK);
 		} catch (NumberFormatException e) {
 			logger.error("++++++++++++++++ Number format exception occurred: " + e.getMessage());
 			return new ResponseEntity<RESTError>(new RESTError(2, "Number format exception occurred: "+ e.getLocalizedMessage()), HttpStatus.NOT_ACCEPTABLE);
@@ -453,10 +462,10 @@ public class DepartmentController {
 			logger.info("---------------- Some data is null.");
 	        return new ResponseEntity<>("Some data is null.", HttpStatus.BAD_REQUEST);
 	      }
-		DepartmentEntity department = new DepartmentEntity();
+		PrimaryTeacherDepartmentEntity pt = new PrimaryTeacherDepartmentEntity();
 		try {
-			department = departmentRepository.findByIdAndStatusLike(id, 1);
-			if (department == null || department.getStatus()!=1) {
+			DepartmentEntity department = departmentRepository.findByIdAndStatusLike(id, 1);
+			if (department == null) {
 				logger.info("---------------- Department not exist.");
 		        return new ResponseEntity<>("Department not exist.", HttpStatus.BAD_REQUEST);
 		      }
@@ -470,11 +479,11 @@ public class DepartmentController {
 			if (assignmentDate != null && !assignmentDate.equals(" ") && !assignmentDate.equals("")) {
 				UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 				logger.info("Logged user identified.");
-				departmentDao.addPrimaryTeacherToDepartment(loggedUser, teacher, department, assignmentDate);
+				pt = departmentDao.addPrimaryTeacherToDepartment(loggedUser, teacher, department, assignmentDate);
 				logger.info("Primary teacher added to department.");
 			}
 			logger.info("---------------- Finished OK.");
-			return new ResponseEntity<DepartmentEntity>(department, HttpStatus.OK);
+			return new ResponseEntity<PrimaryTeacherDepartmentEntity>(pt, HttpStatus.OK);
 		} catch (NumberFormatException e) {
 			logger.error("++++++++++++++++ Number format exception occurred: " + e.getMessage());
 			return new ResponseEntity<RESTError>(new RESTError(2, "Number format exception occurred: "+ e.getLocalizedMessage()), HttpStatus.NOT_ACCEPTABLE);
@@ -494,9 +503,9 @@ public class DepartmentController {
 			logger.info("---------------- Some data is null.");
 	        return new ResponseEntity<>("Some data is null.", HttpStatus.BAD_REQUEST);
 	      }
-		DepartmentEntity department = new DepartmentEntity();
+		PrimaryTeacherDepartmentEntity pt = new PrimaryTeacherDepartmentEntity();
 		try {
-			department = departmentRepository.findByIdAndStatusLike(id, 1);
+			DepartmentEntity department = departmentRepository.findByIdAndStatusLike(id, 1);
 			if (department == null || department.getStatus()!=1) {
 				logger.info("---------------- Department not exist.");
 		        return new ResponseEntity<>("Department not exist.", HttpStatus.BAD_REQUEST);
@@ -510,9 +519,9 @@ public class DepartmentController {
 			logger.info("Teacher identified.");
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
-			departmentDao.removePrimaryTeacherFromDepartment(loggedUser, teacher, department);
+			pt = departmentDao.removePrimaryTeacherFromDepartment(loggedUser, teacher, department);
 			logger.info("---------------- Finished OK.");
-			return new ResponseEntity<DepartmentEntity>(department, HttpStatus.OK);
+			return new ResponseEntity<PrimaryTeacherDepartmentEntity>(pt, HttpStatus.OK);
 		} catch (NumberFormatException e) {
 			logger.error("++++++++++++++++ Number format exception occurred: " + e.getMessage());
 			return new ResponseEntity<RESTError>(new RESTError(2, "Number format exception occurred: "+ e.getLocalizedMessage()), HttpStatus.NOT_ACCEPTABLE);
@@ -532,9 +541,9 @@ public class DepartmentController {
 			logger.info("---------------- Some data is null.");
 	        return new ResponseEntity<>("Some data is null.", HttpStatus.BAD_REQUEST);
 	      }
-		DepartmentEntity department = new DepartmentEntity();
+		DepartmentClassEntity dce = new DepartmentClassEntity();
 		try {
-			department = departmentRepository.findByIdAndStatusLike(id, 1);
+			DepartmentEntity department = departmentRepository.findByIdAndStatusLike(id, 1);
 			if (department == null || department.getStatus()!=1) {
 				logger.info("---------------- Department not exist.");
 		        return new ResponseEntity<>("Department not exist.", HttpStatus.BAD_REQUEST);
@@ -549,11 +558,11 @@ public class DepartmentController {
 			if (schoolyear != null && !schoolyear.equals(" ") && !schoolyear.equals("")) {
 				UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 				logger.info("Logged user identified.");
-				departmentDao.addClassToDepartment(loggedUser, class_, department, schoolyear);
+				dce = departmentDao.addClassToDepartment(loggedUser, class_, department, schoolyear);
 				logger.info("Class added to department.");
 			}
 			logger.info("---------------- Finished OK.");
-			return new ResponseEntity<DepartmentEntity>(department, HttpStatus.OK);
+			return new ResponseEntity<DepartmentClassEntity>(dce, HttpStatus.OK);
 		} catch (NumberFormatException e) {
 			logger.error("++++++++++++++++ Number format exception occurred: " + e.getMessage());
 			return new ResponseEntity<RESTError>(new RESTError(2, "Number format exception occurred: "+ e.getLocalizedMessage()), HttpStatus.NOT_ACCEPTABLE);
@@ -573,9 +582,9 @@ public class DepartmentController {
 			logger.info("---------------- Some data is null.");
 	        return new ResponseEntity<>("Some data is null.", HttpStatus.BAD_REQUEST);
 	      }
-		DepartmentEntity department = new DepartmentEntity();
+		DepartmentClassEntity dce = new DepartmentClassEntity();
 		try {
-			department = departmentRepository.findByIdAndStatusLike(id, 1);
+			DepartmentEntity department = departmentRepository.findByIdAndStatusLike(id, 1);
 			if (department == null || department.getStatus()!=1) {
 				logger.info("---------------- Department not exist.");
 		        return new ResponseEntity<>("Department not exist.", HttpStatus.BAD_REQUEST);
@@ -589,9 +598,9 @@ public class DepartmentController {
 			logger.info("Class identified.");
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
-			departmentDao.removeClassFromDepartment(loggedUser, class_, department);
+			dce = departmentDao.removeClassFromDepartment(loggedUser, class_, department);
 			logger.info("---------------- Finished OK.");
-			return new ResponseEntity<DepartmentEntity>(department, HttpStatus.OK);
+			return new ResponseEntity<DepartmentClassEntity>(dce, HttpStatus.OK);
 		} catch (NumberFormatException e) {
 			logger.error("++++++++++++++++ Number format exception occurred: " + e.getMessage());
 			return new ResponseEntity<RESTError>(new RESTError(2, "Number format exception occurred: "+ e.getLocalizedMessage()), HttpStatus.NOT_ACCEPTABLE);
@@ -604,22 +613,22 @@ public class DepartmentController {
 	@Secured("ROLE_ADMIN")
 	@JsonView(Views.Admin.class)
 	@RequestMapping(method = RequestMethod.PUT, value = "/{id}/student/{s_id}/transferdate/{transferdate}")
-	public ResponseEntity<?> addStudentToDepartment(@PathVariable Integer id, @PathVariable Integer s_id, String transferdate, Principal principal) {
+	public ResponseEntity<?> addStudentToDepartment(@PathVariable Integer id, @PathVariable Integer s_id, @PathVariable String transferdate, Principal principal) {
 		logger.info("################ /project/department/{id}/student/{s_id}/transferdate/{transferdate}/addStudentToDepartment started.");
 		logger.info("Logged user: " + principal.getName());
 		if (id == null || s_id == null || transferdate == null) {
 			logger.info("---------------- Some data is null.");
 	        return new ResponseEntity<>("Some data is null.", HttpStatus.BAD_REQUEST);
 	      }
-		StudentEntity student = new StudentEntity();
+		StudentDepartmentEntity sde = new StudentDepartmentEntity();
 		try {
-			DepartmentEntity department = departmentRepository.findByIdAndStatusLike(s_id, 1);
+			DepartmentEntity department = departmentRepository.findByIdAndStatusLike(id, 1);
 			if (department == null || department.getStatus()!=1) {
 				logger.info("---------------- Department not exist.");
 		        return new ResponseEntity<>("Department not exist.", HttpStatus.BAD_REQUEST);
 		      }
 			logger.info("Department identified.");
-			student = studentRepository.findByIdAndStatusLike(id, 1);
+			StudentEntity student = studentRepository.findByIdAndStatusLike(s_id, 1);
 			if (student == null || student.getStatus()!=1) {
 				logger.info("---------------- Student didn't find.");
 		        return new ResponseEntity<>("Student not exist.", HttpStatus.BAD_REQUEST);
@@ -628,11 +637,11 @@ public class DepartmentController {
 			if (transferdate != null && !transferdate.equals(" ") && !transferdate.equals("")) {
 				UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 				logger.info("Logged user identified.");
-				departmentDao.addStudentToDepartment(loggedUser, student, department, transferdate);
+				sde = departmentDao.addStudentToDepartment(loggedUser, student, department, transferdate);
 				logger.info("Student added to department.");
 			}
 			logger.info("---------------- Finished OK.");
-			return new ResponseEntity<UserEntity>(student, HttpStatus.OK);
+			return new ResponseEntity<StudentDepartmentEntity>(sde, HttpStatus.OK);
 		} catch (NumberFormatException e) {
 			logger.error("++++++++++++++++ Number format exception occurred: " + e.getMessage());
 			return new ResponseEntity<RESTError>(new RESTError(2, "Number format exception occurred: "+ e.getLocalizedMessage()), HttpStatus.NOT_ACCEPTABLE);
@@ -648,15 +657,15 @@ public class DepartmentController {
 	public ResponseEntity<?> removeStudentFromDepartment(@PathVariable Integer id, @PathVariable Integer s_id, Principal principal) {
 		logger.info("################ /project/department/{id}/remove/student/{s_id}/addStudentToDepartment started.");
 		logger.info("Logged user: " + principal.getName());
-		StudentEntity student = new StudentEntity();
+		StudentDepartmentEntity sde = new StudentDepartmentEntity();
 		try {
-			DepartmentEntity department = departmentRepository.findByIdAndStatusLike(s_id, 1);
+			DepartmentEntity department = departmentRepository.findByIdAndStatusLike(id, 1);
 			if (department == null || department.getStatus()!=1) {
 				logger.info("---------------- Department not exist.");
 		        return new ResponseEntity<>("Department not exist.", HttpStatus.BAD_REQUEST);
 		      }
 			logger.info("Department identified.");
-			student = studentRepository.findByIdAndStatusLike(id, 1);
+			StudentEntity student = studentRepository.findByIdAndStatusLike(s_id, 1);
 			if (student == null || student.getStatus()!=1) {
 				logger.info("---------------- Student didn't find.");
 		        return new ResponseEntity<>("Student not exist.", HttpStatus.BAD_REQUEST);
@@ -664,9 +673,9 @@ public class DepartmentController {
 			logger.info("Student identified.");
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
-			departmentDao.removeStudentFromDepartment(loggedUser, student, department);
+			sde = departmentDao.removeStudentFromDepartment(loggedUser, student, department);
 			logger.info("---------------- Finished OK.");
-			return new ResponseEntity<UserEntity>(student, HttpStatus.OK);
+			return new ResponseEntity<StudentDepartmentEntity>(sde, HttpStatus.OK);
 		} catch (NumberFormatException e) {
 			logger.error("++++++++++++++++ Number format exception occurred: " + e.getMessage());
 			return new ResponseEntity<RESTError>(new RESTError(2, "Number format exception occurred: "+ e.getLocalizedMessage()), HttpStatus.NOT_ACCEPTABLE);

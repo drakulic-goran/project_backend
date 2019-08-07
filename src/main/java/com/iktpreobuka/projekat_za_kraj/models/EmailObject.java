@@ -11,6 +11,15 @@ public class EmailObject {
 		} 
 	//TODO add getters and setters 
 
+
+	public EmailObject(String to, String subject, String text) {
+		super();
+		this.to = to;
+		this.subject = subject;
+		this.text = text;
+	}
+
+
 	public String getTo() {
 		return to;
 	}

@@ -190,7 +190,7 @@ public class TeacherController {
 		}
 		UserEntity user = new TeacherEntity();
 		try {
-			if (newTeacher.getjMBG() != null && userRepository.getByJMBG(newTeacher.getjMBG()) != null) {
+			if (newTeacher.getjMBG() != null && teacherRepository.getByJMBG(newTeacher.getjMBG()) != null) {
 				logger.info("---------------- JMBG already exists.");
 		        return new ResponseEntity<>("JMBG already exists.", HttpStatus.BAD_REQUEST);
 			}
@@ -397,6 +397,10 @@ public class TeacherController {
 			logger.info("Teacher for archiving identified.");
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
+			if (id == loggedUser.getId()) {
+				logger.info("---------------- Selected Id is ID of logged User: Cann't archive yourself.");
+				return new ResponseEntity<>("Selected Id is ID of logged User: Cann't archive yourself.", HttpStatus.BAD_REQUEST);
+		      }	
 			teacherDao.archiveTeacher(loggedUser, user);
 			logger.info("Teacher archived.");
 			UserAccountEntity account = userAccountRepository.findByUserAndAccessRoleLikeAndStatusLike(user, EUserRole.ROLE_TEACHER, 1);

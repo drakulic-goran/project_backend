@@ -16,6 +16,9 @@ public class DepartmentDto {
 	@JsonView(Views.Student.class)
 	@Pattern(regexp = "^(20|[3-9][0-9])\\d{2}$", message="Enrollment year is not valid, must be in format YYYY.")
 	private String enrollmentYear;
+	@JsonView(Views.Student.class)
+	@Pattern(regexp = "^(20|[3-9][0-9])[0-9]{2}\\-(20|[3-9][0-9])[0-9]{2}$", message="School year is not valid, must be in format YYYY-YYYY.")
+	private String schoolYear;
 	@JsonView(Views.Teacher.class)
 	private List<String> students;
 	@JsonView(Views.Student.class)
@@ -33,6 +36,7 @@ public class DepartmentDto {
 	public DepartmentDto(
 			@Pattern(regexp = "^[A-Za-z0-9]{1,2}$", message = "Department label is not valid, can contain only one or two letters and/or numbers.") String departmentLabel,
 			@Pattern(regexp = "^(20|[3-9][0-9])\\d{2}$", message = "Enrollment year is not valid, must be in format YYYY.") String enrollmentYear,
+			@Pattern(regexp = "^(20|[3-9][0-9])[0-9]{2}\\-(20|[3-9][0-9])[0-9]{2}$", message = "School year is not valid, must be in format YYYY-YYYY.") String schoolYear,
 			List<String> students, String primaryTeacher, List<Pair<String, String>> teachers_subjects,
 			String department_class) {
 		super();
@@ -47,32 +51,37 @@ public class DepartmentDto {
 	public DepartmentDto(
 			@Pattern(regexp = "^[A-Za-z0-9]{1,2}$", message = "Department label is not valid, can contain only one or two letters and/or numbers.") String departmentLabel,
 			@Pattern(regexp = "^(20|[3-9][0-9])\\d{2}$", message = "Enrollment year is not valid, must be in format YYYY.") String enrollmentYear,
-			List<Pair<String, String>> teachers_subjects, String department_class) {
+			List<Pair<String, String>> teachers_subjects, String department_class, 
+			@Pattern(regexp = "^(20|[3-9][0-9])[0-9]{2}\\-(20|[3-9][0-9])[0-9]{2}$", message = "School year is not valid, must be in format YYYY-YYYY.") String schoolYear) {
 		super();
 		this.departmentLabel = departmentLabel;
 		this.enrollmentYear = enrollmentYear;
 		this.teachers_subjects = teachers_subjects;
 		this.department_class = department_class;
+		this.schoolYear = schoolYear;
 	}
 	
 	public DepartmentDto(
 			@Pattern(regexp = "^[A-Za-z0-9]{1,2}$", message = "Department label is not valid, can contain only one or two letters and/or numbers.") String departmentLabel,
 			@Pattern(regexp = "^(20|[3-9][0-9])\\d{2}$", message = "Enrollment year is not valid, must be in format YYYY.") String enrollmentYear,
-			String primaryTeacher, String department_class) {
+			String primaryTeacher, String department_class, @Pattern(regexp = "^(20|[3-9][0-9])[0-9]{2}\\-(20|[3-9][0-9])[0-9]{2}$", message = "School year is not valid, must be in format YYYY-YYYY.") String schoolYear) {
 		super();
 		this.departmentLabel = departmentLabel;
 		this.enrollmentYear = enrollmentYear;
 		this.primaryTeacher = primaryTeacher;
 		this.department_class = department_class;
+		this.schoolYear = schoolYear;
 	}
 
 	
 	public DepartmentDto(String department_class,
+			@Pattern(regexp = "^(20|[3-9][0-9])[0-9]{2}\\-(20|[3-9][0-9])[0-9]{2}$", message = "School year is not valid, must be in format YYYY-YYYY.") String schoolYear,
 			@Pattern(regexp = "^[A-Za-z0-9]{1,2}$", message = "Department label is not valid, can contain only one or two letters and/or numbers.") String departmentLabel,
 			@Pattern(regexp = "^(20|[3-9][0-9])\\d{2}$", message = "Enrollment year is not valid, must be in format YYYY.") String enrollmentYear,
 			List<String> students) {
 		super();
 		this.department_class = department_class;
+		this.schoolYear = schoolYear;
 		this.departmentLabel = departmentLabel;
 		this.enrollmentYear = enrollmentYear;
 		this.students = students;
@@ -125,6 +134,14 @@ public class DepartmentDto {
 
 	public void setDepartment_class(String department_class) {
 		this.department_class = department_class;
+	}
+
+	public String getSchoolYear() {
+		return schoolYear;
+	}
+
+	public void setSchoolYear(String schoolYear) {
+		this.schoolYear = schoolYear;
 	}
 	
 }

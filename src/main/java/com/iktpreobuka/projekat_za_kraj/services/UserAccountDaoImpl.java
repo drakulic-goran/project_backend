@@ -108,19 +108,45 @@ public class UserAccountDaoImpl implements UserAccountDao {
 		}
 	}
 
-	/*@Override
-	public void modifyAccountRole(UserEntity loggedUser, UserAccountEntity account, EUserRole role) throws Exception {
+	@Override
+	public void modifyAccountAccessRole(UserEntity loggedUser, UserAccountEntity account, EUserRole role) throws Exception {
 		try {
-			if (role != account.getAccessRole() && (role == EUserRole.ROLE_ADMIN || role == EUserRole.ROLE_PARENT || role == EUserRole.ROLE_TEACHER || role == EUserRole.ROLE_STUDENT)) {
+			if (role != null && (role == EUserRole.ROLE_ADMIN || role == EUserRole.ROLE_PARENT || role == EUserRole.ROLE_TEACHER || role == EUserRole.ROLE_STUDENT)) {
 				account.setAccessRole(role);
 				account.setUpdatedById(loggedUser.getId());
 				userAccountRepository.save(account);
 			}
 		} catch (Exception e) {
-			throw new Exception("ModifyAccountRole failed on saving.");
+			throw new Exception("modifyAccountAccessRole failed on saving.");
 		}
-	}*/
+	}
 	
+	@Override
+	public void modifyAccountUserAndAccessRole(UserEntity loggedUser, UserAccountEntity account, UserEntity user, EUserRole role) throws Exception {
+		try {
+			if (user != null && role != null) {
+				account.setUser(user);
+				account.setAccessRole(role);
+				account.setUpdatedById(loggedUser.getId());
+				userAccountRepository.save(account);
+			}
+		} catch (Exception e) {
+			throw new Exception("modifyAccountUserAndAccessRole failed on saving.");
+		}
+	}
+	
+	@Override
+	public void modifyAccountUser(UserEntity loggedUser, UserAccountEntity account, UserEntity user) throws Exception {
+		try {
+			if (user != null) {
+				account.setUser(user);
+				account.setUpdatedById(loggedUser.getId());
+				userAccountRepository.save(account);
+			}
+		} catch (Exception e) {
+			throw new Exception("modifyAccountUser failed on saving.");
+		}
+	}
 	
 	@Override
 	public void modifyAccountPassword(UserEntity loggedUser, UserAccountEntity account, String password) throws Exception {
