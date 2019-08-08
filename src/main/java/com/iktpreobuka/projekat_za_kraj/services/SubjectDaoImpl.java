@@ -16,6 +16,7 @@ import com.iktpreobuka.projekat_za_kraj.entities.TeacherEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.TeacherSubjectDepartmentEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.TeacherSubjectEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.UserEntity;
+import com.iktpreobuka.projekat_za_kraj.entities.dto.StudentSubjectsDto;
 import com.iktpreobuka.projekat_za_kraj.entities.dto.SubjectDto;
 import com.iktpreobuka.projekat_za_kraj.repositories.ClassRepository;
 import com.iktpreobuka.projekat_za_kraj.repositories.ClassSubjectRepository;
@@ -361,6 +362,20 @@ public class SubjectDaoImpl implements SubjectDao {
 				Pair<StudentEntity, List<SubjectEntity>> temp = subjectsByStudent.get(i);
 				if (temp.left.equals(student)) {
 					subjectsss = temp.right;
+				}
+			}
+		}  
+		return subjectsss;
+	}
+	
+	@Override
+	public List<SubjectEntity> getSubjectListByStudent1(List<StudentSubjectsDto> reza, StudentEntity student) throws Exception {
+		List<SubjectEntity> subjectsss = null;
+		if (!reza.isEmpty()) {
+			for (int i = 0; i < reza.size(); i++) {
+				StudentSubjectsDto temp = reza.get(i);
+				if (temp.getStudent().equals(student)) {
+					subjectsss = temp.getSubject();
 				}
 			}
 		}  

@@ -59,7 +59,7 @@ public class StudentEntity extends UserEntity {
 	private List<StudentDepartmentEntity> departments = new ArrayList<>();
 
 
-	@JsonView(Views.Parent.class)
+	@JsonView(Views.Teacher.class)
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
 	//@Pattern(regexp = "^([0][1-9]|[1|2][0-9]|[3][0|1])[./-]([0][1-9]|[1][0-2])[./-]([1-2][0-9]{3})$", message="Enrollment date is not valid, must be in dd-MM-yyyy format.")
 	@Column(name="enrollment_date")

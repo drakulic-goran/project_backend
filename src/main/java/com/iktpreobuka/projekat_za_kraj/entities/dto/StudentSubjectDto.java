@@ -1,7 +1,5 @@
 package com.iktpreobuka.projekat_za_kraj.entities.dto;
 
-import java.util.List;
-
 import javax.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonView;
@@ -9,21 +7,21 @@ import com.iktpreobuka.projekat_za_kraj.entities.StudentEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.SubjectEntity;
 import com.iktpreobuka.projekat_za_kraj.security.Views;
 
-public class StudentSubjectsDto {
+public class StudentSubjectDto {
 
 	@JsonView(Views.Student.class)
 	@NotNull (message = "Student must be provided.")
 	private StudentEntity student;
 	@JsonView(Views.Student.class)
 	@NotNull (message = "Subject must be provided.")
-	private List<SubjectEntity> subject;
+	private SubjectEntity subject;
 	
-	public StudentSubjectsDto() {
+	public StudentSubjectDto() {
 		super();
 	}
 
-	public StudentSubjectsDto(@NotNull(message = "Student must be provided.") StudentEntity student,
-			@NotNull(message = "Subject must be provided.") List<SubjectEntity> subject) {
+	public StudentSubjectDto(@NotNull(message = "Student must be provided.") StudentEntity student,
+			@NotNull(message = "Subject must be provided.") SubjectEntity subject) {
 		super();
 		this.student = student;
 		this.subject = subject;
@@ -37,13 +35,12 @@ public class StudentSubjectsDto {
 		this.student = student;
 	}
 
-	public List<SubjectEntity> getSubject() {
+	public SubjectEntity getSubject() {
 		return subject;
 	}
 
-	public void setSubject(List<SubjectEntity> subject) {
+	public void setSubject(SubjectEntity subject) {
 		this.subject = subject;
 	}
-
 	
 }
