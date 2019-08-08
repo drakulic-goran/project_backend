@@ -48,5 +48,8 @@ public interface StudentRepository extends CrudRepository<StudentEntity, Integer
 	public void addAdminFromExistUser(String enrollment, String number, Integer user, Integer logged);
 	public Object getBySchoolIdentificationNumberAndStatusLike(String schoolIdentificationNumber, Integer status);
 	public Object getByJMBGAndStatusLike(String jMBG, Integer status);
+	
+	@Query("select s from StudentEntity s join s.departments dep join dep.department de join de.teachers d join d.primary_teacher t where t.id=:teacher and t.status=1 and dep.status=1 and s.status=1 and de.status=1 and d.status=1")
+	public List<StudentEntity> findByPrimaryTeacherId(Integer teacher);
 
 }

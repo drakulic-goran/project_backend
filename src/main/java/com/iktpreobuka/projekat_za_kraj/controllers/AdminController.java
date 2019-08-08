@@ -194,19 +194,19 @@ public class AdminController {
 		try {
 			if (newAdmin.getjMBG() != null && adminRepository.getByJMBG(newAdmin.getjMBG()) != null && userRepository.getByJMBG(newAdmin.getjMBG()) == null) {
 				logger.info("---------------- JMBG already exist.");
-				return new ResponseEntity<>("JMBG already exist.", HttpStatus.BAD_REQUEST);
+				return new ResponseEntity<>("JMBG already exist.", HttpStatus.NOT_ACCEPTABLE);
 			}
 			if (newAdmin.getEmail() != null && adminRepository.getByEmail(newAdmin.getEmail()) != null ) {
 				logger.info("---------------- Email already exist.");
-				return new ResponseEntity<>("Email already exist.", HttpStatus.BAD_REQUEST);
+				return new ResponseEntity<>("Email already exist.", HttpStatus.NOT_ACCEPTABLE);
 			}
 			if (newAdmin.getAccessRole() != null && !newAdmin.getAccessRole().equals("ROLE_ADMIN")) {
 				logger.info("---------------- Access role must be ROLE_ADMIN.");
-		        return new ResponseEntity<>("Access role must be ROLE_ADMIN.", HttpStatus.BAD_REQUEST);
+		        return new ResponseEntity<>("Access role must be ROLE_ADMIN.", HttpStatus.NOT_ACCEPTABLE);
 			}		
 			if (newAdmin.getUsername() != null && userAccountRepository.getByUsername(newAdmin.getUsername()) != null) {
-				logger.info("---------------- Username already exists.");
-		        return new ResponseEntity<>("Username already exists.", HttpStatus.BAD_REQUEST);
+				logger.info("---------------- Username already exist.");
+		        return new ResponseEntity<>("Username already exist.", HttpStatus.NOT_ACCEPTABLE);
 		    }
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
@@ -247,25 +247,25 @@ public class AdminController {
 		try {
 			user = adminRepository.findByIdAndStatusLike(id, 1);
 			if (user == null) {
-				logger.info("---------------- Admin didn't find.");
-		        return new ResponseEntity<>("Admin didn't find.", HttpStatus.BAD_REQUEST);
+				logger.info("---------------- Admin not found.");
+		        return new ResponseEntity<>("Admin not found.", HttpStatus.NOT_FOUND);
 		      }
 			logger.info("Admin identified.");
 			if (updateAdmin.getjMBG() != null && userRepository.getByJMBG(updateAdmin.getjMBG()) != null) {
 				logger.info("---------------- JMBG already exist.");
-				return new ResponseEntity<>("JMBG already exist.", HttpStatus.BAD_REQUEST);
+				return new ResponseEntity<>("JMBG already exist.", HttpStatus.NOT_ACCEPTABLE);
 			}
 			if (updateAdmin.getEmail() != null && adminRepository.getByEmail(updateAdmin.getEmail()) != null) {
 				logger.info("---------------- Email already exist.");
-				return new ResponseEntity<>("Email already exist.", HttpStatus.BAD_REQUEST);
+				return new ResponseEntity<>("Email already exist.", HttpStatus.NOT_ACCEPTABLE);
 			}
 			if (updateAdmin.getAccessRole() != null && !updateAdmin.getAccessRole().equals("ROLE_ADMIN")) {
 				logger.info("---------------- Access role must be ROLE_ADMIN.");
-		        return new ResponseEntity<>("Access role must be ROLE_ADMIN.", HttpStatus.BAD_REQUEST);
+		        return new ResponseEntity<>("Access role must be ROLE_ADMIN.", HttpStatus.NOT_ACCEPTABLE);
 			}		
 			if (updateAdmin.getUsername() != null && userAccountRepository.getByUsername(updateAdmin.getUsername()) != null) {
-				logger.info("---------------- Username already exists.");
-		        return new ResponseEntity<>("Username already exists.", HttpStatus.BAD_REQUEST);
+				logger.info("---------------- Username already exist.");
+		        return new ResponseEntity<>("Username already exist.", HttpStatus.NOT_ACCEPTABLE);
 		    }
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
@@ -305,8 +305,8 @@ public class AdminController {
 		try {
 			user = adminRepository.getById(id);
 			if (user == null || user.getStatus() == -1) {
-				logger.info("---------------- Admin didn't find.");
-		        return new ResponseEntity<>("Admin didn't find.", HttpStatus.BAD_REQUEST);
+				logger.info("---------------- Admin not found.");
+		        return new ResponseEntity<>("Admin not found.", HttpStatus.NOT_FOUND);
 		      }
 			logger.info("Admin for archiving identified.");
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
@@ -350,8 +350,8 @@ public class AdminController {
 		try {
 			user = adminRepository.findByIdAndStatusLike(id, 0);
 			if (user == null) {
-				logger.info("---------------- Admin didn't find.");
-		        return new ResponseEntity<>("Admin didn't find.", HttpStatus.BAD_REQUEST);
+				logger.info("---------------- Admin not found.");
+		        return new ResponseEntity<>("Admin not found.", HttpStatus.NOT_FOUND);
 		      }
 			logger.info("Admin for undeleting identified.");
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
@@ -391,8 +391,8 @@ public class AdminController {
 		try {
 			user = adminRepository.findByIdAndStatusLike(id, 1);
 			if (user == null) {
-				logger.info("---------------- Admin didn't find.");
-		        return new ResponseEntity<>("Admin didn't find.", HttpStatus.BAD_REQUEST);
+				logger.info("---------------- Admin not found.");
+		        return new ResponseEntity<>("Admin not found.", HttpStatus.NOT_FOUND);
 		      }
 			logger.info("Admin for deleting identified.");
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);

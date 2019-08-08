@@ -310,28 +310,28 @@ public class GradeController {
 		try {
 			StudentEntity student = studentRepository.findByIdAndStatusLike(Integer.parseInt(newGrade.getStudent()), 1);
 			if (student==null || student.getStatus()!=1) {
-				logger.info("---------------- Student not exist.");
-				return new ResponseEntity<>("Student not exist.", HttpStatus.NOT_FOUND);
+				logger.info("---------------- Student not found.");
+				return new ResponseEntity<>("Student not found.", HttpStatus.NOT_FOUND);
 			}
 			logger.info("Student: " + student.getId().toString());
 			SubjectEntity subject = subjectRepository.findByIdAndStatusLike(Integer.parseInt(newGrade.getSubject()), 1);
 			if (subject==null || subject.getStatus()!=1) {
-				logger.info("---------------- Subject not exist.");
-				return new ResponseEntity<>("Subject not exist.", HttpStatus.NOT_FOUND);
+				logger.info("---------------- Subject not found.");
+				return new ResponseEntity<>("Subject not found.", HttpStatus.NOT_FOUND);
 			}
 			logger.info("Subject: " + subject.getId().toString());
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
 			TeacherEntity teacher = teacherRepository.findByIdAndStatusLike(loggedUser.getId(), 1);
 			if (teacher==null) {
-				logger.info("---------------- Teacher not exist.");
-				return new ResponseEntity<>("Teacher not exist.", HttpStatus.NOT_FOUND);
+				logger.info("---------------- Teacher not found.");
+				return new ResponseEntity<>("Teacher not found.", HttpStatus.NOT_FOUND);
 			}
 			logger.info("Teacher: " + teacher.getId().toString());
-			TeacherSubjectDepartmentEntity teacherDepartments = teacherSubjectDepartmentRepository.getByTeachingTeacherAndTeachingSubjectAndTeachingDepartment(teacher, subject, student);
+			TeacherSubjectDepartmentEntity teacherDepartments = teacherSubjectDepartmentRepository.getByTeachingTeacherAndTeachingSubjectAndTeachingDepartmentAndTeachingClass(teacher, subject, student);
 			if (teacherDepartments==null) {
-				logger.info("---------------- Not student teacher.");
-				return new ResponseEntity<>("Not student teacher.", HttpStatus.NOT_ACCEPTABLE);
+				logger.info("---------------- Not student teacher or not subject in class or not teacher subject.");
+				return new ResponseEntity<>("Not student teacher or not subject in class or not teacher subject.", HttpStatus.FORBIDDEN);
 			}
 			logger.info("Teacher subject department: " + teacherDepartments.getId().toString());
 			grade = gradeDao.addNewGrade(teacher, student, teacherDepartments, newGrade);		
@@ -373,20 +373,20 @@ public class GradeController {
 		try {
 			GradeEntity grade = gradeRepository.findByIdAndStatusLike(Integer.parseInt(id), 1);
 			if (grade==null) {
-				logger.info("---------------- Grade not exist.");
-				return new ResponseEntity<>("Grade not exist.", HttpStatus.NOT_FOUND);
+				logger.info("---------------- Grade not found.");
+				return new ResponseEntity<>("Grade not found.", HttpStatus.NOT_FOUND);
 			}
 			if (newGrade.getStudent() != null && newGrade.getSubject() != null && newGrade.getSemester() != null && newGrade.getGradeValue() != null) {
 				StudentEntity student = studentRepository.findByIdAndStatusLike(Integer.parseInt(newGrade.getStudent()), 1);
 				if (student==null || student.getStatus()!=1) {
-					logger.info("---------------- Student not exist.");
-					return new ResponseEntity<>("Student not exist.", HttpStatus.NOT_FOUND);
+					logger.info("---------------- Student not found.");
+					return new ResponseEntity<>("Student not found.", HttpStatus.NOT_FOUND);
 				}
 				logger.info("Student identified.");
 				SubjectEntity subject = subjectRepository.findByIdAndStatusLike(Integer.parseInt(newGrade.getSubject()), 1);
 				if (subject==null || subject.getStatus()!=1) {
-					logger.info("---------------- Subject not exist.");
-					return new ResponseEntity<>("Subject not exist.", HttpStatus.NOT_FOUND);
+					logger.info("---------------- Subject not found.");
+					return new ResponseEntity<>("Subject not found.", HttpStatus.NOT_FOUND);
 				}
 				logger.info("Subject identified.");
 				UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
@@ -396,7 +396,7 @@ public class GradeController {
 				TeacherEntity teacher = new TeacherEntity();
 				Date updateDate = new Date();
 				if (loggedUserAccount.getAccessRole().equals(EUserRole.ROLE_ADMIN)) {
-					teacher = grade.getTeacher_subject_department().getTeaching_teacher();
+					teacher = grade.getTeacher_subject_department().getTeachingTeacher();
 					updateDate.setYear(updateDate.getYear()-1);
 				}
 				else {
@@ -404,19 +404,19 @@ public class GradeController {
 					updateDate.setMinutes(updateDate.getMinutes()-30);
 				}
 				if (teacher==null) {
-					logger.info("---------------- Teacher not exist.");
-					return new ResponseEntity<>("Teacher not exist.", HttpStatus.NOT_FOUND);
+					logger.info("---------------- Teacher not found.");
+					return new ResponseEntity<>("Teacher not found.", HttpStatus.NOT_FOUND);
 				}
-				if (teacher != grade.getTeacher_subject_department().getTeaching_teacher() || !updateDate.before(grade.getGradeMadeDate())) {
+				if (teacher != grade.getTeacher_subject_department().getTeachingTeacher() || !updateDate.before(grade.getGradeMadeDate())) {
 					logger.info("---------------- Teacher doesn't match or time for change expired.");
-					return new ResponseEntity<>("Teacher doesn't match or time for change expired.", HttpStatus.NOT_ACCEPTABLE);
+					return new ResponseEntity<>("Teacher doesn't match or time for change expired.", HttpStatus.FORBIDDEN);
 				}
 				logger.info("Teacher identified.");
-				if (student == grade.getStudent() && teacher == grade.getTeacher_subject_department().getTeaching_teacher() && subject == grade.getTeacher_subject_department().getTeaching_subject() && updateDate.before(grade.getGradeMadeDate()) && !newGrade.getGradeValue().equals(grade.getGradeValue()))				
+				if (student == grade.getStudent() && grade.getTeacher_subject_department().getStatus() == 1 && teacher == grade.getTeacher_subject_department().getTeachingTeacher() && subject == grade.getTeacher_subject_department().getTeachingSubject() && updateDate.before(grade.getGradeMadeDate()) && !newGrade.getGradeValue().equals(grade.getGradeValue()))				
 					ge = gradeDao.modifyGrade(loggedUser, grade, newGrade.getGradeValue());
 				else {
 					logger.info("---------------- Teacher, subject adn/or student doesn't match or time for change expired.");
-					return new ResponseEntity<>("Teacher, subject adn/or student doesn't match or time for change expired.", HttpStatus.NOT_ACCEPTABLE);
+					return new ResponseEntity<>("Teacher, subject adn/or student doesn't match or time for change expired.", HttpStatus.FORBIDDEN);
 				}
 				if (ge != null) {
 					for (ParentEntity p : student.getParents()) 
@@ -453,8 +453,8 @@ public class GradeController {
 		try {
 			GradeEntity grade = gradeRepository.findByIdAndStatusLike(id, 1);
 			if (grade==null) {
-				logger.info("---------------- Grade not exist.");
-				return new ResponseEntity<>("Grade not exist.", HttpStatus.NOT_FOUND);
+				logger.info("---------------- Grade not found.");
+				return new ResponseEntity<>("Grade not found.", HttpStatus.NOT_FOUND);
 			}			
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
@@ -463,7 +463,7 @@ public class GradeController {
 			TeacherEntity teacher = new TeacherEntity();
 			Date updateDate = new Date();
 			if (loggedUserAccount.getAccessRole().equals(EUserRole.ROLE_ADMIN)) {
-				teacher = grade.getTeacher_subject_department().getTeaching_teacher();
+				teacher = grade.getTeacher_subject_department().getTeachingTeacher();
 				updateDate.setYear(updateDate.getYear()-1);
 			}
 			else {
@@ -471,24 +471,24 @@ public class GradeController {
 				updateDate.setMinutes(updateDate.getMinutes()-30);
 			}
 			if (teacher==null) {
-				logger.info("---------------- Teacher not exist.");
-				return new ResponseEntity<>("Teacher not exist.", HttpStatus.NOT_FOUND);
+				logger.info("---------------- Teacher not found.");
+				return new ResponseEntity<>("Teacher not found.", HttpStatus.NOT_FOUND);
 			}
-			if (teacher != grade.getTeacher_subject_department().getTeaching_teacher() || !updateDate.before(grade.getGradeMadeDate())) {
+			if (teacher != grade.getTeacher_subject_department().getTeachingTeacher() || !updateDate.before(grade.getGradeMadeDate())) {
 				logger.info("---------------- Teacher doesn't match or time for change expired.");
-				return new ResponseEntity<>("Teacher doesn't match or time for change expired.", HttpStatus.NOT_ACCEPTABLE);
+				return new ResponseEntity<>("Teacher doesn't match or time for change expired.", HttpStatus.FORBIDDEN);
 			}
 			logger.info("Teacher identified.");
-			if (teacher == grade.getTeacher_subject_department().getTeaching_teacher() && updateDate.before(grade.getGradeMadeDate()) && !value.equals(grade.getGradeValue()))
+			if (grade.getTeacher_subject_department().getStatus() == 1 && teacher == grade.getTeacher_subject_department().getTeachingTeacher() && updateDate.before(grade.getGradeMadeDate()) && !value.equals(grade.getGradeValue()))
 				ge = gradeDao.modifyGrade(loggedUser, grade, value);
 			else {
 				logger.info("---------------- Teacher, subject adn/or student doesn't match or time for change expired.");
-				return new ResponseEntity<>("Teacher, subject adn/or student doesn't match or time for change expired.", HttpStatus.NOT_ACCEPTABLE);
+				return new ResponseEntity<>("Teacher, subject adn/or student doesn't match or time for change expired.", HttpStatus.FORBIDDEN);
 			}
 			if (ge != null) {
 				for (ParentEntity p : grade.getStudent().getParents()) 
 					if (p.getStatus() == 1) {
-						EmailObject email = new EmailObject(p.getEmail(), "Promena ocene ucenika " + grade.getStudent().getFirstName() + " " + grade.getStudent().getLastName(), "Uceniku " + grade.getStudent().getFirstName() + " " + grade.getStudent().getLastName() + " je promenjena ocena na " + grade.getGradeValue().toString() + " iz predmeta " + grade.getTeacher_subject_department().getTeaching_subject().getSubjectName() + " kod profesora " + teacher.getFirstName() + " " + teacher.getLastName() + ".");
+						EmailObject email = new EmailObject(p.getEmail(), "Promena ocene ucenika " + grade.getStudent().getFirstName() + " " + grade.getStudent().getLastName(), "Uceniku " + grade.getStudent().getFirstName() + " " + grade.getStudent().getLastName() + " je promenjena ocena na " + grade.getGradeValue().toString() + " iz predmeta " + grade.getTeacher_subject_department().getTeachingSubject().getSubjectName() + " kod profesora " + teacher.getFirstName() + " " + teacher.getLastName() + ".");
 						emailService.sendSimpleMessage(email);
 					}
 			}
@@ -514,8 +514,8 @@ public class GradeController {
 		try {
 			GradeEntity grade = gradeRepository.findByIdAndStatusLike(id, 0);
 			if (grade==null || grade.getStatus()!=0) {
-				logger.info("---------------- Grade not exist.");
-				return new ResponseEntity<>("Grade not exist.", HttpStatus.NOT_FOUND);
+				logger.info("---------------- Grade not found.");
+				return new ResponseEntity<>("Grade not found.", HttpStatus.NOT_FOUND);
 			}
 			logger.info("Grade identified.");
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
@@ -525,7 +525,7 @@ public class GradeController {
 			TeacherEntity teacher = new TeacherEntity();
 			Date updateDate = new Date();
 			if (loggedUserAccount.getAccessRole().equals(EUserRole.ROLE_ADMIN)) {
-				teacher = grade.getTeacher_subject_department().getTeaching_teacher();
+				teacher = grade.getTeacher_subject_department().getTeachingTeacher();
 				updateDate.setYear(updateDate.getYear()-1);
 			}
 			else {
@@ -533,22 +533,20 @@ public class GradeController {
 				updateDate.setMinutes(updateDate.getMinutes()-30);
 			}
 			if (teacher==null) {
-				logger.info("---------------- Teacher not exist.");
-				return new ResponseEntity<>("Teacher not exist.", HttpStatus.NOT_FOUND);
+				logger.info("---------------- Teacher not found.");
+				return new ResponseEntity<>("Teacher not found.", HttpStatus.NOT_FOUND);
 			}
-			if (teacher != grade.getTeacher_subject_department().getTeaching_teacher() || !updateDate.before(grade.getGradeMadeDate())) {
-				logger.info("---------------- Teacher doesn't match or time for delete expired.");
-				return new ResponseEntity<>("Teacher doesn't match or time for delete expired.", HttpStatus.NOT_ACCEPTABLE);
+			if (grade.getTeacher_subject_department().getStatus() != 1 || teacher != grade.getTeacher_subject_department().getTeachingTeacher() || !updateDate.before(grade.getGradeMadeDate())) {
+				logger.info("---------------- Teacher doesn't match or time for undelete expired.");
+				return new ResponseEntity<>("Teacher doesn't match or time for undelete expired.", HttpStatus.FORBIDDEN);
 			}
 			logger.info("Teacher identified.");
-			if (teacher == grade.getTeacher_subject_department().getTeaching_teacher() && updateDate.before(grade.getGradeMadeDate())) {
-				gradeDao.setStatusActive(loggedUser, grade);
-				for (ParentEntity p : grade.getStudent().getParents()) 
-					if (p.getStatus() == 1) {
-						EmailObject email = new EmailObject(p.getEmail(), "Aktiviranje obrisane ocene ucenika " + grade.getStudent().getFirstName() + " " + grade.getStudent().getLastName(), "Uceniku " + grade.getStudent().getFirstName() + " " + grade.getStudent().getLastName() + " je ponovo aktivirana ocena " + grade.getGradeValue().toString() + " iz predmeta " + grade.getTeacher_subject_department().getTeaching_subject().getSubjectName() + " kod profesora " + teacher.getFirstName() + " " + teacher.getLastName() + ".");
-						emailService.sendSimpleMessage(email);
-					}
-			}
+			gradeDao.setStatusActive(loggedUser, grade);
+			for (ParentEntity p : grade.getStudent().getParents()) 
+				if (p.getStatus() == 1) {
+					EmailObject email = new EmailObject(p.getEmail(), "Aktiviranje obrisane ocene ucenika " + grade.getStudent().getFirstName() + " " + grade.getStudent().getLastName(), "Uceniku " + grade.getStudent().getFirstName() + " " + grade.getStudent().getLastName() + " je ponovo aktivirana ocena " + grade.getGradeValue().toString() + " iz predmeta " + grade.getTeacher_subject_department().getTeachingSubject().getSubjectName() + " kod profesora " + teacher.getFirstName() + " " + teacher.getLastName() + ".");
+					emailService.sendSimpleMessage(email);
+				}
 			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<GradeEntity>(grade, HttpStatus.OK);
 		} catch (NumberFormatException e) {
@@ -560,7 +558,6 @@ public class GradeController {
 		}
 	}
 
-	@SuppressWarnings("deprecation")
 	@Secured("ROLE_ADMIN")
 	@JsonView(Views.Admin.class)
 	@RequestMapping(method = RequestMethod.PUT, value = "/archive/{id}")
@@ -574,25 +571,12 @@ public class GradeController {
 		try {
 			GradeEntity grade = gradeRepository.getById(id);
 			if (grade==null || grade.getStatus()==-1) {
-				logger.info("---------------- Grade not exist.");
-				return new ResponseEntity<>("Grade not exist.", HttpStatus.NOT_FOUND);
+				logger.info("---------------- Grade not found.");
+				return new ResponseEntity<>("Grade not found.", HttpStatus.NOT_FOUND);
 			}
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
-			TeacherEntity teacher = grade.getTeacher_subject_department().getTeaching_teacher();
-			Date updateDate = new Date();
-			updateDate.setYear(updateDate.getYear()-1);
-			if (teacher==null) {
-				logger.info("---------------- Teacher not exist.");
-				return new ResponseEntity<>("Teacher not exist.", HttpStatus.NOT_FOUND);
-			}
-			if (teacher != grade.getTeacher_subject_department().getTeaching_teacher() || !updateDate.before(grade.getGradeMadeDate())) {
-				logger.info("---------------- Teacher doesn't match or time for delete expired.");
-				return new ResponseEntity<>("Teacher doesn't match or time for delete expired.", HttpStatus.NOT_ACCEPTABLE);
-			}
-			logger.info("Teacher identified.");
-			if (teacher == grade.getTeacher_subject_department().getTeaching_teacher() && updateDate.before(grade.getGradeMadeDate()))
-				gradeDao.setStatusArchived(loggedUser, grade);
+			gradeDao.setStatusArchived(loggedUser, grade);
 			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<GradeEntity>(grade, HttpStatus.OK);
 		} catch (NumberFormatException e) {
@@ -618,8 +602,8 @@ public class GradeController {
 		try {
 			GradeEntity grade = gradeRepository.findByIdAndStatusLike(id, 1);
 			if (grade==null || grade.getStatus()!=1) {
-				logger.info("---------------- Grade not exist.");
-				return new ResponseEntity<Object>("Grade not exist.", HttpStatus.NOT_FOUND);
+				logger.info("---------------- Grade not found.");
+				return new ResponseEntity<Object>("Grade not found.", HttpStatus.NOT_FOUND);
 			}
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
@@ -628,7 +612,7 @@ public class GradeController {
 			TeacherEntity teacher = new TeacherEntity();
 			Date updateDate = new Date();
 			if (loggedUserAccount.getAccessRole().equals(EUserRole.ROLE_ADMIN)) {
-				teacher = grade.getTeacher_subject_department().getTeaching_teacher();
+				teacher = grade.getTeacher_subject_department().getTeachingTeacher();
 				updateDate.setYear(updateDate.getYear()-1);
 			}
 			else {
@@ -636,18 +620,18 @@ public class GradeController {
 				updateDate.setMinutes(updateDate.getMinutes()-30);
 			}
 			if (teacher==null) {
-				logger.info("---------------- Teacher not exist.");
-				return new ResponseEntity<>("Teacher not exist.", HttpStatus.NOT_FOUND);
+				logger.info("---------------- Teacher not found.");
+				return new ResponseEntity<>("Teacher not found.", HttpStatus.NOT_FOUND);
 			}
-			if (teacher != grade.getTeacher_subject_department().getTeaching_teacher() || !updateDate.before(grade.getGradeMadeDate())) {
+			if (grade.getTeacher_subject_department().getStatus() != 1 || teacher != grade.getTeacher_subject_department().getTeachingTeacher() || !updateDate.before(grade.getGradeMadeDate())) {
 				logger.info("---------------- Teacher doesn't match or time for delete expired.");
-				return new ResponseEntity<>("Teacher doesn't match or time for delete expired.", HttpStatus.NOT_ACCEPTABLE);
+				return new ResponseEntity<>("Teacher doesn't match or time for delete expired.", HttpStatus.FORBIDDEN);
 			}
 			logger.info("Teacher identified.");
 			gradeDao.setStatusDeleted(loggedUser, grade);
 			for (ParentEntity p : grade.getStudent().getParents()) 
 				if (p.getStatus() == 1) {
-					EmailObject email = new EmailObject(p.getEmail(), "Brisanje ocene ucenika " + grade.getStudent().getFirstName() + " " + grade.getStudent().getLastName(), "Uceniku " + grade.getStudent().getFirstName() + " " + grade.getStudent().getLastName() + " je obrisana ocena " + grade.getGradeValue().toString() + " iz predmeta " + grade.getTeacher_subject_department().getTeaching_subject().getSubjectName() + " kod profesora " + teacher.getFirstName() + " " + teacher.getLastName() + ".");
+					EmailObject email = new EmailObject(p.getEmail(), "Brisanje ocene ucenika " + grade.getStudent().getFirstName() + " " + grade.getStudent().getLastName(), "Uceniku " + grade.getStudent().getFirstName() + " " + grade.getStudent().getLastName() + " je obrisana ocena " + grade.getGradeValue().toString() + " iz predmeta " + grade.getTeacher_subject_department().getTeachingSubject().getSubjectName() + " kod profesora " + teacher.getFirstName() + " " + teacher.getLastName() + ".");
 					emailService.sendSimpleMessage(email);
 				}
 			logger.info("---------------- Finished OK.");

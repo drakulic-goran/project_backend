@@ -192,15 +192,15 @@ public class TeacherController {
 		try {
 			if (newTeacher.getjMBG() != null && teacherRepository.getByJMBG(newTeacher.getjMBG()) != null) {
 				logger.info("---------------- JMBG already exists.");
-		        return new ResponseEntity<>("JMBG already exists.", HttpStatus.BAD_REQUEST);
+		        return new ResponseEntity<>("JMBG already exists.", HttpStatus.NOT_ACCEPTABLE);
 			}
 			if (newTeacher.getAccessRole() != null && !newTeacher.getAccessRole().equals("ROLE_TEACHER")) {
 				logger.info("---------------- Access role must be ROLE_TEACHER.");
-		        return new ResponseEntity<>("Access role must be ROLE_TEACHER.", HttpStatus.BAD_REQUEST);
+		        return new ResponseEntity<>("Access role must be ROLE_TEACHER.", HttpStatus.NOT_ACCEPTABLE);
 			}		
 			if (newTeacher.getUsername() != null && userAccountRepository.getByUsername(newTeacher.getUsername()) != null) {
 				logger.info("---------------- Username already exists.");
-		        return new ResponseEntity<>("Username already exists.", HttpStatus.BAD_REQUEST);
+		        return new ResponseEntity<>("Username already exists.", HttpStatus.NOT_ACCEPTABLE);
 		      }
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
@@ -241,20 +241,20 @@ public class TeacherController {
 		try {
 			if (updateTeacher.getjMBG() != null && userRepository.getByJMBG(updateTeacher.getjMBG()) != null) {
 				logger.info("---------------- JMBG already exists.");
-		        return new ResponseEntity<>("JMBG already exists.", HttpStatus.BAD_REQUEST);
+		        return new ResponseEntity<>("JMBG already exists.", HttpStatus.NOT_ACCEPTABLE);
 			}
 			if (updateTeacher.getAccessRole() != null && !updateTeacher.getAccessRole().equals("ROLE_TEACHER")) {
 				logger.info("---------------- Access role must be ROLE_TEACHER.");
-		        return new ResponseEntity<>("Access role must be ROLE_TEACHER.", HttpStatus.BAD_REQUEST);
+		        return new ResponseEntity<>("Access role must be ROLE_TEACHER.", HttpStatus.NOT_ACCEPTABLE);
 			}		
 			if (updateTeacher.getUsername() != null && userAccountRepository.getByUsername(updateTeacher.getUsername()) != null) {
 				logger.info("---------------- Username already exists.");
-		        return new ResponseEntity<>("Username already exists.", HttpStatus.BAD_REQUEST);
+		        return new ResponseEntity<>("Username already exists.", HttpStatus.NOT_ACCEPTABLE);
 		      }
 			user = teacherRepository.findByIdAndStatusLike(id, 1);
 			if (user == null) {
-				logger.info("---------------- Teacher didn't find.");
-		        return new ResponseEntity<>("Teacher didn't find.", HttpStatus.BAD_REQUEST);
+				logger.info("---------------- Teacher not found.");
+		        return new ResponseEntity<>("Teacher not found.", HttpStatus.NOT_FOUND);
 		      }
 			logger.info("Teacher identified.");
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
@@ -301,14 +301,14 @@ public class TeacherController {
 	      }
 		if (updateTeacher.getFirstName() != null || updateTeacher.getLastName() != null || updateTeacher.getCertificate() != null || updateTeacher.getEmploymentDate() != null|| updateTeacher.getGender() != null || updateTeacher.getjMBG() != null || updateTeacher.getUsername() != null || updateTeacher.getPassword() != null || updateTeacher.getConfirmedPassword() != null) {
 			logger.info("---------------- Update have non acceptable atrributes.");
-	        return new ResponseEntity<>("Update have non acceptable atrributes.", HttpStatus.BAD_REQUEST);
+	        return new ResponseEntity<>("Update have non acceptable atrributes.", HttpStatus.NOT_ACCEPTABLE);
 		}
 		TeacherEntity user = new TeacherEntity();
 		try {
 			user = teacherRepository.findByIdAndStatusLike(id, 1);
 			if (user == null) {
-				logger.info("---------------- Teacher didn't find.");
-		        return new ResponseEntity<>("Teacher didn't find.", HttpStatus.BAD_REQUEST);
+				logger.info("---------------- Teacher not found.");
+		        return new ResponseEntity<>("Teacher not found.", HttpStatus.NOT_FOUND);
 		      }
 			logger.info("Teacher identified.");
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
@@ -349,14 +349,14 @@ public class TeacherController {
 	      }
 		if (updateTeacher.getFirstName() != null || updateTeacher.getLastName() != null || updateTeacher.getCertificate() != null || updateTeacher.getEmploymentDate() != null|| updateTeacher.getGender() != null || updateTeacher.getjMBG() != null || updateTeacher.getUsername() != null || updateTeacher.getPassword() != null || updateTeacher.getConfirmedPassword() != null) {
 			logger.info("---------------- Update have non acceptable atrributes.");
-	        return new ResponseEntity<>("Update have non acceptable atrributes.", HttpStatus.BAD_REQUEST);
+	        return new ResponseEntity<>("Update have non acceptable atrributes.", HttpStatus.NOT_ACCEPTABLE);
 		}
 		TeacherEntity user = new TeacherEntity();
 		try {
 			user = teacherRepository.findByIdAndStatusLike(id, 1);
 			if (user == null) {
-				logger.info("---------------- Teacher didn't find.");
-		        return new ResponseEntity<>("Teacher didn't find.", HttpStatus.BAD_REQUEST);
+				logger.info("---------------- Teacher not found.");
+		        return new ResponseEntity<>("Teacher not found.", HttpStatus.NOT_FOUND);
 		      }
 			logger.info("Teacher identified.");
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
@@ -391,15 +391,15 @@ public class TeacherController {
 		try {
 			user = teacherRepository.getById(id);
 			if (user == null || user.getStatus() == -1) {
-				logger.info("---------------- Teacher didn't find.");
-		        return new ResponseEntity<>("Teacher didn't find.", HttpStatus.BAD_REQUEST);
+				logger.info("---------------- Teacher not found.");
+		        return new ResponseEntity<>("Teacher not found.", HttpStatus.NOT_FOUND);
 		      }
 			logger.info("Teacher for archiving identified.");
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
 			if (id == loggedUser.getId()) {
 				logger.info("---------------- Selected Id is ID of logged User: Cann't archive yourself.");
-				return new ResponseEntity<>("Selected Id is ID of logged User: Cann't archive yourself.", HttpStatus.BAD_REQUEST);
+				return new ResponseEntity<>("Selected Id is ID of logged User: Cann't archive yourself.", HttpStatus.FORBIDDEN);
 		      }	
 			teacherDao.archiveTeacher(loggedUser, user);
 			logger.info("Teacher archived.");
@@ -436,8 +436,8 @@ public class TeacherController {
 		try {
 			user = teacherRepository.findByIdAndStatusLike(id, 0);
 			if (user == null) {
-				logger.info("---------------- Teacher didn't find.");
-		        return new ResponseEntity<>("Teacher didn't find.", HttpStatus.BAD_REQUEST);
+				logger.info("---------------- Teacher not found.");
+		        return new ResponseEntity<>("Teacher not found.", HttpStatus.NOT_FOUND);
 		      }
 			logger.info("Teacher for undeleting identified.");
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
@@ -477,15 +477,15 @@ public class TeacherController {
 		try {
 			user = teacherRepository.findByIdAndStatusLike(id, 1);
 			if (user == null) {
-				logger.info("---------------- Teacher didn't find.");
-		        return new ResponseEntity<>("Teacher didn't find.", HttpStatus.BAD_REQUEST);
+				logger.info("---------------- Teacher not found.");
+		        return new ResponseEntity<>("Teacher not found.", HttpStatus.NOT_FOUND);
 		      }
 			logger.info("Teacher for deleting identified.");
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
 			if (id == loggedUser.getId()) {
 				logger.info("---------------- Selected Id is ID of logged User: Cann't delete yourself.");
-				return new ResponseEntity<>("Selected Id is ID of logged User: Cann't delete yourself.", HttpStatus.BAD_REQUEST);
+				return new ResponseEntity<>("Selected Id is ID of logged User: Cann't delete yourself.", HttpStatus.FORBIDDEN);
 		      }	
 			teacherDao.deleteTeacher(loggedUser, user);
 			logger.info("Teacher deleted.");

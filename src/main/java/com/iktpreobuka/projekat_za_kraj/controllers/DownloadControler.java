@@ -82,7 +82,6 @@ public class DownloadControler {
 		} catch (IOException e) {
 			e.getMessage();
 		}
-		
 
 		logger.debug("------------------ Download finished.");
         return ResponseEntity.ok()

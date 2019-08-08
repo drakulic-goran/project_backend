@@ -97,7 +97,7 @@ public class DepartmentDaoImpl implements DepartmentDao {
 				if (class_!=null && class_.getStatus()==1 && department.getStatus() == 1) {
 					for (DepartmentClassEntity ds : department.getClasses()) {
 						if (ds.getStatus() == 1) {
-							if (ds.getClass_() == class_ || ds.getSchoolYear() == updateDepartment.getSchoolYear()) {
+							if (ds.getClas() == class_ || ds.getSchoolYear() == updateDepartment.getSchoolYear()) {
 								contains = true;
 							} else {
 								ds.setStatusInactive();
@@ -182,28 +182,28 @@ public class DepartmentDaoImpl implements DepartmentDao {
 	public void archiveDepartment(UserEntity loggedUser, DepartmentEntity department) throws Exception {
 		try {
 			for (DepartmentClassEntity dc : department.getClasses()) {
-				if (dc.getStatus() == 1) {
+				if (dc.getStatus() != -1) {
 					dc.setStatusArchived();
 					dc.setUpdatedById(loggedUser.getId());
 					departmentClassRepository.save(dc);
 				}
 			}
 			for (PrimaryTeacherDepartmentEntity ptd : department.getTeachers()) {
-				if (ptd.getStatus() == 1) {
+				if (ptd.getStatus() != -1) {
 					ptd.setStatusArchived();
 					ptd.setUpdatedById(loggedUser.getId());
 					primaryTeacherDepartmentRepository.save(ptd);
 				}
 			}
 			for (TeacherSubjectDepartmentEntity tsd : department.getTeachers_subjects()) {
-				if (tsd.getStatus() == 1) {
+				if (tsd.getStatus() != -1) {
 					tsd.setStatusArchived();
 					tsd.setUpdatedById(loggedUser.getId());
 					teacherSubjectDepartmentRepository.save(tsd);
 				}
 			}
 			for (StudentDepartmentEntity sd : department.getStudents()) {
-				if (sd.getStatus() == 1) {
+				if (sd.getStatus() != -1) {
 					sd.setStatusArchived();
 					sd.setUpdatedById(loggedUser.getId());
 					studentDepartmentRepository.save(sd);
@@ -281,7 +281,7 @@ public class DepartmentDaoImpl implements DepartmentDao {
 				boolean contains = false;
 				for (DepartmentClassEntity ds : department.getClasses()) {
 					if (ds.getStatus() == 1) {
-						if (ds.getClass_() == class_) {
+						if (ds.getClas() == class_) {
 							contains = true;
 						} else {
 							ds.setStatusInactive();
@@ -311,7 +311,7 @@ public class DepartmentDaoImpl implements DepartmentDao {
 			DepartmentClassEntity dce = null;
 			if (department !=null && department.getStatus() ==1 && class_ !=null && class_.getStatus() ==1) {
 				for (DepartmentClassEntity ds : department.getClasses()) {
-					if (ds.getStatus() == 1 && ds.getClass_() == class_) {
+					if (ds.getStatus() == 1 && ds.getClas() == class_) {
 							ds.setStatusInactive();
 							ds.setUpdatedById(loggedUser.getId());
 							departmentClassRepository.save(ds);
@@ -379,13 +379,13 @@ public class DepartmentDaoImpl implements DepartmentDao {
 
 
 	@Override
-	public TeacherSubjectDepartmentEntity addTeacherAndSubjectToDepartment(UserEntity loggedUser, TeacherEntity teacher, DepartmentEntity department, SubjectEntity subject, String school_year) throws Exception {
+	public TeacherSubjectDepartmentEntity addTeacherAndSubjectToDepartment(UserEntity loggedUser, TeacherEntity teacher, DepartmentEntity department, ClassEntity clas, SubjectEntity subject, String school_year) throws Exception {
 		try {
 			TeacherSubjectDepartmentEntity teaching = null;
-			if (teacher !=null && teacher.getStatus() ==1 && department !=null && department.getStatus() ==1 && subject !=null && subject.getStatus() ==1  && school_year !=null && !school_year.equals("") && !school_year.equals(" ")) {
+			if (teacher !=null && teacher.getStatus() ==1 && department !=null && department.getStatus() ==1 && clas !=null && clas.getStatus() ==1 && subject !=null && subject.getStatus() ==1  && school_year !=null && !school_year.equals("") && !school_year.equals(" ")) {
 				boolean contains = false;
 				for (TeacherSubjectDepartmentEntity tsd : department.getTeachers_subjects()) {
-					if (tsd.getTeaching_teacher() == teacher && tsd.getTeaching_subject() == subject && tsd.getStatus() == 1) {
+					if (tsd.getTeachingTeacher() == teacher && tsd.getTeachingSubject() == subject && tsd.getTeachingClass() == clas && tsd.getStatus() == 1) {
 						contains = true;
 					}
 				}
@@ -399,18 +399,14 @@ public class DepartmentDaoImpl implements DepartmentDao {
 				}
 				if (!contains) {
 					contains = true;
-					for (DepartmentClassEntity ds : department.getClasses()) {
-						if (ds.getStatus() == 1) {
-							for (ClassSubjectEntity cs : ds.getClass_().getSubjects()) {
-								if (cs.getSubject() == subject && cs.getStatus() == 1) {
-									contains = false;
-								}
-							}
+					for (ClassSubjectEntity cs : clas.getSubjects()) {
+						if (cs.getSubject() == subject && cs.getStatus() == 1) {
+							contains = false;
 						}
 					}
 				}
 				if (!contains) {
-					teaching = new TeacherSubjectDepartmentEntity(department, subject, teacher, school_year, loggedUser.getId());
+					teaching = new TeacherSubjectDepartmentEntity(department, clas, subject, teacher, school_year, loggedUser.getId());
 					teacherSubjectDepartmentRepository.save(teaching);
 					department.getTeachers_subjects().add(teaching);
 					department.setUpdatedById(loggedUser.getId());
@@ -424,12 +420,12 @@ public class DepartmentDaoImpl implements DepartmentDao {
 	}
 	
 	@Override
-	public TeacherSubjectDepartmentEntity removeTeacherAndSubjectFromDepartment(UserEntity loggedUser, TeacherEntity teacher, DepartmentEntity department, SubjectEntity subject) throws Exception {
+	public TeacherSubjectDepartmentEntity removeTeacherAndSubjectFromDepartment(UserEntity loggedUser, TeacherEntity teacher, DepartmentEntity department, ClassEntity clas, SubjectEntity subject) throws Exception {
 		try {
 			TeacherSubjectDepartmentEntity tsd1 = null;
-			if (teacher !=null && teacher.getStatus() ==1 && department !=null && department.getStatus() ==1 && subject !=null && subject.getStatus() ==1 ) {
+			if (teacher !=null && teacher.getStatus() ==1 && department !=null && department.getStatus() ==1 && clas !=null && clas.getStatus() ==1 && subject !=null && subject.getStatus() ==1 ) {
 				for (TeacherSubjectDepartmentEntity tsd : department.getTeachers_subjects()) {
-					if (tsd.getTeaching_teacher() == teacher && tsd.getTeaching_subject() == subject && tsd.getStatus() == 1) {
+					if (tsd.getTeachingTeacher() == teacher && tsd.getTeachingSubject() == subject && tsd.getTeachingClass() == clas && tsd.getStatus() == 1) {
 						tsd.setStatusInactive();
 						tsd.setUpdatedById(loggedUser.getId());
 						teacherSubjectDepartmentRepository.save(tsd);

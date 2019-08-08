@@ -203,19 +203,19 @@ public class StudentController {
 		try {
 			if (newStudent.getjMBG() != null && studentRepository.getByJMBG(newStudent.getjMBG()) != null) {
 				logger.info("---------------- JMBG already exist.");
-				return new ResponseEntity<>("JMBG already exist.", HttpStatus.BAD_REQUEST);
+				return new ResponseEntity<>("JMBG already exist.", HttpStatus.NOT_ACCEPTABLE);
 			}
 			if (newStudent.getSchoolIdentificationNumber() != null && studentRepository.getBySchoolIdentificationNumber(newStudent.getSchoolIdentificationNumber()) != null) {
 				logger.info("---------------- School identification number already exist.");
-				return new ResponseEntity<>("School identification number already exist.", HttpStatus.BAD_REQUEST);
+				return new ResponseEntity<>("School identification number already exist.", HttpStatus.NOT_ACCEPTABLE);
 			}
 			if (newStudent.getAccessRole() != null && !newStudent.getAccessRole().equals("ROLE_STUDENT")) {
 				logger.info("---------------- Access role must be ROLE_STUDENT.");
-		        return new ResponseEntity<>("Access role must be ROLE_STUDENT.", HttpStatus.BAD_REQUEST);
+		        return new ResponseEntity<>("Access role must be ROLE_STUDENT.", HttpStatus.NOT_ACCEPTABLE);
 			}		
 			if (newStudent.getUsername() != null && userAccountRepository.getByUsername(newStudent.getUsername()) != null) {
-				logger.info("---------------- Username already exists.");
-		        return new ResponseEntity<>("Username already exists.", HttpStatus.BAD_REQUEST);
+				logger.info("---------------- Username already exist.");
+		        return new ResponseEntity<>("Username already exist.", HttpStatus.NOT_ACCEPTABLE);
 		    }
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
@@ -255,25 +255,25 @@ public class StudentController {
 		StudentEntity user = new StudentEntity();
 		try {
 			if (updateStudent.getjMBG() != null && userRepository.getByJMBG(updateStudent.getjMBG()) != null) {
-				logger.info("---------------- JMBG already exists.");
-		        return new ResponseEntity<>("JMBG already exists.", HttpStatus.BAD_REQUEST);
+				logger.info("---------------- JMBG already exist.");
+		        return new ResponseEntity<>("JMBG already exist.", HttpStatus.NOT_ACCEPTABLE);
 			}
 			if (updateStudent.getSchoolIdentificationNumber() != null && studentRepository.getBySchoolIdentificationNumber(updateStudent.getSchoolIdentificationNumber()) != null) {
 				logger.info("---------------- School identification number already exist.");
-				return new ResponseEntity<>("School identification number already exist.", HttpStatus.BAD_REQUEST);
+				return new ResponseEntity<>("School identification number already exist.", HttpStatus.NOT_ACCEPTABLE);
 			}
 			if (updateStudent.getAccessRole() != null && !updateStudent.getAccessRole().equals("ROLE_STUDENT")) {
 				logger.info("---------------- Access role must be ROLE_STUDENT.");
-		        return new ResponseEntity<>("Access role must be ROLE_STUDENT.", HttpStatus.BAD_REQUEST);
+		        return new ResponseEntity<>("Access role must be ROLE_STUDENT.", HttpStatus.NOT_ACCEPTABLE);
 			}		
 			if (updateStudent.getUsername() != null && userAccountRepository.getByUsername(updateStudent.getUsername()) != null) {
-				logger.info("---------------- Username already exists.");
-		        return new ResponseEntity<>("Username already exists.", HttpStatus.BAD_REQUEST);
+				logger.info("---------------- Username already exist.");
+		        return new ResponseEntity<>("Username already exist.", HttpStatus.NOT_ACCEPTABLE);
 		      }
 			user = studentRepository.findByIdAndStatusLike(id, 1);
 			if (user == null) {
-				logger.info("---------------- Student didn't find.");
-		        return new ResponseEntity<>("Student didn't find.", HttpStatus.BAD_REQUEST);
+				logger.info("---------------- Student not found.");
+		        return new ResponseEntity<>("Student not found.", HttpStatus.NOT_FOUND);
 		      }
 			logger.info("Teacher identified.");
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
@@ -314,19 +314,19 @@ public class StudentController {
 		try {
 			user = studentRepository.findByIdAndStatusLike(id, 1);
 			if (user == null) {
-				logger.info("---------------- Student didn't find.");
-		        return new ResponseEntity<>("Student didn't find.", HttpStatus.BAD_REQUEST);
+				logger.info("---------------- Student not found.");
+		        return new ResponseEntity<>("Student not found.", HttpStatus.NOT_FOUND);
 		      }
 			logger.info("Student identified.");
 			ParentEntity parent = parentRepository.findByIdAndStatusLike(p_id, 1);
 			if (parent == null) {
-				logger.info("---------------- Parent didn't find.");
-		        return new ResponseEntity<>("Parent didn't find.", HttpStatus.BAD_REQUEST);
+				logger.info("---------------- Parent not found.");
+		        return new ResponseEntity<>("Parent not found.", HttpStatus.NOT_FOUND);
 		      }
 			logger.info("Parent identified.");		
 			if (user.getParents().contains(parent)) {
 				logger.info("---------------- Parent already exist.");
-				return new ResponseEntity<>("Parent already exist.", HttpStatus.BAD_REQUEST);
+				return new ResponseEntity<>("Parent already exist.", HttpStatus.NOT_ACCEPTABLE);
 			}
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
@@ -352,19 +352,19 @@ public class StudentController {
 		try {
 			user = studentRepository.findByIdAndStatusLike(id, 1);
 			if (user == null) {
-				logger.info("---------------- Student didn't find.");
-		        return new ResponseEntity<>("Student didn't find.", HttpStatus.BAD_REQUEST);
+				logger.info("---------------- Student not found.");
+		        return new ResponseEntity<>("Student not found.", HttpStatus.NOT_FOUND);
 		      }
 			logger.info("Student identified.");
 			ParentEntity parent = parentRepository.findByIdAndStatusLike(p_id, 1);
 			if (parent == null) {
-				logger.info("---------------- Parent didn't find.");
-		        return new ResponseEntity<>("Parent didn't find.", HttpStatus.BAD_REQUEST);
+				logger.info("---------------- Parent not found.");
+		        return new ResponseEntity<>("Parent not found.", HttpStatus.NOT_FOUND);
 		      }
 			logger.info("Parent identified.");		
 			if (!user.getParents().contains(parent)) {
 				logger.info("---------------- Parent not exist.");
-				return new ResponseEntity<>("Parent not exist.", HttpStatus.BAD_REQUEST);
+				return new ResponseEntity<>("Parent not exist.", HttpStatus.NOT_FOUND);
 			}
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
@@ -394,14 +394,14 @@ public class StudentController {
 		try {
 			StudentEntity user = studentRepository.findByIdAndStatusLike(id, 1);
 			if (user == null) {
-				logger.info("---------------- Student didn't find.");
-		        return new ResponseEntity<>("Student didn't find.", HttpStatus.BAD_REQUEST);
+				logger.info("---------------- Student not found.");
+		        return new ResponseEntity<>("Student not found.", HttpStatus.NOT_FOUND);
 		      }
 			logger.info("Student identified.");
 			DepartmentEntity department = departmentRepository.findByIdAndStatusLike(d_id, 1);
 			if (department == null) {
-				logger.info("---------------- Department didn't find.");
-		        return new ResponseEntity<>("Department didn't find.", HttpStatus.BAD_REQUEST);
+				logger.info("---------------- Department not found.");
+		        return new ResponseEntity<>("Department not found.", HttpStatus.NOT_FOUND);
 		      }
 			logger.info("Department identified.");
 			if (transferdate != null && !transferdate.equals(" ") && !transferdate.equals("")) {
@@ -435,14 +435,14 @@ public class StudentController {
 		try {
 			StudentEntity user = studentRepository.findByIdAndStatusLike(id, 1);
 			if (user == null) {
-				logger.info("---------------- Student didn't find.");
-		        return new ResponseEntity<>("Student didn't find.", HttpStatus.BAD_REQUEST);
+				logger.info("---------------- Student not found.");
+		        return new ResponseEntity<>("Student not found.", HttpStatus.NOT_FOUND);
 		      }
 			logger.info("Student identified.");
 			DepartmentEntity department = departmentRepository.findByIdAndStatusLike(d_id, 1);
 			if (department == null) {
-				logger.info("---------------- Department didn't find.");
-		        return new ResponseEntity<>("Department didn't find.", HttpStatus.BAD_REQUEST);
+				logger.info("---------------- Department not found.");
+		        return new ResponseEntity<>("Department not found.", HttpStatus.NOT_FOUND);
 		      }
 			logger.info("Department identified.");
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
@@ -470,15 +470,15 @@ public class StudentController {
 		try {
 			user = studentRepository.getById(id);
 			if (user == null || user.getStatus() == -1) {
-				logger.info("---------------- Student didn't find.");
-		        return new ResponseEntity<>("Student didn't find.", HttpStatus.BAD_REQUEST);
+				logger.info("---------------- Student not found.");
+		        return new ResponseEntity<>("Student not found.", HttpStatus.NOT_FOUND);
 		      }
 			logger.info("Student for archiving identified.");
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
 			if (id == loggedUser.getId()) {
 				logger.info("---------------- Selected Id is ID of logged User: Cann't archive yourself.");
-				return new ResponseEntity<>("Selected Id is ID of logged User: Cann't archive yourself.", HttpStatus.BAD_REQUEST);
+				return new ResponseEntity<>("Selected Id is ID of logged User: Cann't archive yourself.", HttpStatus.FORBIDDEN);
 		      }	
 			studentDao.archiveStudent(loggedUser, user);
 			logger.info("Student archived.");
@@ -515,8 +515,8 @@ public class StudentController {
 		try {
 			user = studentRepository.findByIdAndStatusLike(id, 0);
 			if (user == null) {
-				logger.info("---------------- Student didn't find.");
-		        return new ResponseEntity<>("Student didn't find.", HttpStatus.BAD_REQUEST);
+				logger.info("---------------- Student not found.");
+		        return new ResponseEntity<>("Student not found.", HttpStatus.NOT_FOUND);
 		      }
 			logger.info("Student for undeleting identified.");
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
@@ -556,15 +556,15 @@ public class StudentController {
 		try {
 			user = studentRepository.findByIdAndStatusLike(id, 1);
 			if (user == null) {
-				logger.info("---------------- Student didn't find.");
-		        return new ResponseEntity<>("Student didn't find.", HttpStatus.BAD_REQUEST);
+				logger.info("---------------- Student not found.");
+		        return new ResponseEntity<>("Student not found.", HttpStatus.NOT_FOUND);
 		      }
 			logger.info("Student for deleting identified.");
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
 			if (id == loggedUser.getId()) {
 				logger.info("---------------- Selected Id is ID of logged User: Cann't delete yourself.");
-				return new ResponseEntity<>("Selected Id is ID of logged User: Cann't delete yourself.", HttpStatus.BAD_REQUEST);
+				return new ResponseEntity<>("Selected Id is ID of logged User: Cann't delete yourself.", HttpStatus.FORBIDDEN);
 		      }	
 			studentDao.deleteStudent(loggedUser, user);
 			logger.info("Student deleted.");

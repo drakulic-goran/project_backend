@@ -2,12 +2,9 @@ package com.iktpreobuka.projekat_za_kraj.services;
 
 import java.util.List;
 
-import com.iktpreobuka.projekat_za_kraj.entities.StudentEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.SubjectEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.UserEntity;
-import com.iktpreobuka.projekat_za_kraj.entities.dto.StudentSubjectsDto;
 import com.iktpreobuka.projekat_za_kraj.entities.dto.SubjectDto;
-import com.mysql.cj.conf.ConnectionUrlParser.Pair;
 
 public interface SubjectDao {
 
@@ -40,10 +37,6 @@ public interface SubjectDao {
 	//public void removePrimaryTeacherFromDepartment(UserEntity loggedUser, TeacherEntity teacher, DepartmentEntity department) throws Exception;
 
 	public void removeTeacherAndDepartmentFromSubject(UserEntity loggedUser, SubjectEntity subject,	String teachingDepartment, String teachingTeacher) throws Exception;
-
-	public List<SubjectEntity> getSubjectListByStudent(List<Pair<StudentEntity, List<SubjectEntity>>> subjectsByStudent, StudentEntity student) throws Exception;
-
-	public List<SubjectEntity> getSubjectListByStudent1(List<StudentSubjectsDto> reza, StudentEntity student) throws Exception;
 
 	//public void removeClassFromDepartment(UserEntity loggedUser, ClassEntity class_, DepartmentEntity department) throws Exception;
 

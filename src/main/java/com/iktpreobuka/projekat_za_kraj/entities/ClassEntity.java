@@ -51,6 +51,11 @@ public class ClassEntity {
 	@JsonView(Views.Teacher.class)
 	@OneToMany(mappedBy = "clas", fetch = FetchType.LAZY, cascade = { CascadeType.REFRESH}, orphanRemoval = true)
 	private List<DepartmentClassEntity> departments = new ArrayList<>();
+	
+	@JsonView(Views.Admin.class)
+	@JsonIgnore
+	@OneToMany(mappedBy = "teachingClass", fetch = FetchType.LAZY, cascade = { CascadeType.REFRESH})
+	private List<TeacherSubjectDepartmentEntity> teachers_subjects_departments = new ArrayList<>();
 
 	
 	@Id
@@ -167,6 +172,14 @@ public class ClassEntity {
 
 	public void setDepartments(List<DepartmentClassEntity> departments) {
 		this.departments = departments;
+	}
+
+	public List<TeacherSubjectDepartmentEntity> getTeachers_subjects_departments() {
+		return teachers_subjects_departments;
+	}
+
+	public void setTeachers_subjects_departments(List<TeacherSubjectDepartmentEntity> teachers_subjects_departments) {
+		this.teachers_subjects_departments = teachers_subjects_departments;
 	}
 
 	public Integer getVersion() {

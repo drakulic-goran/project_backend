@@ -30,11 +30,11 @@ public interface DepartmentDao {
 
 	public PrimaryTeacherDepartmentEntity addPrimaryTeacherToDepartment(UserEntity loggedUser, TeacherEntity teacher, DepartmentEntity department, String assignmentDate) throws Exception;
 
-	public TeacherSubjectDepartmentEntity addTeacherAndSubjectToDepartment(UserEntity loggedUser, TeacherEntity teacher, DepartmentEntity department, SubjectEntity subject, String school_year) throws Exception;
+	public TeacherSubjectDepartmentEntity addTeacherAndSubjectToDepartment(UserEntity loggedUser, TeacherEntity teacher, DepartmentEntity department, ClassEntity clas, SubjectEntity subject, String school_year) throws Exception;
 
 	public PrimaryTeacherDepartmentEntity removePrimaryTeacherFromDepartment(UserEntity loggedUser, TeacherEntity teacher, DepartmentEntity department) throws Exception;
 
-	public TeacherSubjectDepartmentEntity removeTeacherAndSubjectFromDepartment(UserEntity loggedUser, TeacherEntity teacher, DepartmentEntity department, SubjectEntity subject) throws Exception;
+	public TeacherSubjectDepartmentEntity removeTeacherAndSubjectFromDepartment(UserEntity loggedUser, TeacherEntity teacher, DepartmentEntity department, ClassEntity clas, SubjectEntity subject) throws Exception;
 
 	public DepartmentClassEntity removeClassFromDepartment(UserEntity loggedUser, ClassEntity class_, DepartmentEntity department) throws Exception;
 

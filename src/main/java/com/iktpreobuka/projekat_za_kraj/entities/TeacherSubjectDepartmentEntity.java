@@ -19,7 +19,6 @@ import javax.persistence.Version;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -27,7 +26,7 @@ import com.fasterxml.jackson.annotation.JsonView;
 import com.iktpreobuka.projekat_za_kraj.security.Views;
 
 @Entity
-@Table(name = "teacher_subject_department", uniqueConstraints=@UniqueConstraint(columnNames= {"teacher_id", "subject_id", "department_id", "school_year"}))
+@Table(name = "teacher_subject_department", uniqueConstraints=@UniqueConstraint(columnNames= {"teacher_id", "subject_id", "department_id", "class_id", "school_year"}))
 @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
 public class TeacherSubjectDepartmentEntity {
 	
@@ -48,6 +47,13 @@ public class TeacherSubjectDepartmentEntity {
 	@NotNull (message = "Department must be provided.")
 	private DepartmentEntity teachingDepartment;
 	
+	@JsonIgnore
+	@JsonView(Views.Admin.class)
+	@ManyToOne(cascade = CascadeType.REFRESH, fetch = FetchType.LAZY)
+	@JoinColumn(name = "class_id", nullable=false)
+	@NotNull (message = "Class must be provided.")
+	private ClassEntity teachingClass;
+
 	@JsonIgnore
 	@JsonView(Views.Admin.class)
 	@ManyToOne(cascade = CascadeType.REFRESH, fetch = FetchType.LAZY)
@@ -95,12 +101,14 @@ public class TeacherSubjectDepartmentEntity {
 
 	public TeacherSubjectDepartmentEntity(
 			@NotNull(message = "Department must be provided.") DepartmentEntity teachingDepartment,
+			@NotNull(message = "Class must be provided.") ClassEntity teachingClass,
 			@NotNull(message = "Subject must be provided.") SubjectEntity teachingSubject,
 			@NotNull(message = "Teacher must be provided.") TeacherEntity teachingTeacher,
-			@NotNull(message = "School year must be provided.") @Pattern(regexp = "^(20|[3-9][0-9])\\d{2}\\-(20|[3-9][0-9])\\\\d{2}$", message = "School year is not valid, must be in format YYYY-YYYY.") String schoolYear,
+			@NotNull(message = "School year must be provided.") String schoolYear,
 			Integer createdById) {
 		super();
 		this.teachingDepartment = teachingDepartment;
+		this.teachingClass = teachingClass;
 		this.teachingSubject = teachingSubject;
 		this.teachingTeacher = teachingTeacher;
 		this.schoolYear = schoolYear;
@@ -176,28 +184,36 @@ public class TeacherSubjectDepartmentEntity {
 		return STATUS_ARCHIVED;
 	}
 
-	public DepartmentEntity getTeaching_department() {
+	public DepartmentEntity getTeachingDepartment() {
 		return teachingDepartment;
 	}
 
-	public void setTeaching_department(DepartmentEntity teaching_department) {
-		this.teachingDepartment = teaching_department;
+	public void setTeachingDepartment(DepartmentEntity teachingDepartment) {
+		this.teachingDepartment = teachingDepartment;
 	}
 
-	public SubjectEntity getTeaching_subject() {
+	public ClassEntity getTeachingClass() {
+		return teachingClass;
+	}
+
+	public void setTeachingClass(ClassEntity teachingClass) {
+		this.teachingClass = teachingClass;
+	}
+
+	public SubjectEntity getTeachingSubject() {
 		return teachingSubject;
 	}
 
-	public void setTeaching_subject(SubjectEntity teaching_subject) {
-		this.teachingSubject = teaching_subject;
+	public void setTeachingSubject(SubjectEntity teachingSubject) {
+		this.teachingSubject = teachingSubject;
 	}
 
-	public TeacherEntity getTeaching_teacher() {
+	public TeacherEntity getTeachingTeacher() {
 		return teachingTeacher;
 	}
 
-	public void setTeaching_teacher(TeacherEntity teaching_teacher) {
-		this.teachingTeacher = teaching_teacher;
+	public void setTeachingTeacher(TeacherEntity teachingTeacher) {
+		this.teachingTeacher = teachingTeacher;
 	}
 
 	public List<GradeEntity> getGrades() {

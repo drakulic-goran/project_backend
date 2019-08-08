@@ -99,14 +99,6 @@ public class DepartmentClassEntity {
 		this.id = id;
 	}
 
-	public ClassEntity getClass_() {
-		return clas;
-	}
-
-	public void setClass_(ClassEntity class_) {
-		this.clas = class_;
-	}
-
 	public DepartmentEntity getDepartment() {
 		return department;
 	}
@@ -145,6 +137,14 @@ public class DepartmentClassEntity {
 
 	public void setVersion(Integer version) {
 		this.version = version;
+	}
+
+	public ClassEntity getClas() {
+		return clas;
+	}
+
+	public void setClas(ClassEntity clas) {
+		this.clas = clas;
 	}
 
 	public static Integer getStatusInactive() {
