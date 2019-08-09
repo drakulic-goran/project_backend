@@ -22,12 +22,8 @@ public class GradeDaoImpl implements GradeDao {
    
    @Override
    public GradeEntity addNewGrade(TeacherEntity teacher, StudentEntity student, TeacherSubjectDepartmentEntity teacherDepartments, GradeDto newGrade) throws Exception {
-	   try {
-		if (teacher ==null || student==null || teacherDepartments==null || newGrade == null || newGrade.getSemester() == null || newGrade.getGradeValue() == null) {
-			     throw new Exception("Some data is null.");
-		   }
-	   } catch (Exception e) {
-		   throw new Exception("GradeDto check failed.");
+	   if (teacher ==null || student==null || teacherDepartments==null || newGrade == null || newGrade.getSemester() == null || newGrade.getGradeValue() == null) {
+		   throw new Exception("Some data is null.");
 	   }
 	   GradeEntity grade = new GradeEntity();
 	   try {
@@ -47,13 +43,9 @@ public class GradeDaoImpl implements GradeDao {
    
    @Override
    public GradeEntity modifyGrade(UserEntity loggedUser, GradeEntity grade, Integer gradeValue) throws Exception {
-	   try {
 		if (grade ==null || gradeValue == null) {
-			     throw new Exception("Some data is null.");
-		   }
-	   } catch (Exception e) {
-		   throw new Exception("GradeDto check failed.");
-	   }
+			throw new Exception("Some data is null.");
+		}
 	   try {
 		   grade.setGradeValue(gradeValue);
 		   grade.setGradeMadeDate(new Date());
@@ -67,13 +59,9 @@ public class GradeDaoImpl implements GradeDao {
    
    @Override
    public void setStatusActive(UserEntity loggedUser, GradeEntity grade)  throws Exception {
-	   try {
 		if (grade ==null) {
-			     throw new Exception("Some data is null.");
-		   }
-	   } catch (Exception e) {
-		   throw new Exception("Check failed.");
-	   }
+			throw new Exception("Some data is null.");
+		}
 	   try {
 			grade.setStatusActive();
 			grade.setUpdatedById(loggedUser.getId());
@@ -85,13 +73,9 @@ public class GradeDaoImpl implements GradeDao {
    
    @Override
    public void setStatusArchived(UserEntity loggedUser, GradeEntity grade)  throws Exception {
-	   try {
 		if (grade ==null) {
-			     throw new Exception("Some data is null.");
-		   }
-	   } catch (Exception e) {
-		   throw new Exception("Check failed.");
-	   }
+			throw new Exception("Some data is null.");
+		}
 	   try {
 			grade.setStatusArchived();
 			grade.setUpdatedById(loggedUser.getId());
@@ -103,13 +87,9 @@ public class GradeDaoImpl implements GradeDao {
    
    @Override
    public void setStatusDeleted(UserEntity loggedUser, GradeEntity grade)  throws Exception {
-	   try {
 		if (grade ==null) {
-			     throw new Exception("Some data is null.");
-		   }
-	   } catch (Exception e) {
-		   throw new Exception("Check failed.");
-	   }
+			throw new Exception("Some data is null.");
+		}
 	   try {
 			grade.setStatusInactive();
 			grade.setUpdatedById(loggedUser.getId());

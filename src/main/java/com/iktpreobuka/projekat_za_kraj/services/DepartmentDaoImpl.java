@@ -216,17 +216,7 @@ public class DepartmentDaoImpl implements DepartmentDao {
 			throw new Exception("ArchiveDeletedStudent failed on saving.");
 		}		
 	}
-	
-/*	@Override
-	public void addParentToStudent(StudentEntity student, ParentEntity parent) throws Exception {
-		try {
-			student.getParents().add(parent);
-			studentRepository.save(student);
-		} catch (Exception e) {
-			throw new Exception("addParentToStudent failed on saving.");
-		}
-	}*/
-	
+		
 	@Override
 	public StudentDepartmentEntity addStudentToDepartment(UserEntity loggedUser, StudentEntity student, DepartmentEntity department, String transfer_date)  throws Exception {
 		try {
@@ -239,6 +229,13 @@ public class DepartmentDaoImpl implements DepartmentDao {
 					}
 				}
 				if (!contains) {
+					for (StudentDepartmentEntity sd : student.getDepartments()) {
+						if (sd.getStatus()==1) {
+							sd.setStatusInactive();
+							sd.setUpdatedById(loggedUser.getId());
+							studentDepartmentRepository.save(sd);
+						}
+					}
 					StudentDepartmentEntity studentDepartment = new StudentDepartmentEntity(student, department, Date.valueOf(transfer_date), loggedUser.getId());
 					studentDepartmentRepository.save(studentDepartment);
 					department.getStudents().add(studentDepartment);
@@ -291,6 +288,13 @@ public class DepartmentDaoImpl implements DepartmentDao {
 					}
 				}
 				if (!contains) {
+					for (TeacherSubjectDepartmentEntity tsd : department.getTeachers_subjects()) {
+						if (tsd.getStatus()==1) {
+							tsd.setStatusInactive();
+							tsd.setUpdatedById(loggedUser.getId());
+							teacherSubjectDepartmentRepository.save(tsd);
+						}
+					}
 					DepartmentClassEntity departmentClass = new DepartmentClassEntity(class_, department, schoolYear, loggedUser.getId());
 					departmentClassRepository.save(departmentClass);
 					department.getClasses().add(departmentClass);
@@ -319,6 +323,15 @@ public class DepartmentDaoImpl implements DepartmentDao {
 					}
 				}
 			}
+			if (dce != null) {
+				for (TeacherSubjectDepartmentEntity tsd : dce.getDepartment().getTeachers_subjects()) {
+					if (tsd.getTeachingClass() == dce.getClas() && tsd.getTeachingDepartment() == dce.getDepartment()) {
+						tsd.setStatusInactive();
+						tsd.setUpdatedById(loggedUser.getId());
+						teacherSubjectDepartmentRepository.save(tsd);
+					}
+				}
+			}
 			return dce;
 		} catch (Exception e) {
 			throw new Exception("removeClassFromDepartment failed on saving.");
@@ -343,6 +356,13 @@ public class DepartmentDaoImpl implements DepartmentDao {
 					}
 				}
 				if (!contains) {
+					for (PrimaryTeacherDepartmentEntity te : teacher.getDepartments()) {
+						if (te.getStatus()==1) {
+							te.setStatusInactive();
+							te.setUpdatedById(loggedUser.getId());
+							primaryTeacherDepartmentRepository.save(te);
+						}
+					}
 					PrimaryTeacherDepartmentEntity primaryTeacher = new PrimaryTeacherDepartmentEntity(teacher, department, Date.valueOf(assignmentDate), loggedUser.getId());
 					primaryTeacherDepartmentRepository.save(primaryTeacher);
 					department.getTeachers().add(primaryTeacher);
@@ -415,7 +435,7 @@ public class DepartmentDaoImpl implements DepartmentDao {
 			}
 			return teaching;
 		} catch (Exception e) {
-			throw new Exception("addSubjectsInDepartmentsToTeacher failed on saving.");
+			throw new Exception("addTeacherAndSubjectToDepartment failed on saving.");
 		}
 	}
 	

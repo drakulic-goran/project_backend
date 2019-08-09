@@ -23,21 +23,17 @@ public class AdminDaoImpl implements AdminDao {
 
 	@Override
 	public UserEntity addNewAdmin(UserEntity loggedUser, AdminDto newAdmin) throws Exception {
-			try {
-				if (newAdmin.getFirstName() == null || newAdmin.getLastName() == null || newAdmin.getGender() == null || newAdmin.getjMBG() == null || newAdmin.getEmail() == null || newAdmin.getMobilePhoneNumber() == null) {
-				     throw new Exception("Some data is null.");
-				}
-			} catch (Exception e) {
-				throw new Exception("AdminDto check failed.");
+			if (newAdmin.getFirstName() == null || newAdmin.getLastName() == null || newAdmin.getGender() == null || newAdmin.getjMBG() == null || newAdmin.getEmail() == null || newAdmin.getMobilePhoneNumber() == null) {
+				throw new Exception("Some data is null.");
 			}
 			UserEntity temporaryUser = new AdminEntity();
 			try {
 				temporaryUser = userRepository.findByJMBG(newAdmin.getjMBG());
-				if (temporaryUser != null && (!temporaryUser.getFirstName().equals(newAdmin.getFirstName()) || !temporaryUser.getLastName().equals(newAdmin.getLastName()) || !temporaryUser.getGender().toString().equals(newAdmin.getGender()) || !temporaryUser.getjMBG().equals(newAdmin.getjMBG()))) {
-					throw new Exception("User exists, but import data not same as exist user data.");
-				}
 			} catch (Exception e1) {
 				throw new Exception("Exist user check failed.");
+			}
+			if (temporaryUser != null && (!temporaryUser.getFirstName().equals(newAdmin.getFirstName()) || !temporaryUser.getLastName().equals(newAdmin.getLastName()) || !temporaryUser.getGender().toString().equals(newAdmin.getGender()) || !temporaryUser.getjMBG().equals(newAdmin.getjMBG()))) {
+				throw new Exception("User exists, but import data not same as exist user data.");
 			}
 			AdminEntity user = new AdminEntity();
 		try {
@@ -68,13 +64,8 @@ public class AdminDaoImpl implements AdminDao {
 
 	@Override
 	public void modifyAdmin(UserEntity loggedUser, AdminEntity admin, AdminDto updateAdmin) throws Exception {
-		try {
-			if (updateAdmin.getFirstName() == null && updateAdmin.getLastName() == null && updateAdmin.getEmail() == null && updateAdmin.getMobilePhoneNumber() == null && updateAdmin.getGender() == null && updateAdmin.getjMBG() == null) {
-			     throw new Exception("All data is null.");
-			}
-		} catch (Exception e1) {
-			throw new Exception("AdminDto check failed.");
-		}
+		if (updateAdmin.getFirstName() == null && updateAdmin.getLastName() == null && updateAdmin.getEmail() == null && updateAdmin.getMobilePhoneNumber() == null && updateAdmin.getGender() == null && updateAdmin.getjMBG() == null)
+			throw new Exception("All data is null.");
 		try {
 			Integer i = 0;
 			if (updateAdmin.getFirstName() != null && !updateAdmin.getFirstName().equals(" ") && !updateAdmin.getFirstName().equals("") && !updateAdmin.getFirstName().equals(admin.getFirstName())) {

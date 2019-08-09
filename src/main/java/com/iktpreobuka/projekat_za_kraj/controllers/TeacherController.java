@@ -266,7 +266,7 @@ public class TeacherController {
 			UserAccountEntity account = userAccountRepository.findByUserAndAccessRoleLikeAndStatusLike(user, EUserRole.ROLE_TEACHER, 1);
 			logger.info("Admin's user account identified.");
 			if (account != null) {
-				if (updateTeacher.getUsername() != null && !updateTeacher.getUsername().equals("") && !updateTeacher.getUsername().equals(" ") && userAccountRepository.getByUsername(updateTeacher.getUsername()) != null) {
+				if (updateTeacher.getUsername() != null && !updateTeacher.getUsername().equals("") && !updateTeacher.getUsername().equals(" ") && userAccountRepository.getByUsername(updateTeacher.getUsername()) == null) {
 					userAccountDao.modifyAccountUsername(loggedUser, account, updateTeacher.getUsername());
 					logger.info("Username modified.");					
 				}

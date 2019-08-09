@@ -87,21 +87,17 @@ public class TeacherDaoImpl implements TeacherDao {
 
 	@Override
 	public UserEntity addNewTeacher(UserEntity loggedUser, TeacherDto newTeacher) throws Exception {
-			try {
-				if (newTeacher.getFirstName() == null || newTeacher.getLastName() == null || newTeacher.getCertificate() == null || newTeacher.getEmploymentDate() == null || newTeacher.getGender() == null || newTeacher.getjMBG() == null ) {
-				     throw new Exception("Some data is null.");
-				}
-			} catch (Exception e) {
-				throw new Exception("addNewTeacher TeacherDto check failed.");
+			if (newTeacher.getFirstName() == null || newTeacher.getLastName() == null || newTeacher.getCertificate() == null || newTeacher.getEmploymentDate() == null || newTeacher.getGender() == null || newTeacher.getjMBG() == null ) {
+				throw new Exception("Some data is null.");
 			}
 			UserEntity temporaryUser = new TeacherEntity();
 			try {
 				temporaryUser = userRepository.findByJMBG(newTeacher.getjMBG());
-				if (temporaryUser != null && (!temporaryUser.getFirstName().equals(newTeacher.getFirstName()) || !temporaryUser.getLastName().equals(newTeacher.getLastName()) || !temporaryUser.getGender().toString().equals(newTeacher.getGender()) || !temporaryUser.getjMBG().equals(newTeacher.getjMBG()))) {
-					throw new Exception("User exists, but import data not same as exist user data.");
-				}
 			} catch (Exception e1) {
 				throw new Exception("addNewTeacher Exist user check failed.");
+			}
+			if (temporaryUser != null && (!temporaryUser.getFirstName().equals(newTeacher.getFirstName()) || !temporaryUser.getLastName().equals(newTeacher.getLastName()) || !temporaryUser.getGender().toString().equals(newTeacher.getGender()) || !temporaryUser.getjMBG().equals(newTeacher.getjMBG()))) {
+				throw new Exception("User exists, but import data not same as exist user data.");
 			}
 			TeacherEntity user = new TeacherEntity();
 		try {
@@ -372,7 +368,7 @@ public class TeacherDaoImpl implements TeacherDao {
 						DepartmentEntity dep = departmentRepository.findByIdAndStatusLike(Integer.parseInt(sd.right), 1);
 						if (dep==null)
 							throw new Exception("Department not exist.");
-						ClassEntity clas = departmentClassRepository.getByDepartmentAndStatusLike(dep, 1);
+						ClassEntity clas = departmentClassRepository.getClasByDepartmentAndStatusLike(dep, 1);
 						if (clas==null)
 							throw new Exception("Class for selected department not exist.");
 						boolean contains = false;
@@ -425,7 +421,7 @@ public class TeacherDaoImpl implements TeacherDao {
 						DepartmentEntity dep = departmentRepository.findByIdAndStatusLike(Integer.parseInt(sd.right), 1);
 						if (dep==null)
 							throw new Exception("Department not exist.");
-						ClassEntity clas = departmentClassRepository.getByDepartmentAndStatusLike(dep, 1);
+						ClassEntity clas = departmentClassRepository.getClasByDepartmentAndStatusLike(dep, 1);
 						if (clas==null)
 							throw new Exception("Class for selected department not exist.");
 						for (TeacherSubjectDepartmentEntity tsd : user.getSubjects_departments()) {

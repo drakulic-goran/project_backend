@@ -2,7 +2,10 @@ package com.iktpreobuka.projekat_za_kraj.services;
 
 import java.util.List;
 
+import com.iktpreobuka.projekat_za_kraj.entities.ClassSubjectEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.SubjectEntity;
+import com.iktpreobuka.projekat_za_kraj.entities.TeacherSubjectDepartmentEntity;
+import com.iktpreobuka.projekat_za_kraj.entities.TeacherSubjectEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.UserEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.dto.SubjectDto;
 
@@ -20,23 +23,23 @@ public interface SubjectDao {
 
 	public void archiveSubject(UserEntity loggedUser, SubjectEntity subject) throws Exception;
 	
-	public void addClassToSubject(UserEntity loggedUser, List<String> classes, SubjectEntity subject, String learningProgram) throws Exception;
+	public ClassSubjectEntity addClassToSubject(UserEntity loggedUser, List<String> classes, SubjectEntity subject, String learningProgram) throws Exception;
 	
-	public void removeClassFromSubject(UserEntity loggedUser, List<String> classes, SubjectEntity subject) throws Exception;
+	public ClassSubjectEntity removeClassFromSubject(UserEntity loggedUser, List<String> classes, SubjectEntity subject) throws Exception;
 
-	public void addTeachersToSubject(UserEntity loggedUser, SubjectEntity subject, List<String> teachers) throws Exception;
+	public TeacherSubjectEntity addTeachersToSubject(UserEntity loggedUser, SubjectEntity subject, List<String> teachers) throws Exception;
 	
-	public void removeTeachersFromSubject(UserEntity loggedUser, SubjectEntity subject, List<String> teachers) throws Exception;
+	public TeacherSubjectEntity removeTeachersFromSubject(UserEntity loggedUser, SubjectEntity subject, List<String> teachers) throws Exception;
 	
 	//public void addClassToDepartment(UserEntity loggedUser, ClassEntity class_, DepartmentEntity department, String schoolYear)  throws Exception;
 
 	//public void addPrimaryTeacherToDepartment(UserEntity loggedUser, TeacherEntity teacher, DepartmentEntity department, String assignmentDate) throws Exception;
 
-	public void addTeacherAndDepartmentToSubject(UserEntity loggedUser, SubjectEntity subject, String teachingDepartment, String teachingTeacher, String schoolYear) throws Exception;
+	public TeacherSubjectDepartmentEntity addTeacherAndDepartmentToSubject(UserEntity loggedUser, SubjectEntity subject, String teachingDepartment, String teachingTeacher, String schoolYear) throws Exception;
 
 	//public void removePrimaryTeacherFromDepartment(UserEntity loggedUser, TeacherEntity teacher, DepartmentEntity department) throws Exception;
 
-	public void removeTeacherAndDepartmentFromSubject(UserEntity loggedUser, SubjectEntity subject,	String teachingDepartment, String teachingTeacher) throws Exception;
+	public TeacherSubjectDepartmentEntity removeTeacherAndDepartmentFromSubject(UserEntity loggedUser, SubjectEntity subject,	String teachingDepartment, String teachingTeacher) throws Exception;
 
 	//public void removeClassFromDepartment(UserEntity loggedUser, ClassEntity class_, DepartmentEntity department) throws Exception;
 

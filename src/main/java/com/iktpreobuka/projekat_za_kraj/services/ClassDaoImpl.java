@@ -8,12 +8,14 @@ import com.iktpreobuka.projekat_za_kraj.entities.ClassSubjectEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.DepartmentClassEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.DepartmentEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.SubjectEntity;
+import com.iktpreobuka.projekat_za_kraj.entities.TeacherSubjectDepartmentEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.UserEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.dto.ClassDto;
 import com.iktpreobuka.projekat_za_kraj.enumerations.EClass;
 import com.iktpreobuka.projekat_za_kraj.repositories.ClassRepository;
 import com.iktpreobuka.projekat_za_kraj.repositories.ClassSubjectRepository;
 import com.iktpreobuka.projekat_za_kraj.repositories.DepartmentClassRepository;
+import com.iktpreobuka.projekat_za_kraj.repositories.TeacherSubjectDepartmentRepository;
 
 @Service
 public class ClassDaoImpl implements ClassDao {
@@ -27,14 +29,13 @@ public class ClassDaoImpl implements ClassDao {
 	@Autowired
 	private DepartmentClassRepository departmentClassRepository;
 	
+	@Autowired
+	private TeacherSubjectDepartmentRepository teacherSubjectDepartmentRepository;
+	
 	@Override
 	public ClassEntity addNewClass(UserEntity loggedUser, ClassDto newClass) throws Exception {
-		try {
-			if (newClass.getClassLabel() == null) {
-			     throw new Exception("Some data is null.");
-			}
-		} catch (Exception e) {
-			throw new Exception("ClassDto check failed.");
+		if (newClass.getClassLabel() == null) {
+			throw new Exception("Some data is null.");
 		}
 		ClassEntity clas = new ClassEntity();
 		try {
@@ -50,12 +51,8 @@ public class ClassDaoImpl implements ClassDao {
 	
 	@Override
 	public void modifyClass(UserEntity loggedUser, ClassEntity class_, ClassDto updateClass) throws Exception {
-		try {
-			if (updateClass.getClassLabel() == null) {
-			     throw new Exception("All data is null.");
-			}
-		} catch (Exception e) {
-			throw new Exception("ClassDto check failed.");
+		if (updateClass.getClassLabel() == null) {
+			throw new Exception("All data is null.");
 		}
 		try {
 			if (updateClass.getClassLabel() != null && !updateClass.getClassLabel().equals(" ") && !updateClass.getClassLabel().equals("")) {
@@ -108,6 +105,18 @@ public class ClassDaoImpl implements ClassDao {
 					}
 				}
 			}
+			if (cs1 != null) {
+				for (DepartmentClassEntity d : cs1.getClass_().getDepartments())
+					if (d.getStatus() == 1) {
+						for (TeacherSubjectDepartmentEntity tsd : d.getDepartment().getTeachers_subjects()) {
+							if (tsd.getTeachingClass() == cs1.getClas() && tsd.getTeachingSubject() == cs1.getSubject() && tsd.getStatus() == 1) {
+								tsd.setStatusInactive();
+								tsd.setUpdatedById(loggedUser.getId());
+								teacherSubjectDepartmentRepository.save(tsd);
+							}
+						}
+					}
+			}
 			return cs1;
 		} catch (Exception e) {
 			throw new Exception("removeSubjectFromClass failed on saving.");
@@ -132,9 +141,18 @@ public class ClassDaoImpl implements ClassDao {
 			DepartmentClassEntity departmentClass = null;
 			if (!contains) {
 				for (DepartmentClassEntity d : department.getClasses()) {
-					d.setStatusInactive();
-					d.setUpdatedById(loggedUser.getId());
-					departmentClassRepository.save(d);
+					if (d.getStatus() == 1) {
+						d.setStatusInactive();
+						d.setUpdatedById(loggedUser.getId());
+						departmentClassRepository.save(d);
+					}
+				}
+				for (TeacherSubjectDepartmentEntity tsd : department.getTeachers_subjects()) {
+					if (tsd.getStatus() == 1) {
+						tsd.setStatusInactive();
+						tsd.setUpdatedById(loggedUser.getId());
+						teacherSubjectDepartmentRepository.save(tsd);
+					}
 				}
 				departmentClass = new DepartmentClassEntity(class_, department, schoolYear, loggedUser.getId());
 				departmentClassRepository.save(departmentClass);
@@ -161,9 +179,18 @@ public class ClassDaoImpl implements ClassDao {
 					}
 				}
 			}
+			if (dc1 != null) {
+				for (TeacherSubjectDepartmentEntity tsd : dc1.getDepartment().getTeachers_subjects()) {
+					if (tsd.getTeachingClass() == dc1.getClas() && tsd.getTeachingDepartment() == dc1.getDepartment()) {
+						tsd.setStatusInactive();
+						tsd.setUpdatedById(loggedUser.getId());
+						teacherSubjectDepartmentRepository.save(tsd);
+					}
+				}
+			}
 			return dc1;
 		} catch (Exception e) {
-			throw new Exception("addDepartmentToClass failed on saving.");
+			throw new Exception("removeDepartmentFromClass failed on saving.");
 		}
 	}
 	
@@ -182,6 +209,13 @@ public class ClassDaoImpl implements ClassDao {
 					cs.setStatusInactive();
 					cs.setUpdatedById(loggedUser.getId());
 					classSubjectRepository.save(cs);
+				}
+			}
+			for (TeacherSubjectDepartmentEntity tsd : class_.getTeachers_subjects_departments()) {
+				if (tsd.getStatus() == 1) {
+					tsd.setStatusInactive();
+					tsd.setUpdatedById(loggedUser.getId());
+					teacherSubjectDepartmentRepository.save(tsd);
 				}
 			}
 			class_.setStatusInactive();
@@ -218,6 +252,13 @@ public class ClassDaoImpl implements ClassDao {
 					cs.setStatusArchived();;
 					cs.setUpdatedById(loggedUser.getId());
 					classSubjectRepository.save(cs);
+				}
+			}
+			for (TeacherSubjectDepartmentEntity tsd : class_.getTeachers_subjects_departments()) {
+				if (tsd.getStatus() != -1) {
+					tsd.setStatusArchived();
+					tsd.setUpdatedById(loggedUser.getId());
+					teacherSubjectDepartmentRepository.save(tsd);
 				}
 			}
 			class_.setStatusArchived();;

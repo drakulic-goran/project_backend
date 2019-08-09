@@ -59,21 +59,17 @@ public class StudentDaoImpl implements StudentDao {
 	
 	@Override
 	public UserEntity addNewStudent(UserEntity loggedUser, StudentDto newStudent) throws Exception {
-		try {
-			if (newStudent.getFirstName() == null || newStudent.getLastName() == null || newStudent.getEnrollmentDate() == null || newStudent.getGender() == null || newStudent.getjMBG() == null || newStudent.getSchoolIdentificationNumber() == null ) {
-		         throw new Exception("Some data is null.");
-			}
-		} catch (Exception e) {
-			throw new Exception("StudentDto check failed.");
+		if (newStudent.getFirstName() == null || newStudent.getLastName() == null || newStudent.getEnrollmentDate() == null || newStudent.getGender() == null || newStudent.getjMBG() == null || newStudent.getSchoolIdentificationNumber() == null ) {
+			throw new Exception("Some data is null.");
 		}
 		UserEntity temporaryUser = new TeacherEntity();
 		try {
 			temporaryUser = userRepository.findByJMBG(newStudent.getjMBG());
-			if (temporaryUser != null && (!temporaryUser.getFirstName().equals(newStudent.getFirstName()) || !temporaryUser.getLastName().equals(newStudent.getLastName()) || !temporaryUser.getGender().toString().equals(newStudent.getGender()) || !temporaryUser.getjMBG().equals(newStudent.getjMBG()))) {
-				throw new Exception("User exists, but import data not same as exist user data.");
-			}
 		} catch (Exception e1) {
 			throw new Exception("Exist user check failed.");
+		}
+		if (temporaryUser != null && (!temporaryUser.getFirstName().equals(newStudent.getFirstName()) || !temporaryUser.getLastName().equals(newStudent.getLastName()) || !temporaryUser.getGender().toString().equals(newStudent.getGender()) || !temporaryUser.getjMBG().equals(newStudent.getjMBG()))) {
+			throw new Exception("User exists, but import data not same as exist user data.");
 		}
 		StudentEntity user = new StudentEntity();
 		try {
@@ -180,7 +176,7 @@ public class StudentDaoImpl implements StudentDao {
 	public void archiveStudent(UserEntity loggedUser, StudentEntity student) throws Exception {
 		try {
 			for (StudentDepartmentEntity sd : student.getDepartments()) {
-				if (sd.getStatus() == 1) {
+				if (sd.getStatus() != 1) {
 					sd.setStatusArchived();
 					sd.setUpdatedById(loggedUser.getId());
 					studentDepartmentRepository.save(sd);

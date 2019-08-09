@@ -173,7 +173,6 @@ public class ParentController {
 		}
 	}
 
-	@SuppressWarnings("unused")
 	@Secured("ROLE_ADMIN")
 	@JsonView(Views.Admin.class)
 	@RequestMapping(method = RequestMethod.POST)
@@ -255,9 +254,9 @@ public class ParentController {
 				logger.info("---------------- Email already exist.");
 				return new ResponseEntity<>("Email already exist.", HttpStatus.NOT_ACCEPTABLE);
 			}
-			if (updateParent.getAccessRole() != null && !updateParent.getAccessRole().equals("ROLE_ADMIN")) {
-				logger.info("---------------- Access role must be ROLE_ADMIN.");
-		        return new ResponseEntity<>("Access role must be ROLE_ADMIN.", HttpStatus.NOT_ACCEPTABLE);
+			if (updateParent.getAccessRole() != null && !updateParent.getAccessRole().equals("ROLE_PARENT")) {
+				logger.info("---------------- Access role must be ROLE_PARENT.");
+		        return new ResponseEntity<>("Access role must be ROLE_PARENT.", HttpStatus.NOT_ACCEPTABLE);
 			}		
 			if (updateParent.getUsername() != null && userAccountRepository.getByUsername(updateParent.getUsername()) != null) {
 				logger.info("---------------- Username already exists.");
@@ -278,7 +277,7 @@ public class ParentController {
 			UserAccountEntity account = userAccountRepository.findByUserAndAccessRoleLikeAndStatusLike(user, EUserRole.ROLE_PARENT, 1);
 			logger.info("Parent's user account identified.");
 			if (account != null) {
-				if (updateParent.getUsername() != null && !updateParent.getUsername().equals("") && !updateParent.getUsername().equals(" ") && userAccountRepository.getByUsername(updateParent.getUsername()) != null) {
+				if (updateParent.getUsername() != null && !updateParent.getUsername().equals("") && !updateParent.getUsername().equals(" ") && userAccountRepository.getByUsername(updateParent.getUsername()) == null) {
 					userAccountDao.modifyAccountUsername(loggedUser, account, updateParent.getUsername());
 					logger.info("Username modified.");					
 				}
@@ -356,8 +355,8 @@ public class ParentController {
 		      }
 			logger.info("Student identified.");
 			if (!user.getStudents().contains(student)) {
-				logger.info("---------------- Student don't exist.");
-				return new ResponseEntity<>("Student don't exist.", HttpStatus.NOT_FOUND);
+				logger.info("---------------- Student not parent child.");
+				return new ResponseEntity<>("Student not parent child.", HttpStatus.NOT_FOUND);
 			}
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");

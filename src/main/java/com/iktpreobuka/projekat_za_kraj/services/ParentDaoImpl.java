@@ -11,6 +11,7 @@ import com.iktpreobuka.projekat_za_kraj.entities.dto.ParentDto;
 import com.iktpreobuka.projekat_za_kraj.enumerations.EGender;
 import com.iktpreobuka.projekat_za_kraj.enumerations.EUserRole;
 import com.iktpreobuka.projekat_za_kraj.repositories.ParentRepository;
+import com.iktpreobuka.projekat_za_kraj.repositories.StudentRepository;
 import com.iktpreobuka.projekat_za_kraj.repositories.UserRepository;
 
 @Service
@@ -21,6 +22,9 @@ public class ParentDaoImpl implements ParentDao {
 
 	@Autowired
 	private UserRepository userRepository;
+	
+	@Autowired
+	private StudentRepository studentRepository;
 
 	/*@Override
 	public ParentEntity findById(Integer id) throws Exception{
@@ -51,21 +55,17 @@ public class ParentDaoImpl implements ParentDao {
 
 	@Override
 	public UserEntity addNewParent(UserEntity loggedUser, ParentDto newParent) throws Exception {
-		try {
-			if (newParent.getFirstName() == null || newParent.getLastName() == null || newParent.getGender() == null || newParent.getjMBG() == null || newParent.getEmail() == null) {
-			     throw new Exception("Some data is null.");
-			}
-		} catch (Exception e) {
-			throw new Exception("TeacherDto check failed.");
+		if (newParent.getFirstName() == null || newParent.getLastName() == null || newParent.getGender() == null || newParent.getjMBG() == null || newParent.getEmail() == null) {
+			throw new Exception("Some data is null.");
 		}
 		UserEntity temporaryUser = new TeacherEntity();
 		try {
 			temporaryUser = userRepository.findByJMBG(newParent.getjMBG());
-			if (temporaryUser != null && (!temporaryUser.getFirstName().equals(newParent.getFirstName()) || !temporaryUser.getLastName().equals(newParent.getLastName()) || !temporaryUser.getGender().toString().equals(newParent.getGender()) || !temporaryUser.getjMBG().equals(newParent.getjMBG()))) {
-				throw new Exception("User exists, but import data not same as exist user data.");
-			}
 		} catch (Exception e1) {
 			throw new Exception("addNewParent Exist user check failed.");
+		}
+		if (temporaryUser != null && (!temporaryUser.getFirstName().equals(newParent.getFirstName()) || !temporaryUser.getLastName().equals(newParent.getLastName()) || !temporaryUser.getGender().toString().equals(newParent.getGender()) || !temporaryUser.getjMBG().equals(newParent.getjMBG()))) {
+			throw new Exception("User exists, but import data not same as exist user data.");
 		}
 		ParentEntity user = new ParentEntity();
 		try {
@@ -96,13 +96,9 @@ public class ParentDaoImpl implements ParentDao {
 
 	@Override
 	public void modifyParent(UserEntity loggedUser, ParentEntity parent, ParentDto updateParent) throws Exception {
-		try {
-			if (updateParent.getFirstName() == null && updateParent.getLastName() == null && updateParent.getGender() == null && updateParent.getjMBG() == null && updateParent.getEmail() == null) {
-			     throw new Exception("All data is null.");
-			}
-		} catch (Exception e1) {
-			throw new Exception("modifyParent ParentDto check failed.");
-		}		
+		if (updateParent.getFirstName() == null && updateParent.getLastName() == null && updateParent.getGender() == null && updateParent.getjMBG() == null && updateParent.getEmail() == null) {
+			throw new Exception("All data is null.");
+		}
 		try {
 			Integer i = 0;
 			if (updateParent.getFirstName() != null && !updateParent.getFirstName().equals(" ") && !updateParent.getFirstName().equals("") && !updateParent.getFirstName().equals(parent.getFirstName())) {
@@ -170,9 +166,9 @@ public class ParentDaoImpl implements ParentDao {
 	@Override
 	public void addStudentToParent(UserEntity loggedUser, ParentEntity parent, StudentEntity student) throws Exception {
 		try {
-			parent.getStudents().add(student);
-			parent.setUpdatedById(loggedUser.getId());
-			parentRepository.save(parent);
+			student.getParents().add(parent);
+			student.setUpdatedById(loggedUser.getId());
+			studentRepository.save(student);
 		} catch (Exception e) {
 			throw new Exception("AddStudentToParent failed on saving.");
 		}
@@ -181,9 +177,9 @@ public class ParentDaoImpl implements ParentDao {
 	@Override
 	public void removeStudentFromParent(UserEntity loggedUser, ParentEntity parent, StudentEntity student) throws Exception {
 		try {
-			parent.getStudents().remove(student);
-			parent.setUpdatedById(loggedUser.getId());
-			parentRepository.save(parent);
+			student.getParents().remove(parent);
+			student.setUpdatedById(loggedUser.getId());
+			studentRepository.save(student);
 		} catch (Exception e) {
 			throw new Exception("removeStudentFromParent failed on saving.");
 		}

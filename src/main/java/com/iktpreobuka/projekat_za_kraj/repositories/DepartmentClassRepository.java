@@ -1,5 +1,6 @@
 package com.iktpreobuka.projekat_za_kraj.repositories;
 
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 
 import com.iktpreobuka.projekat_za_kraj.entities.ClassEntity;
@@ -10,6 +11,7 @@ public interface DepartmentClassRepository extends CrudRepository<DepartmentClas
 
 	public DepartmentClassEntity getByClasAndDepartment(Integer id, Integer id1);
 
-	public ClassEntity getByDepartmentAndStatusLike(DepartmentEntity dep, Integer Status);
+	@Query("select c from ClassEntity c join c.departments d where d.department=:dep and c.status=1 and d.status=:status")
+	public ClassEntity getClasByDepartmentAndStatusLike(DepartmentEntity dep, Integer status);
 
 }

@@ -32,7 +32,6 @@ import com.iktpreobuka.projekat_za_kraj.entities.SubjectEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.TeacherEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.TeacherSubjectDepartmentEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.UserEntity;
-import com.iktpreobuka.projekat_za_kraj.entities.dto.DepartmentClassDto;
 import com.iktpreobuka.projekat_za_kraj.entities.dto.DepartmentDto;
 import com.iktpreobuka.projekat_za_kraj.enumerations.EClass;
 import com.iktpreobuka.projekat_za_kraj.repositories.ClassRepository;
@@ -88,9 +87,9 @@ public class DepartmentController {
 		logger.info("################ /project/department/getAll started.");
 		logger.info("Logged user: " + principal.getName());
 		try {
-			Iterable<DepartmentClassDto> departments= departmentRepository.findWithClass_departmentByStatusLike(1);
+			Iterable<DepartmentEntity> departments= departmentRepository.findByStatusLike(1);
 			logger.info("---------------- Finished OK.");
-			return new ResponseEntity<Iterable<DepartmentClassDto>>(departments, HttpStatus.OK);
+			return new ResponseEntity<>(departments, HttpStatus.OK);
 		} catch(Exception e) {
 			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
 			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -104,9 +103,9 @@ public class DepartmentController {
 		logger.info("################ /project/department/getById started.");
 		logger.info("Logged user: " + principal.getName());
 		try {
-			Iterable<DepartmentClassDto> department= departmentRepository.findWithClass_departmentByIdAndStatusLike(id, 1);
+			DepartmentEntity department= departmentRepository.findByIdAndStatusLike(id, 1);
 			logger.info("---------------- Finished OK.");
-			return new ResponseEntity<Iterable<DepartmentClassDto>>(department, HttpStatus.OK);
+			return new ResponseEntity<>(department, HttpStatus.OK);
 		} catch(Exception e) {
 			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
 			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -120,9 +119,9 @@ public class DepartmentController {
 		logger.info("################ /project/department/getAllDeleted started.");
 		logger.info("Logged user: " + principal.getName());
 		try {
-			Iterable<DepartmentClassDto> departments= departmentRepository.findWithClass_departmentByStatusLike(0);
+			Iterable<DepartmentEntity> departments= departmentRepository.findByStatusLike(0);
 			logger.info("---------------- Finished OK.");
-			return new ResponseEntity<Iterable<DepartmentClassDto>>(departments, HttpStatus.OK);
+			return new ResponseEntity<>(departments, HttpStatus.OK);
 		} catch(Exception e) {
 			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
 			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -136,9 +135,9 @@ public class DepartmentController {
 		logger.info("################ /project/department/getByIdDeleted started.");
 		logger.info("Logged user: " + principal.getName());
 		try {
-			Iterable<DepartmentClassDto> department= departmentRepository.findWithClass_departmentByIdAndStatusLike(id, 0);
+			DepartmentEntity department= departmentRepository.findByIdAndStatusLike(id, 0);
 			logger.info("---------------- Finished OK.");
-			return new ResponseEntity<Iterable<DepartmentClassDto>>(department, HttpStatus.OK);
+			return new ResponseEntity<>(department, HttpStatus.OK);
 		} catch(Exception e) {
 			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
 			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -152,9 +151,9 @@ public class DepartmentController {
 		logger.info("################ /project/department/archived/getAllArchived started.");
 		logger.info("Logged user: " + principal.getName());
 		try {
-			Iterable<DepartmentClassDto> departments= departmentRepository.findWithClass_departmentByStatusLike(-1);
+			Iterable<DepartmentEntity> departments= departmentRepository.findByStatusLike(-1);
 			logger.info("---------------- Finished OK.");
-			return new ResponseEntity<Iterable<DepartmentClassDto>>(departments, HttpStatus.OK);
+			return new ResponseEntity<>(departments, HttpStatus.OK);
 		} catch(Exception e) {
 			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
 			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -168,9 +167,9 @@ public class DepartmentController {
 		logger.info("################ /project/department/archived/getByIdArchived started.");
 		logger.info("Logged user: " + principal.getName());
 		try {
-			Iterable<DepartmentClassDto> department= departmentRepository.findWithClass_departmentByIdAndStatusLike(id, -1);
+			DepartmentEntity department= departmentRepository.findByIdAndStatusLike(id, -1);
 			logger.info("---------------- Finished OK.");
-			return new ResponseEntity<Iterable<DepartmentClassDto>>(department, HttpStatus.OK);
+			return new ResponseEntity<>(department, HttpStatus.OK);
 		} catch(Exception e) {
 			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
 			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -198,8 +197,8 @@ public class DepartmentController {
 		DepartmentEntity department = new DepartmentEntity();
 		try {
 			if (newDepartment.getDepartmentLabel() != null && newDepartment.getEnrollmentYear() != null && departmentRepository.findByDepartmentLabelAndEnrollmentYearAndStatusLike(newDepartment.getDepartmentLabel(), newDepartment.getEnrollmentYear(), 1) != null) {
-				logger.info("---------------- Department label for that year already exist.");
-				return new ResponseEntity<>("Department label for that year already exist.", HttpStatus.NOT_ACCEPTABLE);
+				logger.info("---------------- Department label for that enrollment year already exist.");
+				return new ResponseEntity<>("Department label for that enrollment year already exist.", HttpStatus.NOT_ACCEPTABLE);
 			}
 			ClassEntity class_ = classRepository.findByClassLabelAndStatusLike(EClass.valueOf(newDepartment.getDepartment_class()), 1);
 			if (class_==null || class_.getStatus()!=1) {
@@ -273,6 +272,9 @@ public class DepartmentController {
 				logger.info("Logged user identified.");
 				departmentDao.modifyDepartment(loggedUser, department, updateDepartment);	
 				logger.info("Department modified.");
+			} else {
+				logger.info("---------------- School year missing.");
+				return new ResponseEntity<>("School year missing.", HttpStatus.BAD_REQUEST);
 			}
 			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<>(department, HttpStatus.OK);
@@ -383,7 +385,7 @@ public class DepartmentController {
 		        return new ResponseEntity<>("Department not found.", HttpStatus.NOT_FOUND);
 		      }
 			logger.info("Department identified.");
-			ClassEntity clas = departmentClassRepository.getByDepartmentAndStatusLike(department, 1);
+			ClassEntity clas = departmentClassRepository.getClasByDepartmentAndStatusLike(department, 1);
 			if (department == null || department.getStatus()!=1) {
 				logger.info("---------------- Class not found.");
 		        return new ResponseEntity<>("Class not found.", HttpStatus.NOT_FOUND);
@@ -436,7 +438,7 @@ public class DepartmentController {
 		        return new ResponseEntity<>("Department not found.", HttpStatus.NOT_FOUND);
 		      }
 			logger.info("Department identified.");
-			ClassEntity clas = departmentClassRepository.getByDepartmentAndStatusLike(department, 1);
+			ClassEntity clas = departmentClassRepository.getClasByDepartmentAndStatusLike(department, 1);
 			if (department == null || department.getStatus()!=1) {
 				logger.info("---------------- Class not found.");
 		        return new ResponseEntity<>("Class not found.", HttpStatus.NOT_FOUND);

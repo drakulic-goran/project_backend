@@ -1,6 +1,7 @@
 package com.iktpreobuka.projekat_za_kraj.controllers;
 
 import java.security.Principal;
+import java.sql.Date;
 import java.util.stream.Collectors;
 
 import javax.validation.Valid;
@@ -35,6 +36,7 @@ import com.iktpreobuka.projekat_za_kraj.entities.dto.StudentDto;
 import com.iktpreobuka.projekat_za_kraj.enumerations.EUserRole;
 import com.iktpreobuka.projekat_za_kraj.repositories.DepartmentRepository;
 import com.iktpreobuka.projekat_za_kraj.repositories.ParentRepository;
+import com.iktpreobuka.projekat_za_kraj.repositories.StudentDepartmentRepository;
 import com.iktpreobuka.projekat_za_kraj.repositories.StudentRepository;
 import com.iktpreobuka.projekat_za_kraj.repositories.UserAccountRepository;
 import com.iktpreobuka.projekat_za_kraj.repositories.UserRepository;
@@ -64,6 +66,9 @@ public class StudentController {
 	
 	@Autowired
 	private DepartmentRepository departmentRepository;
+	
+	@Autowired
+	private StudentDepartmentRepository studentDepartmentRepository;
 
 	@Autowired
 	private UserRepository userRepository;
@@ -180,7 +185,6 @@ public class StudentController {
 		}
 	}
 
-	@SuppressWarnings("unused")
 	@Secured("ROLE_ADMIN")
 	@JsonView(Views.Admin.class)
 	@RequestMapping(method = RequestMethod.POST)
@@ -285,7 +289,7 @@ public class StudentController {
 			UserAccountEntity account = userAccountRepository.findByUserAndAccessRoleLikeAndStatusLike(user, EUserRole.ROLE_STUDENT, 1);
 			logger.info("Admin's user account identified.");
 			if (account != null) {
-				if (updateStudent.getUsername() != null && !updateStudent.getUsername().equals("") && !updateStudent.getUsername().equals(" ") && userAccountRepository.getByUsername(updateStudent.getUsername()) != null) {
+				if (updateStudent.getUsername() != null && !updateStudent.getUsername().equals("") && !updateStudent.getUsername().equals(" ") && userAccountRepository.getByUsername(updateStudent.getUsername()) == null) {
 					userAccountDao.modifyAccountUsername(loggedUser, account, updateStudent.getUsername());
 					logger.info("Username modified.");					
 				}
@@ -363,8 +367,8 @@ public class StudentController {
 		      }
 			logger.info("Parent identified.");		
 			if (!user.getParents().contains(parent)) {
-				logger.info("---------------- Parent not exist.");
-				return new ResponseEntity<>("Parent not exist.", HttpStatus.NOT_FOUND);
+				logger.info("---------------- Parent not student parent.");
+				return new ResponseEntity<>("Parent not student parent.", HttpStatus.NOT_FOUND);
 			}
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
@@ -404,12 +408,14 @@ public class StudentController {
 		        return new ResponseEntity<>("Department not found.", HttpStatus.NOT_FOUND);
 		      }
 			logger.info("Department identified.");
-			if (transferdate != null && !transferdate.equals(" ") && !transferdate.equals("")) {
-				UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
-				logger.info("Logged user identified.");
-				sde = studentDao.addDepartmentToStudent(loggedUser, user, department, transferdate);
-				logger.info("Department added to student.");
+			if (transferdate == null || transferdate.equals(" ") || transferdate.equals("") || studentDepartmentRepository.findByStudentAndDepartmentAndTransferDate(user, department, Date.valueOf(transferdate)) != null) {
+				logger.info("---------------- Transfer date same as last transfer date.");
+		        return new ResponseEntity<>("Transfer date same as last transfer date.", HttpStatus.NOT_ACCEPTABLE);
 			}
+			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
+			logger.info("Logged user identified.");
+			sde = studentDao.addDepartmentToStudent(loggedUser, user, department, transferdate);
+			logger.info("Department added to student.");
 			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<StudentDepartmentEntity>(sde, HttpStatus.OK);
 		} catch (NumberFormatException e) {

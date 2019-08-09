@@ -33,4 +33,6 @@ public interface SubjectRepository extends CrudRepository<SubjectEntity, Integer
 	@Query("select sub from TeacherEntity t join t.departments d join d.primary_department sd join sd.classes cl join cl.clas cd join cd.subjects su join su.subject sub where t.id=:teacher and t.status=1 and d.status=1 and sd.status=1 and cl.status=1 and cd.status=1 and su.status=1 and sub.status=1")
 	public Iterable<SubjectEntity> findByPrimaryTeacher(Integer teacher);
 
+	public SubjectEntity findBySubjectName(String subjectName);
+
 }

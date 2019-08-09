@@ -56,12 +56,8 @@ public class SubjectDaoImpl implements SubjectDao {
 	
 	@Override
 	public SubjectEntity addNewSubject(UserEntity loggedUser, SubjectDto newSubject) throws Exception {
-		try {
-			if (newSubject.getSubjectName() == null || newSubject.getWeekClassesNumber() == null) {
-			     throw new Exception("Some data is null.");
-			}
-		} catch (Exception e) {
-			throw new Exception("SubjectDto check failed.");
+		if (newSubject.getSubjectName() == null || newSubject.getWeekClassesNumber() == null) {
+			throw new Exception("Some data is null.");
 		}
 		SubjectEntity subject = new SubjectEntity();
 		try {	
@@ -79,12 +75,8 @@ public class SubjectDaoImpl implements SubjectDao {
 	@SuppressWarnings("unlikely-arg-type")
 	@Override
 	public void modifySubject(UserEntity loggedUser, SubjectEntity subject, SubjectDto updateSubject) throws Exception {
-		try {
-			if (updateSubject.getSubjectName() == null && updateSubject.getWeekClassesNumber() == null) {
-			     throw new Exception("All data is null.");
-			}
-		} catch (Exception e) {
-			throw new Exception("SubjectDto check failed.");
+		if (updateSubject.getSubjectName() == null && updateSubject.getWeekClassesNumber() == null) {
+			throw new Exception("All data is null.");
 		}
 		try {
 			Integer i = 0;
@@ -181,8 +173,9 @@ public class SubjectDaoImpl implements SubjectDao {
 	}
 	
 	@Override
-	public void addClassToSubject(UserEntity loggedUser, List<String> classes, SubjectEntity subject, String learningProgram) throws Exception {
+	public ClassSubjectEntity addClassToSubject(UserEntity loggedUser, List<String> classes, SubjectEntity subject, String learningProgram) throws Exception {
 		try {
+			ClassSubjectEntity classSubject = null;
 			if (subject !=null && subject.getStatus() ==1 && !classes.isEmpty() && learningProgram !=null && !learningProgram.equals("") && !learningProgram.equals(" ")) {
 				for (String t : classes) {
 					if (t !=null && !t.equals("") && !t.equals(" ")) {
@@ -193,13 +186,13 @@ public class SubjectDaoImpl implements SubjectDao {
 						if (learningProgram != null && class_.getStatus() == 1 && subject.getStatus() == 1) {
 							for (ClassSubjectEntity cs : subject.getClasses()) {
 								if (cs.getClass_() == class_ && cs.getStatus() == 1) {
-									contains = true;
+										contains = true;
 								}
 							}
 						} else
 							contains = true;
 						if (!contains) {
-							ClassSubjectEntity classSubject = new ClassSubjectEntity(class_, subject, learningProgram, loggedUser.getId());
+							classSubject = new ClassSubjectEntity(class_, subject, learningProgram, loggedUser.getId());
 							classSubjectRepository.save(classSubject);
 							subject.getClasses().add(classSubject);
 							subject.setUpdatedById(loggedUser.getId());
@@ -208,14 +201,16 @@ public class SubjectDaoImpl implements SubjectDao {
 					}
 				}
 			}
+			return classSubject;
 		} catch (Exception e) {
 			throw new Exception("addClassToSubject failed on saving.");
 		}
 	}
 		
 	@Override
-	public void removeClassFromSubject(UserEntity loggedUser, List<String> classes, SubjectEntity subject) throws Exception {
+	public ClassSubjectEntity removeClassFromSubject(UserEntity loggedUser, List<String> classes, SubjectEntity subject) throws Exception {
 		try {
+			ClassSubjectEntity classSubject = null;
 			if (subject !=null && subject.getStatus() ==1 && !classes.isEmpty()) {
 				for (String t : classes) {
 					if (t !=null && !t.equals("") && !t.equals(" ")) {
@@ -228,20 +223,32 @@ public class SubjectDaoImpl implements SubjectDao {
 									cs.setStatusInactive();
 									cs.setUpdatedById(loggedUser.getId());
 									classSubjectRepository.save(cs);
+									classSubject = cs;
+								}
+							}
+							if (classSubject != null) {
+								for (TeacherSubjectDepartmentEntity tsd : classSubject.getSubject().getTeachers_departments()) {
+									if (tsd.getTeachingSubject() == classSubject.getSubject() && tsd.getTeachingClass() == classSubject.getClas()) {
+										tsd.setStatusInactive();
+										tsd.setUpdatedById(loggedUser.getId());
+										teacherSubjectDepartmentRepository.save(tsd);
+									}
 								}
 							}
 						}
 					}
 				}
 			}
+			return classSubject;
 		} catch (Exception e) {
 			throw new Exception("removeSubjectFromClass failed on saving.");
 		}
 	}
 
 	@Override
-	public void addTeachersToSubject(UserEntity loggedUser, SubjectEntity subject, List<String> teachers) throws Exception {
+	public TeacherSubjectEntity addTeachersToSubject(UserEntity loggedUser, SubjectEntity subject, List<String> teachers) throws Exception {
 		try {
+			TeacherSubjectEntity teaching = null;
 			if (subject !=null && subject.getStatus() ==1 && !teachers.isEmpty()) {
 				for (String t : teachers) {
 					if (t !=null && !t.equals("") && !t.equals(" ")) {
@@ -255,7 +262,7 @@ public class SubjectDaoImpl implements SubjectDao {
 							}
 						}
 						if (!contains) {
-							TeacherSubjectEntity teaching = new TeacherSubjectEntity(teacher, subject, new Date(), loggedUser.getId());
+							teaching = new TeacherSubjectEntity(teacher, subject, new Date(), loggedUser.getId());
 							teacherSubjectRepository.save(teaching);
 							subject.getTeachers().add(teaching);
 							subject.setUpdatedById(loggedUser.getId());
@@ -264,14 +271,16 @@ public class SubjectDaoImpl implements SubjectDao {
 					}
 				}
 			}
+			return teaching;
 		} catch (Exception e) {
 			throw new Exception("addTeachersToSubject failed on saving.");
 		}
 	}
 	
 	@Override
-	public void removeTeachersFromSubject(UserEntity loggedUser, SubjectEntity subject, List<String> teachers) throws Exception {
+	public TeacherSubjectEntity removeTeachersFromSubject(UserEntity loggedUser, SubjectEntity subject, List<String> teachers) throws Exception {
 		try {
+			TeacherSubjectEntity teaching = null;
 			if (subject !=null && subject.getStatus() ==1 && !teachers.isEmpty()) {
 				for (String t : teachers) {
 					if (t !=null && !t.equals("") && !t.equals(" ")) {
@@ -283,19 +292,31 @@ public class SubjectDaoImpl implements SubjectDao {
 								ts.setStatusInactive();
 								ts.setUpdatedById(loggedUser.getId());
 								teacherSubjectRepository.save(ts);
+								teaching = ts;
+							}
+						}
+						if (teaching != null) {
+							for (TeacherSubjectDepartmentEntity tsd : teaching.getSubject().getTeachers_departments()) {
+								if (tsd.getTeachingSubject() == teaching.getSubject() && tsd.getTeachingTeacher() == teaching.getTeacher()) {
+									tsd.setStatusInactive();
+									tsd.setUpdatedById(loggedUser.getId());
+									teacherSubjectDepartmentRepository.save(tsd);
+								}
 							}
 						}
 					}
 				}
 			}
+			return teaching;
 		} catch (Exception e) {
 			throw new Exception("removeTeachersFromSubject failed on saving.");
 		}
 	}
 
 	@Override
-	public void addTeacherAndDepartmentToSubject(UserEntity loggedUser, SubjectEntity subject, String teachingDepartment, String teachingTeacher, String schoolYear) throws Exception {
+	public TeacherSubjectDepartmentEntity addTeacherAndDepartmentToSubject(UserEntity loggedUser, SubjectEntity subject, String teachingDepartment, String teachingTeacher, String schoolYear) throws Exception {
 		try {
+			TeacherSubjectDepartmentEntity teaching = null;
 			if (subject !=null && subject.getStatus() ==1 && teachingTeacher !=null && !teachingTeacher.equals("") && !teachingTeacher.equals(" ") && teachingDepartment !=null && !teachingDepartment.equals("") && !teachingDepartment.equals(" ") && schoolYear !=null && !schoolYear.equals("") && !schoolYear.equals(" ")) {
 					TeacherEntity teacher = teacherRepository.findByIdAndStatusLike(Integer.parseInt(teachingTeacher), 1);
 					if (teacher==null)
@@ -303,7 +324,7 @@ public class SubjectDaoImpl implements SubjectDao {
 					DepartmentEntity department = departmentRepository.findByIdAndStatusLike(Integer.parseInt(teachingDepartment), 1);
 					if (department==null)
 						throw new Exception("Department not exist.");
-					ClassEntity clas = departmentClassRepository.getByDepartmentAndStatusLike(department, 1);
+					ClassEntity clas = departmentClassRepository.getClasByDepartmentAndStatusLike(department, 1);
 					if (clas==null)
 						throw new Exception("Class for selected department not exist.");
 					boolean contains = false;
@@ -329,21 +350,23 @@ public class SubjectDaoImpl implements SubjectDao {
 						}
 					}
 					if (!contains) {
-						TeacherSubjectDepartmentEntity teaching = new TeacherSubjectDepartmentEntity(department, clas, subject, teacher, schoolYear, loggedUser.getId());
+						teaching = new TeacherSubjectDepartmentEntity(department, clas, subject, teacher, schoolYear, loggedUser.getId());
 						teacherSubjectDepartmentRepository.save(teaching);
 						subject.getTeachers_departments().add(teaching);
 						subject.setUpdatedById(loggedUser.getId());
 						subjectRepository.save(subject);
 					}
 			}
+			return teaching;
 		} catch (Exception e) {
 			throw new Exception("addTeacherAndDepartmentToSubject failed on saving.");
 		}
 	}
 	
 	@Override
-	public void removeTeacherAndDepartmentFromSubject(UserEntity loggedUser, SubjectEntity subject,	String teachingDepartment, String teachingTeacher) throws Exception {
+	public TeacherSubjectDepartmentEntity removeTeacherAndDepartmentFromSubject(UserEntity loggedUser, SubjectEntity subject,	String teachingDepartment, String teachingTeacher) throws Exception {
 		try {
+			TeacherSubjectDepartmentEntity teaching = null;
 			if (subject !=null && subject.getStatus() ==1 && teachingTeacher !=null && !teachingTeacher.equals("") && !teachingTeacher.equals(" ") && teachingDepartment !=null && !teachingDepartment.equals("") && !teachingDepartment.equals(" ")) {
 					TeacherEntity teacher = teacherRepository.findByIdAndStatusLike(Integer.parseInt(teachingTeacher), 1);
 					if (teacher==null)
@@ -351,7 +374,7 @@ public class SubjectDaoImpl implements SubjectDao {
 					DepartmentEntity department = departmentRepository.findByIdAndStatusLike(Integer.parseInt(teachingDepartment), 1);
 					if (department==null)
 						throw new Exception("Department not exist.");
-					ClassEntity clas = departmentClassRepository.getByDepartmentAndStatusLike(department, 1);
+					ClassEntity clas = departmentClassRepository.getClasByDepartmentAndStatusLike(department, 1);
 					if (clas==null)
 						throw new Exception("Class for selected department not exist.");
 					for (TeacherSubjectDepartmentEntity tsd : subject.getTeachers_departments()) {
@@ -359,9 +382,11 @@ public class SubjectDaoImpl implements SubjectDao {
 							tsd.setStatusInactive();
 							tsd.setUpdatedById(loggedUser.getId());
 							teacherSubjectDepartmentRepository.save(tsd);
+							teaching = tsd;
 						}
 					}
 			}
+			return teaching;
 		} catch (Exception e) {
 			throw new Exception("removeTeacherAndDepartmentFromSubject failed on saving.");
 		}

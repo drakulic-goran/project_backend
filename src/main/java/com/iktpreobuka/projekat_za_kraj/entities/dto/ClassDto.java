@@ -12,7 +12,7 @@ import com.iktpreobuka.projekat_za_kraj.security.Views;
 public class ClassDto {
 
 	@JsonView(Views.Student.class)
-	@Pattern(regexp = "^(IV|V?I{1,4})$", message="Student class is not valid, must be I, II, III, IV, V, VI, VII or VIII.")
+	@Pattern(regexp = "^(IV|IX|X|V?I{0,3})$", message="Student class is not valid, must be I, II, III, IV, V, VI, VII, VIII, IX or X.")
 	private String classLabel;
 	@JsonView(Views.Student.class)
 	//@Pattern(regexp = "^([_A-Za-z0-9- _])+$", message="Subject is not valid.")
@@ -32,7 +32,7 @@ public class ClassDto {
 	}
 
 	public ClassDto(
-			@Pattern(regexp = "^(IV|V?I{1,4})$", message = "Student class is not valid, must be I, II, III, IV, V, VI, VII or VIII.") String classLabel,
+			@Pattern(regexp = "^(IV|V?I{1,4})$", message = "Student class is not valid, must be I, II, III, IV, V, VI, VII, VIII, IX or X.") String classLabel,
 			//@Pattern(regexp = "^([_A-Za-z0-9- _])+$", message = "Subject is not valid.") 
 			SubjectEntity subject,
 			//@Pattern(regexp = "^[a-zA-Z]$", message = "Department label is not valid, can contain only one letter.") 
@@ -44,7 +44,7 @@ public class ClassDto {
 	}
 
 	public ClassDto(
-			@Pattern(regexp = "^(IV|V?I{1,4})$", message = "Student class is not valid, must be I, II, III, IV, V, VI, VII or VIII.") String classLabel,
+			@Pattern(regexp = "^(IV|V?I{1,4})$", message = "Student class is not valid, must be I, II, III, IV, V, VI, VII, VIII, IX or X.") String classLabel,
 			//@Pattern(regexp = "^([_A-Za-z0-9- _])+$", message = "Subject is not valid.") 
 			List<String> subjects,
 			//@Pattern(regexp = "^[a-zA-Z]$", message = "Department label is not valid, can contain only one letter.") 
@@ -56,7 +56,7 @@ public class ClassDto {
 	}
 
 	public ClassDto(
-			@Pattern(regexp = "^(IV|V?I{1,4})$", message = "Student class is not valid, must be I, II, III, IV, V, VI, VII or VIII.") String classLabel,
+			@Pattern(regexp = "^(IV|V?I{1,4})$", message = "Student class is not valid, must be I, II, III, IV, V, VI, VII, VIII, IX or X.") String classLabel,
 			//@Pattern(regexp = "^([_A-Za-z0-9- _])+$", message = "Subject is not valid.") 
 			SubjectEntity subject,
 			//@Pattern(regexp = "^[a-zA-Z]$", message = "Department label is not valid, can contain only one letter.") 
@@ -68,7 +68,7 @@ public class ClassDto {
 	}
 
 	public ClassDto(
-			@Pattern(regexp = "^(IV|V?I{1,4})$", message = "Student class is not valid, must be I, II, III, IV, V, VI, VII or VIII.") String classLabel,
+			@Pattern(regexp = "^(IV|V?I{1,4})$", message = "Student class is not valid, must be I, II, III, IV, V, VI, VII, VIII, IX or X.") String classLabel,
 			//@Pattern(regexp = "^([_A-Za-z0-9- _])+$", message = "Subject is not valid.") 
 			List<String> subjects) {
 		super();
@@ -79,7 +79,7 @@ public class ClassDto {
 	public ClassDto(
 			//@Pattern(regexp = "^[a-zA-Z]$", message = "Department label is not valid, can contain only one letter.") 
 			List<String> departments,
-			@Pattern(regexp = "^(IV|V?I{1,4})$", message = "Student class is not valid, must be I, II, III, IV, V, VI, VII or VIII.") String classLabel) {
+			@Pattern(regexp = "^(IV|V?I{1,4})$", message = "Student class is not valid, must be I, II, III, IV, V, VI, VII, VIII, IX or X.") String classLabel) {
 		super();
 		this.departments = departments;
 		this.classLabel = classLabel;

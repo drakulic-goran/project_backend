@@ -96,9 +96,8 @@ public class AdminController {
 		logger.info("Logged username: " + principal.getName());
 		try {
 			AdminEntity user= adminRepository.findByIdAndStatusLike(id, 1);
-			user.getAccounts();
 			logger.info("---------------- Finished OK.");
-			return new ResponseEntity<AdminEntity>(user, HttpStatus.OK);
+			return new ResponseEntity<>(user, HttpStatus.OK);
 		} catch(Exception e) {
 			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
 			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -130,7 +129,6 @@ public class AdminController {
 		logger.info("Logged username: " + principal.getName());
 		try {
 			AdminEntity user= adminRepository.findByIdAndStatusLike(id, 0);
-			user.getAccounts();
 			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<AdminEntity>(user, HttpStatus.OK);
 		} catch(Exception e) {
@@ -163,7 +161,6 @@ public class AdminController {
 		logger.info("Logged username: " + principal.getName());
 		try {
 			AdminEntity user= adminRepository.findByIdAndStatusLike(id, -1);
-			user.getAccounts();
 			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<AdminEntity>(user, HttpStatus.OK);
 		} catch(Exception e) {
@@ -186,7 +183,7 @@ public class AdminController {
 			logger.info("---------------- New admin is null.");
 	        return new ResponseEntity<>("New admin is null", HttpStatus.BAD_REQUEST);
 	      }
-		if (newAdmin.getFirstName() == null || newAdmin.getLastName() == null || newAdmin.getEmail() == null || newAdmin.getMobilePhoneNumber() == null|| newAdmin.getGender() == null || newAdmin.getjMBG() == null) {
+		if (newAdmin.getFirstName() == null || newAdmin.getLastName() == null || newAdmin.getEmail() == null || newAdmin.getMobilePhoneNumber() == null|| newAdmin.getGender() == null || newAdmin.getjMBG() == null ) {
 			logger.info("---------------- Some or all atributes is null.");
 			return new ResponseEntity<>("Some or all atributes is null.", HttpStatus.BAD_REQUEST);
 		}
@@ -274,9 +271,9 @@ public class AdminController {
 				logger.info("Admin modified.");
 			}
 			UserAccountEntity account = userAccountRepository.findByUserAndAccessRoleLikeAndStatusLike(user, EUserRole.ROLE_ADMIN, 1);
-			logger.info("Admin's user account identified.");
 			if (account != null) {
-				if (updateAdmin.getUsername() != null && !updateAdmin.getUsername().equals("") && !updateAdmin.getUsername().equals(" ") && userAccountRepository.getByUsername(updateAdmin.getUsername()) != null) {
+				logger.info("Admin's user account identified.");
+				if (updateAdmin.getUsername() != null && !updateAdmin.getUsername().equals("") && !updateAdmin.getUsername().equals(" ") && userAccountRepository.getByUsername(updateAdmin.getUsername()) == null) {
 					userAccountDao.modifyAccountUsername(loggedUser, account, updateAdmin.getUsername());
 					logger.info("Username modified.");					
 				}

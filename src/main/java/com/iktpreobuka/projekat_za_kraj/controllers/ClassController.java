@@ -173,9 +173,9 @@ public class ClassController {
 			logger.info("---------------- Validation has errors - " + createErrorMessage(result));
 			return new ResponseEntity<>(createErrorMessage(result), HttpStatus.BAD_REQUEST); 
 			}
-		if (newClass == null || newClass.getClassLabel() == null) {
-			logger.info("---------------- Some data is null.");
-	        return new ResponseEntity<>("Some data is null.", HttpStatus.BAD_REQUEST);
+		if (newClass == null || newClass.getClassLabel() == null || newClass.getDepartment() != null || newClass.getDepartments() != null || newClass.getSubject() != null || newClass.getSubjects() != null) {
+			logger.info("---------------- Some data is null or wrong data.");
+	        return new ResponseEntity<>("Some data is null or wrong data.", HttpStatus.BAD_REQUEST);
 	      }
 		ClassEntity class_ = new ClassEntity();
 		try {
@@ -207,9 +207,9 @@ public class ClassController {
 			logger.info("---------------- Validation has errors - " + createErrorMessage(result));
 			return new ResponseEntity<>(createErrorMessage(result), HttpStatus.BAD_REQUEST); 
 			}
-		if (id == null || updateClass == null || updateClass.getClassLabel() == null) {
-			logger.info("---------------- Some data is null.");
-	        return new ResponseEntity<>("Some data is null.", HttpStatus.BAD_REQUEST);
+		if (id == null || updateClass == null || updateClass.getClassLabel() == null || updateClass.getDepartment() != null || updateClass.getDepartments() != null || updateClass.getSubject() != null || updateClass.getSubjects() != null) {
+			logger.info("---------------- Some data is null or wrong data.");
+	        return new ResponseEntity<>("Some data is null or wrong data.", HttpStatus.BAD_REQUEST);
 	      }
 		ClassEntity class_ = new ClassEntity();
 		try {
@@ -236,46 +236,6 @@ public class ClassController {
 		}
 	}
 
-/*	@Secured("ROLE_ADMIN")
-	@JsonView(Views.Admin.class)
-	@RequestMapping(method = RequestMethod.PUT, value = "/change/{id}/classlabel/{name}")
-	public ResponseEntity<?> modifyClassLabel(@PathVariable String id, @PathVariable String name, Principal principal) {
-		logger.info("################ /project/class/modifyClassLabel started.");
-		String loggedUserName = principal.getName();
-		logger.info("Logged user: " + loggedUserName);
-		if (id == null) {
-			logger.info("This is an info message: Class id is null.");
-	        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-	      }
-		if (name == null) {
-			logger.info("This is an info message: Class name is null.");
-	        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-	      }
-		try {
-			ClassEntity class_ = classRepository.findByIdAndStatusLike(Integer.parseInt(id), 1);
-			if (class_==null) {
-				logger.info("This is an info message: Searched class not found.");
-				return new ResponseEntity<ClassEntity>(class_, HttpStatus.OK);
-			}
-			if (name != null && !name.equals(" ") && !name.equals("")) {
-				class_.setClassLabel(EClass.valueOf(name));
-				UserAccountEntity loggedUser = userAccountRepository.getByUsername(loggedUserName);
-				//AdminEntity user = adminRepository.getByUserAccount(loggedUser);
-				//AdminEntity user = (AdminEntity) loggedUser.getUser();
-				class_.setUpdatedById(loggedUser.getUser().getId());
-				classRepository.save(class_);
-				logger.info("This is an info message: Class modified.");
-			}
-			return new ResponseEntity<ClassEntity>(class_, HttpStatus.OK);
-		} catch (NumberFormatException e) {
-			logger.error("++++++++++++++++ Number format exception occurred: " + e.getMessage());
-			return new ResponseEntity<RESTError>(new RESTError(2, "Number format exception occurred: "+ e.getLocalizedMessage()), HttpStatus.NOT_ACCEPTABLE);
-		} catch (Exception e) {
-			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
-			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
-		}
-	}
-*/
 	@Secured("ROLE_ADMIN")
 	@JsonView(Views.Admin.class)
 	@RequestMapping(method = RequestMethod.PUT, value = "/{id}/add-subject/{s_id}/learningprogram/{name}")
