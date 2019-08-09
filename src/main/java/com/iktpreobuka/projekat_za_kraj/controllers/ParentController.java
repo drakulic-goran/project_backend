@@ -394,9 +394,9 @@ public class ParentController {
 		      }	
 			parentDao.archiveParent(loggedUser, user);
 			logger.info("Parent archived.");
-			UserAccountEntity account = userAccountRepository.findByUserAndAccessRoleLikeAndStatusLike(user, EUserRole.ROLE_PARENT, 1);
+			UserAccountEntity account = userAccountRepository.findByUserAndAccessRoleLike(user, EUserRole.ROLE_PARENT);
 			logger.info("Parent's user account identified.");
-			if (account != null) {
+			if (account != null && account.getStatus() != -1) {
 				userAccountDao.archiveAccount(loggedUser, account);
 				logger.info("Account archived.");
 				return new ResponseEntity<UserAccountEntity>(account, HttpStatus.OK);

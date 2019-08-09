@@ -36,12 +36,12 @@ public class TeacherEntity extends UserEntity {
 	@OneToMany(mappedBy = "teacher", fetch = FetchType.LAZY, cascade = { CascadeType.REFRESH}, orphanRemoval = true)
 	private List<TeacherSubjectEntity> subjects = new ArrayList<>();
 	
-	@JsonView(Views.Student.class)
+	@JsonView(Views.Teacher.class)
 	@JsonIgnore
 	@OneToMany(mappedBy = "primary_teacher", fetch = FetchType.LAZY, cascade = { CascadeType.REFRESH})
 	private List<PrimaryTeacherDepartmentEntity> departments = new ArrayList<>();
 	
-	@JsonView(Views.Admin.class)
+	@JsonView(Views.Teacher.class)
 	@JsonIgnore
 	@OneToMany(mappedBy = "teachingTeacher", fetch = FetchType.LAZY, cascade = { CascadeType.REFRESH})
 	private List<TeacherSubjectDepartmentEntity> subjects_departments = new ArrayList<>();
@@ -52,7 +52,7 @@ public class TeacherEntity extends UserEntity {
 	@NotNull (message = "Certificate must be provided.")
 	private String certificate;
 	@JsonView(Views.Teacher.class)
-	//@Pattern(regexp = "^([0][1-9]|[1|2][0-9]|[3][0|1])[./-]([0][1-9]|[1][0-2])[./-]([1-2][0-9]{3})$", message="Enrollment date is not valid, must be in dd-MM-yyyy format.")
+	//@Pattern(regexp = "^([1-2][0-9]{3})[./-]([0][1-9]|[1][0-2])[./-]([0][1-9]|[1|2][0-9]|[3][0|1])$", message="Employment date is not valid, must be in yyyy-MM-dd format.")
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
 	@Column(name="employment_date")
 	@NotNull (message = "Employment date must be provided.")

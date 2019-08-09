@@ -6,6 +6,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 import javax.validation.Valid;
@@ -37,6 +38,7 @@ import com.iktpreobuka.projekat_za_kraj.entities.UserAccountEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.UserEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.dto.GradeDto;
 import com.iktpreobuka.projekat_za_kraj.entities.dto.SubjectGradesDto;
+import com.iktpreobuka.projekat_za_kraj.enumerations.ESemester;
 import com.iktpreobuka.projekat_za_kraj.enumerations.EUserRole;
 import com.iktpreobuka.projekat_za_kraj.models.EmailObject;
 import com.iktpreobuka.projekat_za_kraj.repositories.GradeRepository;
@@ -238,15 +240,15 @@ public class GradeController {
 	
 	@Secured({"ROLE_STUDENT"})
 	@JsonView(Views.Student.class)
-	@RequestMapping(method = RequestMethod.GET, value = "/student/groupedbysubject")
-	public ResponseEntity<?> getAllStudentGroupedBySubject(Principal principal) {
-		logger.info("################ /project/grades/student/groupedbysubject/getAllStudentGroupedBySubject started.");
+	@RequestMapping(method = RequestMethod.GET, value = "/student/semester/{semester}/groupedbysubject")
+	public ResponseEntity<?> getAllStudentGroupedBySubjectForSemester(@PathVariable String semester, Principal principal) {
+		logger.info("################ /project/grades/student/semester/{semester}/groupedbysubject/getAllStudentGroupedBySubjectForSemester started.");
 		logger.info("Logged user: " + principal.getName());
 		try {
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
 			StudentEntity user = studentRepository.findByIdAndStatusLike(loggedUser.getId(), 1);
-			List<SubjectGradesDto> grades= gradeRepository.findGradesWithSubjectByStudent(user.getId());
+			List<SubjectGradesDto> grades= gradeRepository.findGradesWithSubjectBySemesterAndStudent(user.getId(), ESemester.valueOf(semester));
 			Map<SubjectEntity, List<GradeEntity>> gradesBySubject = new HashMap<SubjectEntity, List<GradeEntity>>();
 			for (SubjectGradesDto  entry : grades) {
 				SubjectEntity subject = entry.getSubject();
@@ -258,8 +260,14 @@ public class GradeController {
 			    }
 			    gradess.add(grade);
 			}
+			
+			Map<String, List<GradeEntity>> gradesAndSubject = new TreeMap<String, List<GradeEntity>>();
+			for (Map.Entry<SubjectEntity, List<GradeEntity>> entry : gradesBySubject.entrySet()) {
+				gradesAndSubject.put(entry.getKey().getSubjectName(), entry.getValue());
+			}			
+
 			logger.info("---------------- Finished OK.");
-			return new ResponseEntity<Map<SubjectEntity, List<GradeEntity>>>(gradesBySubject, HttpStatus.OK);
+			return new ResponseEntity<>(gradesAndSubject, HttpStatus.OK);
 		} catch(Exception e) {
 			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
 			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -268,9 +276,9 @@ public class GradeController {
 
 	@Secured({"ROLE_STUDENT"})
 	@JsonView(Views.Student.class)
-	@RequestMapping(method = RequestMethod.GET, value = "/student/bysubject/{id}")
-	public ResponseEntity<?> getByStudentAndSubjectStudent(@PathVariable Integer id, Principal principal) {
-		logger.info("################ /project/grades/student/bysubject/{id}/getByStudentAndSubjectStudent started.");
+	@RequestMapping(method = RequestMethod.GET, value = "/student/semester/{semester}/bysubject/{id}")
+	public ResponseEntity<?> getByStudentAndSemsesterAndSubjectStudent(@PathVariable Integer id, @PathVariable String semester, Principal principal) {
+		logger.info("################ /project/grades/student/semester/{semester}/bysubject/{id}/getByStudentAndSubjectStudent started.");
 		logger.info("Logged user: " + principal.getName());
 		try {
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
@@ -279,7 +287,7 @@ public class GradeController {
 			SubjectEntity subject = subjectRepository.findByIdAndStatusLike(id, 1);
 			List<GradeEntity> grade = null;
 			if (user!=null && subject!=null)
-				grade = gradeRepository.findByStudentAndSubject(user, subject);
+				grade = gradeRepository.findByStudentAndSemesterAndSubject(user, subject, ESemester.valueOf(semester));
 			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<List<GradeEntity>>(grade, HttpStatus.OK);
 		} catch(Exception e) {
@@ -288,6 +296,102 @@ public class GradeController {
 		}
 	}
 	
+	@Secured({"ROLE_PARENT"})
+	@JsonView(Views.Student.class)
+	@RequestMapping(method = RequestMethod.GET, value = "/parent/semester/{semester}/groupedbysubject")
+	public ResponseEntity<?> getParentStudentsGroupedBySubjectForSemester(@PathVariable String semester, Principal principal) {
+		logger.info("################ /project/grades/parent/semester/{semester}/groupedbysubject/getParentStudentsGroupedBySubjectForSemester started.");
+		logger.info("Logged user: " + principal.getName());
+		try {
+			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
+			logger.info("Logged user identified.");
+			ParentEntity parent = parentRepository.findByIdAndStatusLike(loggedUser.getId(), 1);
+			List<StudentEntity> students = studentRepository.findByParent(parent.getId());
+			
+			Map<StudentEntity, Map<String, List<GradeEntity>>> finalna = new HashMap<StudentEntity, Map<String, List<GradeEntity>>>();
+
+			for (StudentEntity user : students) {
+				Map<SubjectEntity, List<GradeEntity>> gradesBySubject = new HashMap<SubjectEntity, List<GradeEntity>>();
+				List<SubjectGradesDto> grades= gradeRepository.findGradesWithSubjectBySemesterAndStudent(user.getId(), ESemester.valueOf(semester));
+				for (SubjectGradesDto  entry : grades) {
+					SubjectEntity subject = entry.getSubject();
+				    GradeEntity grade = entry.getGrade();
+				    List<GradeEntity> gradess = gradesBySubject.get(subject);
+				    if (gradess == null) {
+				        gradess = new ArrayList<GradeEntity>();
+				        gradesBySubject.put(subject, gradess);
+				    }
+				    gradess.add(grade);
+				}
+				Map<String, List<GradeEntity>> gradesAndSubject = new TreeMap<String, List<GradeEntity>>();
+				for (Map.Entry<SubjectEntity, List<GradeEntity>> entry : gradesBySubject.entrySet()) {
+					gradesAndSubject.put(entry.getKey().getSubjectName(), entry.getValue());
+				}			
+				finalna.put(user, gradesAndSubject);
+			}
+			
+			Map<String, Map<String, List<GradeEntity>>> zaispis = new TreeMap<String, Map<String, List<GradeEntity>>>();
+			for (Map.Entry<StudentEntity, Map<String, List<GradeEntity>>> entry : finalna.entrySet()) {
+				zaispis.put(entry.getKey().getFirstName() + " " + entry.getKey().getLastName(), entry.getValue());
+			}			
+
+			logger.info("---------------- Finished OK.");
+			return new ResponseEntity<>(zaispis, HttpStatus.OK);
+
+		} catch(Exception e) {
+			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+
+	@Secured({"ROLE_PARENT"})
+	@JsonView(Views.Student.class)
+	@RequestMapping(method = RequestMethod.GET, value = "/parent/semester/{semester}/bysubject/{id}")
+	public ResponseEntity<?> getParentStudentsGroupedBySubjectForSemesterAndSubject(@PathVariable String semester, @PathVariable Integer id, Principal principal) {
+		logger.info("################ /project/grades/parent/semester/{semester}/bysubject/{id}/getParentStudentsGroupedBySubjectForSemester started.");
+		logger.info("Logged user: " + principal.getName());
+		try {
+			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
+			logger.info("Logged user identified.");
+			ParentEntity parent = parentRepository.findByIdAndStatusLike(loggedUser.getId(), 1);
+			List<StudentEntity> students = studentRepository.findByParent(parent.getId());
+			
+			Map<StudentEntity, Map<String, List<GradeEntity>>> finalna = new HashMap<StudentEntity, Map<String, List<GradeEntity>>>();
+
+			for (StudentEntity user : students) {
+				Map<SubjectEntity, List<GradeEntity>> gradesBySubject = new HashMap<SubjectEntity, List<GradeEntity>>();
+				List<SubjectGradesDto> grades= gradeRepository.findGradesWithSubjectBySemesterAndStudentAndSubject(user.getId(), id, ESemester.valueOf(semester));
+				for (SubjectGradesDto  entry : grades) {
+					SubjectEntity subject = entry.getSubject();
+				    GradeEntity grade = entry.getGrade();
+				    List<GradeEntity> gradess = gradesBySubject.get(subject);
+				    if (gradess == null) {
+				        gradess = new ArrayList<GradeEntity>();
+				        gradesBySubject.put(subject, gradess);
+				    }
+				    gradess.add(grade);
+				}
+				Map<String, List<GradeEntity>> gradesAndSubject = new TreeMap<String, List<GradeEntity>>();
+				for (Map.Entry<SubjectEntity, List<GradeEntity>> entry : gradesBySubject.entrySet()) {
+					gradesAndSubject.put(entry.getKey().getSubjectName(), entry.getValue());
+				}			
+				finalna.put(user, gradesAndSubject);
+			}
+			
+			Map<String, Map<String, List<GradeEntity>>> zaispis = new TreeMap<String, Map<String, List<GradeEntity>>>();
+			for (Map.Entry<StudentEntity, Map<String, List<GradeEntity>>> entry : finalna.entrySet()) {
+				zaispis.put(entry.getKey().getFirstName() + " " + entry.getKey().getLastName(), entry.getValue());
+			}			
+
+			logger.info("---------------- Finished OK.");
+			return new ResponseEntity<>(zaispis, HttpStatus.OK);
+
+		} catch(Exception e) {
+			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+
 	@Secured("ROLE_TEACHER")
 	@JsonView(Views.Teacher.class)
 	@RequestMapping(method = RequestMethod.POST)
@@ -344,6 +448,9 @@ public class GradeController {
 			}
 			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<GradeEntity>(grade, HttpStatus.OK);
+		} catch (NumberFormatException e) {
+			logger.error("++++++++++++++++ Number format exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(2, "Number format exception occurred: "+ e.getLocalizedMessage()), HttpStatus.NOT_ACCEPTABLE);
 		} catch (Exception e) {
 			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
 			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -412,11 +519,11 @@ public class GradeController {
 					return new ResponseEntity<>("Teacher doesn't match or time for change expired.", HttpStatus.FORBIDDEN);
 				}
 				logger.info("Teacher identified.");
-				if (student == grade.getStudent() && grade.getTeacher_subject_department().getStatus() == 1 && teacher == grade.getTeacher_subject_department().getTeachingTeacher() && subject == grade.getTeacher_subject_department().getTeachingSubject() && updateDate.before(grade.getGradeMadeDate()) && !newGrade.getGradeValue().equals(grade.getGradeValue()))				
+				if (student == grade.getStudent() && grade.getTeacher_subject_department().getStatus() == 1 && teacher == grade.getTeacher_subject_department().getTeachingTeacher() && subject == grade.getTeacher_subject_department().getTeachingSubject() && grade.getSemester().equals(ESemester.valueOf(newGrade.getSemester())) && updateDate.before(grade.getGradeMadeDate()) && !newGrade.getGradeValue().equals(grade.getGradeValue()))				
 					ge = gradeDao.modifyGrade(loggedUser, grade, newGrade.getGradeValue());
 				else {
-					logger.info("---------------- Teacher, subject adn/or student doesn't match or time for change expired.");
-					return new ResponseEntity<>("Teacher, subject adn/or student doesn't match or time for change expired.", HttpStatus.FORBIDDEN);
+					logger.info("---------------- Semester, teacher, subject adn/or student doesn't match or time for change expired.");
+					return new ResponseEntity<>("Semester, teacher, subject adn/or student doesn't match or time for change expired.", HttpStatus.FORBIDDEN);
 				}
 				if (ge != null) {
 					for (ParentEntity p : student.getParents()) 
@@ -428,6 +535,9 @@ public class GradeController {
 				logger.info("---------------- Finished OK.");
 			}
 			return new ResponseEntity<>(ge, HttpStatus.OK);
+		} catch (NumberFormatException e) {
+			logger.error("++++++++++++++++ Number format exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(2, "Number format exception occurred: "+ e.getLocalizedMessage()), HttpStatus.NOT_ACCEPTABLE);
 		} catch (Exception e) {
 			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
 			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -482,8 +592,8 @@ public class GradeController {
 			if (grade.getTeacher_subject_department().getStatus() == 1 && teacher == grade.getTeacher_subject_department().getTeachingTeacher() && updateDate.before(grade.getGradeMadeDate()) && !value.equals(grade.getGradeValue()))
 				ge = gradeDao.modifyGrade(loggedUser, grade, value);
 			else {
-				logger.info("---------------- Teacher, subject adn/or student doesn't match or time for change expired.");
-				return new ResponseEntity<>("Teacher, subject adn/or student doesn't match or time for change expired.", HttpStatus.FORBIDDEN);
+				logger.info("---------------- Teacher doesn't match or time for change expired.");
+				return new ResponseEntity<>("Teacher doesn't match or time for change expired.", HttpStatus.FORBIDDEN);
 			}
 			if (ge != null) {
 				for (ParentEntity p : grade.getStudent().getParents()) 

@@ -35,9 +35,14 @@ import com.iktpreobuka.projekat_za_kraj.entities.TeacherSubjectDepartmentEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.TeacherSubjectEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.UserEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.dto.StudentSubjectDto;
+import com.iktpreobuka.projekat_za_kraj.entities.dto.StudentSubjectTeacherDto;
 import com.iktpreobuka.projekat_za_kraj.entities.dto.SubjectDto;
+import com.iktpreobuka.projekat_za_kraj.entities.dto.SubjectTeacherDto;
+import com.iktpreobuka.projekat_za_kraj.entities.dto.TrioStudentSubjecTeachertDto;
 import com.iktpreobuka.projekat_za_kraj.repositories.ClassRepository;
+import com.iktpreobuka.projekat_za_kraj.repositories.DepartmentRepository;
 import com.iktpreobuka.projekat_za_kraj.repositories.SubjectRepository;
+import com.iktpreobuka.projekat_za_kraj.repositories.TeacherRepository;
 import com.iktpreobuka.projekat_za_kraj.repositories.UserAccountRepository;
 import com.iktpreobuka.projekat_za_kraj.security.Views;
 import com.iktpreobuka.projekat_za_kraj.services.SubjectDao;
@@ -53,6 +58,12 @@ public class SubjectController {
 	@Autowired
 	private ClassRepository classRepository;
 	
+	@Autowired
+	private TeacherRepository teacherRepository;
+	
+	@Autowired
+	private DepartmentRepository departmentRepository;
+		
 	@Autowired
 	private UserAccountRepository userAccountRepository;
 
@@ -195,6 +206,9 @@ public class SubjectController {
 			Iterable<SubjectEntity> classes= classRepository.findSubjectsByClass(class_);
 			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<Iterable<SubjectEntity>>(classes, HttpStatus.OK);
+		} catch (NumberFormatException e) {
+			logger.error("++++++++++++++++ Number format exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(2, "Number format exception occurred: "+ e.getLocalizedMessage()), HttpStatus.NOT_ACCEPTABLE);
 		} catch(Exception e) {
 			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
 			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -273,6 +287,52 @@ public class SubjectController {
 		}
 	}
 
+	@Secured({"ROLE_PARENT"})
+	@JsonView(Views.Parent.class)
+	@RequestMapping(method = RequestMethod.GET, value = "/parent/with-teacher")
+	public ResponseEntity<?> getAllWithTeacherForParent(Principal principal) {
+		logger.info("################ /project/subjects/parent/with-teacher/getAllWithTeacherForParent started.");
+		logger.info("Logged user: " + principal.getName());
+		try {
+			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
+			logger.info("Logged user identified.");
+			List<TrioStudentSubjecTeachertDto> subjects= subjectRepository.findStudentAndSubjectAndTeacherByStudent(loggedUser.getId());
+			logger.info("Lista predmeta za decu.");
+			List<StudentSubjectTeacherDto> subjectsAndTeachers = new ArrayList<StudentSubjectTeacherDto>();
+			for(final TrioStudentSubjecTeachertDto t : subjects) {
+			   StudentSubjectTeacherDto temp = new StudentSubjectTeacherDto();
+			   SubjectTeacherDto temp1 = new SubjectTeacherDto();
+			   temp1.setSubject(t.getSubject());
+			   temp1.setTeacher(t.getTeacher());
+			   temp.setStudent(t.getStudent());
+			   temp.setSubject(temp1);
+			   subjectsAndTeachers.add(temp);
+			}
+
+			Map<StudentEntity, List<SubjectTeacherDto>> subjectsByStudent = new HashMap<StudentEntity, List<SubjectTeacherDto>>();
+			for (StudentSubjectTeacherDto entry : subjectsAndTeachers) {
+				SubjectTeacherDto subject = entry.getSubject();
+			    StudentEntity student = entry.getStudent();
+			    List<SubjectTeacherDto> subjectsss = subjectsByStudent.get(student);
+			    if (subjectsss == null) {
+			        subjectsss = new ArrayList<SubjectTeacherDto>();
+			        subjectsByStudent.put(student, subjectsss);
+			    }
+			    subjectsss.add(subject);
+			}
+			
+			Map<String, List<SubjectTeacherDto>> subjectsAndStudent = new TreeMap<String, List<SubjectTeacherDto>>();
+			for (Map.Entry<StudentEntity, List<SubjectTeacherDto>> entry : subjectsByStudent.entrySet()) {
+				subjectsAndStudent.put(entry.getKey().getFirstName() + " " + entry.getKey().getLastName(), entry.getValue());
+			}			
+			
+			return new ResponseEntity<>(subjectsAndStudent, HttpStatus.OK);
+		} catch(Exception e) {
+			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+
 	@Secured({"ROLE_STUDENT"})
 	@JsonView(Views.Student.class)
 	@RequestMapping(method = RequestMethod.GET, value = "/student")
@@ -284,13 +344,31 @@ public class SubjectController {
 			logger.info("Logged user identified.");
 			Iterable<SubjectEntity> subjects= subjectRepository.findByStudent(loggedUser.getId());
 			logger.info("---------------- Finished OK.");
-			return new ResponseEntity<Iterable<SubjectEntity>>(subjects, HttpStatus.OK);
+			return new ResponseEntity<>(subjects, HttpStatus.OK);
 		} catch(Exception e) {
 			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
 			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
 	
+	@Secured({"ROLE_STUDENT"})
+	@JsonView(Views.Student.class)
+	@RequestMapping(method = RequestMethod.GET, value = "/student/with-teacher")
+	public ResponseEntity<?> getAllWithTeacherForStudent(Principal principal) {
+		logger.info("################ /project/subjects/student/with-teacher/getAllWithTeacherForStudent started.");
+		logger.info("Logged user: " + principal.getName());
+		try {
+			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
+			logger.info("Logged user identified.");
+			Iterable<SubjectTeacherDto> subjectsAndTeachers = subjectRepository.findSubjectAndTeacherByStudent(loggedUser.getId());
+			logger.info("---------------- Finished OK.");
+			return new ResponseEntity<>(subjectsAndTeachers, HttpStatus.OK);
+		} catch(Exception e) {
+			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+
 	@Secured("ROLE_ADMIN")
 	@JsonView(Views.Admin.class)
 	@RequestMapping(method = RequestMethod.POST)
@@ -323,6 +401,9 @@ public class SubjectController {
 			}
 			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<>(subject, HttpStatus.OK);
+		} catch (NumberFormatException e) {
+			logger.error("++++++++++++++++ Number format exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(2, "Number format exception occurred: "+ e.getLocalizedMessage()), HttpStatus.NOT_ACCEPTABLE);
 		} catch (Exception e) {
 			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
 			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -369,6 +450,9 @@ public class SubjectController {
 			}
 			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<>(subject, HttpStatus.OK);
+		} catch (NumberFormatException e) {
+			logger.error("++++++++++++++++ Number format exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(2, "Number format exception occurred: "+ e.getLocalizedMessage()), HttpStatus.NOT_ACCEPTABLE);
 		} catch (Exception e) {
 			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
 			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -394,8 +478,20 @@ public class SubjectController {
 			logger.info("---------------- Update have non acceptable atrributes.");
 	        return new ResponseEntity<>("Update have non acceptable atrributes.", HttpStatus.NOT_ACCEPTABLE);
 		}
-		TeacherSubjectEntity ts = new TeacherSubjectEntity();
+		for (String t : updateSubject.getTeachers()) {
+			if (t ==null || t.equals("") || t.equals(" ")) {
+				logger.info("---------------- New teacher/s is null.");
+		        return new ResponseEntity<>("New teacher/s is null.", HttpStatus.BAD_REQUEST);
+			}
+		}
+		List<TeacherSubjectEntity> ts = new ArrayList<TeacherSubjectEntity>();
 		try {
+			for (String t : updateSubject.getTeachers()) {
+				if (teacherRepository.findByIdAndStatusLike(Integer.parseInt(t), 1) == null ) {
+					logger.info("---------------- Teacher/s not found.");
+			        return new ResponseEntity<>("Teacher/s not found.", HttpStatus.NOT_FOUND);
+				}
+			}
 			SubjectEntity subject = subjectRepository.findByIdAndStatusLike(id, 1);
 			if (subject == null) {
 				logger.info("---------------- Subject not found.");
@@ -404,7 +500,7 @@ public class SubjectController {
 			logger.info("Subject identified.");
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
-			if (updateSubject.getTeachers() != null && updateSubject.getAssignmentDate() != null && updateSubject.getTeachers() != null) {
+			if (updateSubject.getTeachers() != null && updateSubject.getTeachers() != null) {
 				ts = subjectDao.addTeachersToSubject(loggedUser, subject, updateSubject.getTeachers());
 				logger.info("Teacher/s added.");
 			} else {
@@ -413,6 +509,9 @@ public class SubjectController {
 			}
 			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<>(ts, HttpStatus.OK);
+		} catch (NumberFormatException e) {
+			logger.error("++++++++++++++++ Number format exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(2, "Number format exception occurred: "+ e.getLocalizedMessage()), HttpStatus.NOT_ACCEPTABLE);
 		} catch (Exception e) {
 			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
 			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -437,8 +536,24 @@ public class SubjectController {
 			logger.info("---------------- Update have non acceptable atrributes.");
 	        return new ResponseEntity<>("Update have non acceptable atrributes.", HttpStatus.NOT_ACCEPTABLE);
 		}
-		ClassSubjectEntity cs = new ClassSubjectEntity();
+		for (String c : updateSubject.getClasses()) {
+			if (c ==null || c.equals("") || c.equals(" ")) {
+				logger.info("---------------- New class/es is null.");
+		        return new ResponseEntity<>("New class/es is null.", HttpStatus.BAD_REQUEST);
+			}
+		}
+		if (updateSubject.getLearningProgram() ==null || updateSubject.getLearningProgram().equals("") || updateSubject.getLearningProgram().equals(" ")) {
+			logger.info("---------------- New learning program is null.");
+		       return new ResponseEntity<>("New learning program is null.", HttpStatus.BAD_REQUEST);
+		}
+		List<ClassSubjectEntity> cs = new ArrayList<ClassSubjectEntity>();
 		try {
+			for (String t : updateSubject.getClasses()) {
+				if (classRepository.findByIdAndStatusLike(Integer.parseInt(t), 1) == null ) {
+					logger.info("---------------- Class/es not found.");
+			        return new ResponseEntity<>("Class/es not found.", HttpStatus.NOT_FOUND);
+				}
+			}
 			SubjectEntity subject = subjectRepository.findByIdAndStatusLike(id, 1);
 			if (subject == null) {
 				logger.info("---------------- Subject not found.");
@@ -456,6 +571,9 @@ public class SubjectController {
 			}
 			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<>(cs, HttpStatus.OK);
+		} catch (NumberFormatException e) {
+			logger.error("++++++++++++++++ Number format exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(2, "Number format exception occurred: "+ e.getLocalizedMessage()), HttpStatus.NOT_ACCEPTABLE);
 		} catch (Exception e) {
 			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
 			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -480,8 +598,28 @@ public class SubjectController {
 			logger.info("---------------- Update have non acceptable atrributes.");
 	        return new ResponseEntity<>("Update have non acceptable atrributes.", HttpStatus.NOT_ACCEPTABLE);
 		}
+		if (updateSubject.getTeachingTeacher() ==null || updateSubject.getTeachingTeacher().equals("") || updateSubject.getTeachingTeacher().equals(" ")) {
+			logger.info("---------------- New teacher is null.");
+		    return new ResponseEntity<>("New teacher is null.", HttpStatus.BAD_REQUEST);
+		}
+		if (updateSubject.getTeachingDepartment() ==null || updateSubject.getTeachingDepartment().equals("") || updateSubject.getTeachingDepartment().equals(" ")) {
+			logger.info("---------------- New department is null.");
+		    return new ResponseEntity<>("New department is null.", HttpStatus.BAD_REQUEST);
+		}
+		if (updateSubject.getSchoolYear() ==null || updateSubject.getSchoolYear().equals("") || updateSubject.getSchoolYear().equals(" ")) {
+			logger.info("---------------- New school year is null.");
+		       return new ResponseEntity<>("New school year is null.", HttpStatus.BAD_REQUEST);
+		}
 		TeacherSubjectDepartmentEntity tsd = new TeacherSubjectDepartmentEntity();
 		try {
+			if (teacherRepository.findByIdAndStatusLike(Integer.parseInt(updateSubject.getTeachingTeacher()), 1) == null ) {
+				logger.info("---------------- Teacher not found.");
+			    return new ResponseEntity<>("Teacher not found.", HttpStatus.NOT_FOUND);
+			}
+			if (departmentRepository.findByIdAndStatusLike(Integer.parseInt(updateSubject.getTeachingDepartment()), 1) == null ) {
+				logger.info("---------------- Department not found.");
+			    return new ResponseEntity<>("Department not found.", HttpStatus.NOT_FOUND);
+			}	
 			SubjectEntity subject = subjectRepository.findByIdAndStatusLike(id, 1);
 			if (subject == null) {
 				logger.info("---------------- Subject not found.");
@@ -499,6 +637,9 @@ public class SubjectController {
 			}
 			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<>(tsd, HttpStatus.OK);
+		} catch (NumberFormatException e) {
+			logger.error("++++++++++++++++ Number format exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(2, "Number format exception occurred: "+ e.getLocalizedMessage()), HttpStatus.NOT_ACCEPTABLE);
 		} catch (Exception e) {
 			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
 			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -523,8 +664,20 @@ public class SubjectController {
 			logger.info("---------------- Update have non acceptable atrributes.");
 	        return new ResponseEntity<>("Update have non acceptable atrributes.", HttpStatus.NOT_ACCEPTABLE);
 		}
-		TeacherSubjectEntity ts = new TeacherSubjectEntity();
+		for (String t : updateSubject.getTeachers()) {
+			if (t ==null || t.equals("") || t.equals(" ")) {
+				logger.info("---------------- Remove teacher/s is null.");
+		        return new ResponseEntity<>("Remove teacher/s is null.", HttpStatus.BAD_REQUEST);
+			}
+		}
+		List<TeacherSubjectEntity> ts = new ArrayList<TeacherSubjectEntity>();
 		try {
+			for (String t : updateSubject.getTeachers()) {
+				if (teacherRepository.findByIdAndStatusLike(Integer.parseInt(t), 1) == null ) {
+					logger.info("---------------- Teacher/s not found.");
+			        return new ResponseEntity<>("Teacher/s not found.", HttpStatus.NOT_FOUND);
+				}
+			}
 			SubjectEntity subject = subjectRepository.findByIdAndStatusLike(id, 1);
 			if (subject == null) {
 				logger.info("---------------- Subject not found.");
@@ -539,6 +692,9 @@ public class SubjectController {
 			}
 			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<>(ts, HttpStatus.OK);
+		} catch (NumberFormatException e) {
+			logger.error("++++++++++++++++ Number format exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(2, "Number format exception occurred: "+ e.getLocalizedMessage()), HttpStatus.NOT_ACCEPTABLE);
 		} catch (Exception e) {
 			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
 			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -563,8 +719,20 @@ public class SubjectController {
 			logger.info("---------------- Update have non acceptable atrributes.");
 	        return new ResponseEntity<>("Update have non acceptable atrributes.", HttpStatus.NOT_ACCEPTABLE);
 		}
-		ClassSubjectEntity cs = new ClassSubjectEntity();
+		for (String c : updateSubject.getClasses()) {
+			if (c ==null || c.equals("") || c.equals(" ")) {
+				logger.info("---------------- New class/es is null.");
+		        return new ResponseEntity<>("New class/es is null.", HttpStatus.BAD_REQUEST);
+			}
+		}
+		List<ClassSubjectEntity> cs = new ArrayList<ClassSubjectEntity>();
 		try {
+			for (String t : updateSubject.getClasses()) {
+				if (classRepository.findByIdAndStatusLike(Integer.parseInt(t), 1) == null ) {
+					logger.info("---------------- Class/es not found.");
+			        return new ResponseEntity<>("Class/es not found.", HttpStatus.NOT_FOUND);
+				}
+			}
 			SubjectEntity subject = subjectRepository.findByIdAndStatusLike(id, 1);
 			if (subject == null) {
 				logger.info("---------------- Subject not found.");
@@ -579,6 +747,9 @@ public class SubjectController {
 			}
 			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<>(cs, HttpStatus.OK);
+		} catch (NumberFormatException e) {
+			logger.error("++++++++++++++++ Number format exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(2, "Number format exception occurred: "+ e.getLocalizedMessage()), HttpStatus.NOT_ACCEPTABLE);
 		} catch (Exception e) {
 			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
 			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -603,8 +774,24 @@ public class SubjectController {
 			logger.info("---------------- Update have non acceptable atrributes.");
 	        return new ResponseEntity<>("Update have non acceptable atrributes.", HttpStatus.NOT_ACCEPTABLE);
 		}
+		if (updateSubject.getTeachingTeacher() ==null || updateSubject.getTeachingTeacher().equals("") || updateSubject.getTeachingTeacher().equals(" ")) {
+			logger.info("---------------- New teacher is null.");
+		    return new ResponseEntity<>("New teacher is null.", HttpStatus.BAD_REQUEST);
+		}
+		if (updateSubject.getTeachingDepartment() ==null || updateSubject.getTeachingDepartment().equals("") || updateSubject.getTeachingDepartment().equals(" ")) {
+			logger.info("---------------- New department is null.");
+		    return new ResponseEntity<>("New department is null.", HttpStatus.BAD_REQUEST);
+		}
 		TeacherSubjectDepartmentEntity tsd = new TeacherSubjectDepartmentEntity();
 		try {
+			if (teacherRepository.findByIdAndStatusLike(Integer.parseInt(updateSubject.getTeachingTeacher()), 1) == null ) {
+				logger.info("---------------- Teacher not found.");
+			    return new ResponseEntity<>("Teacher not found.", HttpStatus.NOT_FOUND);
+			}
+			if (departmentRepository.findByIdAndStatusLike(Integer.parseInt(updateSubject.getTeachingDepartment()), 1) == null ) {
+				logger.info("---------------- Department not found.");
+			    return new ResponseEntity<>("Department not found.", HttpStatus.NOT_FOUND);
+			}	
 			SubjectEntity subject = subjectRepository.findByIdAndStatusLike(id, 1);
 			if (subject == null) {
 				logger.info("---------------- Subject not found.");
@@ -619,6 +806,9 @@ public class SubjectController {
 			}
 			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<>(tsd, HttpStatus.OK);
+		} catch (NumberFormatException e) {
+			logger.error("++++++++++++++++ Number format exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(2, "Number format exception occurred: "+ e.getLocalizedMessage()), HttpStatus.NOT_ACCEPTABLE);
 		} catch (Exception e) {
 			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
 			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);

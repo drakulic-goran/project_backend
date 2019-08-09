@@ -35,13 +35,13 @@ public class GradeEntity {
 	private static final Integer STATUS_ACTIVE = 1;
 	private static final Integer STATUS_ARCHIVED = -1;
 
-	@JsonView(Views.Student.class)
+	@JsonView(Views.Parent.class)
 	@ManyToOne(cascade = CascadeType.REFRESH, fetch = FetchType.LAZY)
 	@JoinColumn(name = "student")
 	@NotNull (message = "Student must be provided.")
 	private StudentEntity student;
 	
-	//@JsonView(Views.Student.class)
+	//@JsonView(Views.Admin.class)
 	@JsonIgnore
 	@ManyToOne(cascade = CascadeType.REFRESH, fetch = FetchType.LAZY)
 	@JoinColumn(name = "teacher_subject_department")
@@ -51,7 +51,7 @@ public class GradeEntity {
 	
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
-	@JsonView(Views.Admin.class)
+	@JsonView(Views.Student.class)
 	@Column(name="grade_id")
 	private Integer id;
 	/*@JsonView(Views.Student.class)

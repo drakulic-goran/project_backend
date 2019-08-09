@@ -45,5 +45,6 @@ public interface TeacherRepository extends CrudRepository<TeacherEntity, Integer
     @Modifying
     @Query (value ="INSERT INTO teacher (user_id, certificate, employment_date, status, created_by) VALUES (:user, :certificate, :employment, 1, :logged)", nativeQuery = true)
 	public void addAdminFromExistUser(String certificate, String employment, Integer user, Integer logged);
+	public TeacherEntity getByIdAndStatusLike(Integer userId, Integer status);
 
 }

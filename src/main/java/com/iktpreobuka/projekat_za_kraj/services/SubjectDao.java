@@ -23,13 +23,13 @@ public interface SubjectDao {
 
 	public void archiveSubject(UserEntity loggedUser, SubjectEntity subject) throws Exception;
 	
-	public ClassSubjectEntity addClassToSubject(UserEntity loggedUser, List<String> classes, SubjectEntity subject, String learningProgram) throws Exception;
+	public List<ClassSubjectEntity> addClassToSubject(UserEntity loggedUser, List<String> classes, SubjectEntity subject, String learningProgram) throws Exception;
 	
-	public ClassSubjectEntity removeClassFromSubject(UserEntity loggedUser, List<String> classes, SubjectEntity subject) throws Exception;
+	public List<ClassSubjectEntity> removeClassFromSubject(UserEntity loggedUser, List<String> classes, SubjectEntity subject) throws Exception;
 
-	public TeacherSubjectEntity addTeachersToSubject(UserEntity loggedUser, SubjectEntity subject, List<String> teachers) throws Exception;
+	public List<TeacherSubjectEntity> addTeachersToSubject(UserEntity loggedUser, SubjectEntity subject, List<String> teachers) throws Exception;
 	
-	public TeacherSubjectEntity removeTeachersFromSubject(UserEntity loggedUser, SubjectEntity subject, List<String> teachers) throws Exception;
+	public List<TeacherSubjectEntity> removeTeachersFromSubject(UserEntity loggedUser, SubjectEntity subject, List<String> teachers) throws Exception;
 	
 	//public void addClassToDepartment(UserEntity loggedUser, ClassEntity class_, DepartmentEntity department, String schoolYear)  throws Exception;
 

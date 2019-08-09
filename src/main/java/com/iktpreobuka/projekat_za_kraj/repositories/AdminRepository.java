@@ -47,5 +47,6 @@ public interface AdminRepository extends CrudRepository<AdminEntity, Integer> {
     @Modifying
     @Query (value ="INSERT INTO admin (user_id, e_mail, mobile_phone_number, status, created_by) VALUES (:user, :email, :mobile, 1, :logged)", nativeQuery = true)
 	public void addAdminFromExistUser(String mobile, String email, Integer user, Integer logged);
+	public AdminEntity getByIdAndStatusLike(Integer userId, Integer status);
 
 }

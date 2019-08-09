@@ -61,7 +61,7 @@ public class UserEntity {
 	
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
-	@JsonView(Views.Admin.class)
+	@JsonView(Views.Parent.class)
 	@Column(name="user_id")
 	protected Integer id;
 	@JsonView(Views.Student.class)

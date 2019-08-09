@@ -1,5 +1,6 @@
 package com.iktpreobuka.projekat_za_kraj.services;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -173,9 +174,9 @@ public class SubjectDaoImpl implements SubjectDao {
 	}
 	
 	@Override
-	public ClassSubjectEntity addClassToSubject(UserEntity loggedUser, List<String> classes, SubjectEntity subject, String learningProgram) throws Exception {
+	public List<ClassSubjectEntity> addClassToSubject(UserEntity loggedUser, List<String> classes, SubjectEntity subject, String learningProgram) throws Exception {
 		try {
-			ClassSubjectEntity classSubject = null;
+			List<ClassSubjectEntity> cse = new ArrayList<ClassSubjectEntity>();
 			if (subject !=null && subject.getStatus() ==1 && !classes.isEmpty() && learningProgram !=null && !learningProgram.equals("") && !learningProgram.equals(" ")) {
 				for (String t : classes) {
 					if (t !=null && !t.equals("") && !t.equals(" ")) {
@@ -192,25 +193,26 @@ public class SubjectDaoImpl implements SubjectDao {
 						} else
 							contains = true;
 						if (!contains) {
-							classSubject = new ClassSubjectEntity(class_, subject, learningProgram, loggedUser.getId());
+							ClassSubjectEntity classSubject = new ClassSubjectEntity(class_, subject, learningProgram, loggedUser.getId());
 							classSubjectRepository.save(classSubject);
 							subject.getClasses().add(classSubject);
 							subject.setUpdatedById(loggedUser.getId());
 							subjectRepository.save(subject);
+							cse.add(classSubject);
 						}
 					}
 				}
 			}
-			return classSubject;
+			return cse;
 		} catch (Exception e) {
 			throw new Exception("addClassToSubject failed on saving.");
 		}
 	}
 		
 	@Override
-	public ClassSubjectEntity removeClassFromSubject(UserEntity loggedUser, List<String> classes, SubjectEntity subject) throws Exception {
+	public List<ClassSubjectEntity> removeClassFromSubject(UserEntity loggedUser, List<String> classes, SubjectEntity subject) throws Exception {
 		try {
-			ClassSubjectEntity classSubject = null;
+			List<ClassSubjectEntity> classSubject = new ArrayList<ClassSubjectEntity>();
 			if (subject !=null && subject.getStatus() ==1 && !classes.isEmpty()) {
 				for (String t : classes) {
 					if (t !=null && !t.equals("") && !t.equals(" ")) {
@@ -223,15 +225,13 @@ public class SubjectDaoImpl implements SubjectDao {
 									cs.setStatusInactive();
 									cs.setUpdatedById(loggedUser.getId());
 									classSubjectRepository.save(cs);
-									classSubject = cs;
-								}
-							}
-							if (classSubject != null) {
-								for (TeacherSubjectDepartmentEntity tsd : classSubject.getSubject().getTeachers_departments()) {
-									if (tsd.getTeachingSubject() == classSubject.getSubject() && tsd.getTeachingClass() == classSubject.getClas()) {
-										tsd.setStatusInactive();
-										tsd.setUpdatedById(loggedUser.getId());
-										teacherSubjectDepartmentRepository.save(tsd);
+									classSubject.add(cs);
+									for (TeacherSubjectDepartmentEntity tsd : cs.getSubject().getTeachers_departments()) {
+										if (tsd.getTeachingSubject() == cs.getSubject() && tsd.getTeachingClass() == cs.getClas()) {
+											tsd.setStatusInactive();
+											tsd.setUpdatedById(loggedUser.getId());
+											teacherSubjectDepartmentRepository.save(tsd);
+										}
 									}
 								}
 							}
@@ -246,9 +246,9 @@ public class SubjectDaoImpl implements SubjectDao {
 	}
 
 	@Override
-	public TeacherSubjectEntity addTeachersToSubject(UserEntity loggedUser, SubjectEntity subject, List<String> teachers) throws Exception {
+	public List<TeacherSubjectEntity> addTeachersToSubject(UserEntity loggedUser, SubjectEntity subject, List<String> teachers) throws Exception {
 		try {
-			TeacherSubjectEntity teaching = null;
+			List<TeacherSubjectEntity> tse = new ArrayList<TeacherSubjectEntity>();
 			if (subject !=null && subject.getStatus() ==1 && !teachers.isEmpty()) {
 				for (String t : teachers) {
 					if (t !=null && !t.equals("") && !t.equals(" ")) {
@@ -262,25 +262,26 @@ public class SubjectDaoImpl implements SubjectDao {
 							}
 						}
 						if (!contains) {
-							teaching = new TeacherSubjectEntity(teacher, subject, new Date(), loggedUser.getId());
+							TeacherSubjectEntity teaching = new TeacherSubjectEntity(teacher, subject, new Date(), loggedUser.getId());
 							teacherSubjectRepository.save(teaching);
 							subject.getTeachers().add(teaching);
 							subject.setUpdatedById(loggedUser.getId());
 							subjectRepository.save(subject);
+							tse.add(teaching);
 						}
 					}
 				}
 			}
-			return teaching;
+			return tse;
 		} catch (Exception e) {
 			throw new Exception("addTeachersToSubject failed on saving.");
 		}
 	}
 	
 	@Override
-	public TeacherSubjectEntity removeTeachersFromSubject(UserEntity loggedUser, SubjectEntity subject, List<String> teachers) throws Exception {
+	public List<TeacherSubjectEntity> removeTeachersFromSubject(UserEntity loggedUser, SubjectEntity subject, List<String> teachers) throws Exception {
 		try {
-			TeacherSubjectEntity teaching = null;
+			List<TeacherSubjectEntity> tse = new ArrayList<TeacherSubjectEntity>();
 			if (subject !=null && subject.getStatus() ==1 && !teachers.isEmpty()) {
 				for (String t : teachers) {
 					if (t !=null && !t.equals("") && !t.equals(" ")) {
@@ -292,22 +293,20 @@ public class SubjectDaoImpl implements SubjectDao {
 								ts.setStatusInactive();
 								ts.setUpdatedById(loggedUser.getId());
 								teacherSubjectRepository.save(ts);
-								teaching = ts;
-							}
-						}
-						if (teaching != null) {
-							for (TeacherSubjectDepartmentEntity tsd : teaching.getSubject().getTeachers_departments()) {
-								if (tsd.getTeachingSubject() == teaching.getSubject() && tsd.getTeachingTeacher() == teaching.getTeacher()) {
-									tsd.setStatusInactive();
-									tsd.setUpdatedById(loggedUser.getId());
-									teacherSubjectDepartmentRepository.save(tsd);
+								tse.add(ts);
+								for (TeacherSubjectDepartmentEntity tsd : ts.getSubject().getTeachers_departments()) {
+									if (tsd.getTeachingSubject() == ts.getSubject() && tsd.getTeachingTeacher() == ts.getTeacher()) {
+										tsd.setStatusInactive();
+										tsd.setUpdatedById(loggedUser.getId());
+										teacherSubjectDepartmentRepository.save(tsd);
+									}
 								}
 							}
 						}
 					}
 				}
 			}
-			return teaching;
+			return tse;
 		} catch (Exception e) {
 			throw new Exception("removeTeachersFromSubject failed on saving.");
 		}

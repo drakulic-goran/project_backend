@@ -1,6 +1,11 @@
 package com.iktpreobuka.projekat_za_kraj.controllers;
 
 import java.security.Principal;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 import javax.validation.Valid;
@@ -28,7 +33,9 @@ import com.iktpreobuka.projekat_za_kraj.entities.DepartmentClassEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.DepartmentEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.SubjectEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.UserEntity;
+import com.iktpreobuka.projekat_za_kraj.entities.dto.ClassDepartmentDto;
 import com.iktpreobuka.projekat_za_kraj.entities.dto.ClassDto;
+import com.iktpreobuka.projekat_za_kraj.entities.dto.SubjectClassDto;
 import com.iktpreobuka.projekat_za_kraj.enumerations.EClass;
 import com.iktpreobuka.projekat_za_kraj.repositories.ClassRepository;
 import com.iktpreobuka.projekat_za_kraj.repositories.DepartmentRepository;
@@ -93,6 +100,9 @@ public class ClassController {
 			ClassEntity class_ = classRepository.findByIdAndStatusLike(Integer.parseInt(id), 1);
 			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<ClassEntity>(class_, HttpStatus.OK);
+		} catch (NumberFormatException e) {
+			logger.error("++++++++++++++++ Number format exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(2, "Number format exception occurred: "+ e.getLocalizedMessage()), HttpStatus.NOT_ACCEPTABLE);
 		} catch(Exception e) {
 			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
 			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -125,6 +135,9 @@ public class ClassController {
 			ClassEntity class_ = classRepository.findByIdAndStatusLike(Integer.parseInt(id), 0);
 			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<ClassEntity>(class_, HttpStatus.OK);
+		} catch (NumberFormatException e) {
+			logger.error("++++++++++++++++ Number format exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(2, "Number format exception occurred: "+ e.getLocalizedMessage()), HttpStatus.NOT_ACCEPTABLE);
 		} catch(Exception e) {
 			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
 			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -157,6 +170,185 @@ public class ClassController {
 			ClassEntity class_ = classRepository.findByIdAndStatusLike(Integer.parseInt(id), -1);
 			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<ClassEntity>(class_, HttpStatus.OK);
+		} catch (NumberFormatException e) {
+			logger.error("++++++++++++++++ Number format exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(2, "Number format exception occurred: "+ e.getLocalizedMessage()), HttpStatus.NOT_ACCEPTABLE);
+		} catch(Exception e) {
+			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+	
+	@Secured({"ROLE_ADMIN"})
+	@JsonView(Views.Admin.class)
+	@RequestMapping(method = RequestMethod.GET, value = "/departments")
+	public ResponseEntity<?> getDepartments(Principal principal) {
+		logger.info("################ /project/class/{id}/getById started.");
+		logger.info("Logged user: " + principal.getName());
+		try {
+			Iterable<ClassEntity> classes= classRepository.findByStatusLike(1);
+			List<ClassDepartmentDto> cd = new ArrayList<ClassDepartmentDto>();
+			for(final ClassEntity c : classes) {
+				for(final DepartmentClassEntity d : c.getDepartments()) {
+					if (d.getStatus() == 1) {
+						cd.add(new ClassDepartmentDto(d.getClas(), d.getDepartment()));
+					}
+				}
+			}
+			
+			Map<ClassEntity, List<DepartmentEntity>> departmentsByClass = new HashMap<ClassEntity, List<DepartmentEntity>>();
+			for (ClassDepartmentDto entry : cd) {
+				DepartmentEntity department = entry.getDepartment();
+			    ClassEntity clas = entry.getClas();
+			    List<DepartmentEntity> subjectsss = departmentsByClass.get(clas);
+			    if (subjectsss == null) {
+			        subjectsss = new ArrayList<DepartmentEntity>();
+			        departmentsByClass.put(clas, subjectsss);
+			    }
+			    subjectsss.add(department);
+			}
+			
+			Map<String, List<DepartmentEntity>> departmentsAndClass = new TreeMap<String, List<DepartmentEntity>>();
+			for (Map.Entry<ClassEntity, List<DepartmentEntity>> entry : departmentsByClass.entrySet()) {
+				departmentsAndClass.put(entry.getKey().getClassLabel().toString(), entry.getValue());
+			}			
+
+			logger.info("---------------- Finished OK.");
+			return new ResponseEntity<>(departmentsAndClass, HttpStatus.OK);
+		} catch (NumberFormatException e) {
+			logger.error("++++++++++++++++ Number format exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(2, "Number format exception occurred: "+ e.getLocalizedMessage()), HttpStatus.NOT_ACCEPTABLE);
+		} catch(Exception e) {
+			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+
+	@Secured({"ROLE_ADMIN"})
+	@JsonView(Views.Admin.class)
+	@RequestMapping(method = RequestMethod.GET, value = "/{id}/departments")
+	public ResponseEntity<?> getDepartmentsForClass(@PathVariable Integer id, Principal principal) {
+		logger.info("################ /project/class/{id}/getById started.");
+		logger.info("Logged user: " + principal.getName());
+		try {
+			ClassEntity clasa= classRepository.findByIdAndStatusLike(id, 1);
+			List<ClassDepartmentDto> cd = new ArrayList<ClassDepartmentDto>();
+			for(final DepartmentClassEntity d : clasa.getDepartments()) {
+				if (d.getStatus() == 1) {
+					cd.add(new ClassDepartmentDto(d.getClas(), d.getDepartment()));
+				}
+			}
+			
+			Map<ClassEntity, List<DepartmentEntity>> departmentsByClass = new HashMap<ClassEntity, List<DepartmentEntity>>();
+			for (ClassDepartmentDto entry : cd) {
+				DepartmentEntity department = entry.getDepartment();
+			    ClassEntity clas = entry.getClas();
+			    List<DepartmentEntity> subjectsss = departmentsByClass.get(clas);
+			    if (subjectsss == null) {
+			        subjectsss = new ArrayList<DepartmentEntity>();
+			        departmentsByClass.put(clas, subjectsss);
+			    }
+			    subjectsss.add(department);
+			}
+			
+			Map<String, List<DepartmentEntity>> departmentsAndClass = new TreeMap<String, List<DepartmentEntity>>();
+			for (Map.Entry<ClassEntity, List<DepartmentEntity>> entry : departmentsByClass.entrySet()) {
+				departmentsAndClass.put(entry.getKey().getClassLabel().toString(), entry.getValue());
+			}			
+
+			logger.info("---------------- Finished OK.");
+			return new ResponseEntity<>(departmentsAndClass, HttpStatus.OK);
+		} catch (NumberFormatException e) {
+			logger.error("++++++++++++++++ Number format exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(2, "Number format exception occurred: "+ e.getLocalizedMessage()), HttpStatus.NOT_ACCEPTABLE);
+		} catch(Exception e) {
+			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+
+	@Secured({"ROLE_ADMIN"})
+	@JsonView(Views.Admin.class)
+	@RequestMapping(method = RequestMethod.GET, value = "/subjects")
+	public ResponseEntity<?> getSubjects(Principal principal) {
+		logger.info("################ /project/class/subjects/getSubjects started.");
+		logger.info("Logged user: " + principal.getName());
+		try {
+			Iterable<ClassEntity> classes= classRepository.findByStatusLike(1);
+			List<SubjectClassDto> cd = new ArrayList<SubjectClassDto>();
+			for(final ClassEntity c : classes) {
+				for(final ClassSubjectEntity d : c.getSubjects()) {
+					if (d.getStatus() == 1) {
+						cd.add(new SubjectClassDto(d.getClas(), d.getSubject()));
+					}
+				}
+			}
+			
+			Map<ClassEntity, List<SubjectEntity>> departmentsByClass = new HashMap<ClassEntity, List<SubjectEntity>>();
+			for (SubjectClassDto entry : cd) {
+				SubjectEntity department = entry.getSubject();
+			    ClassEntity clas = entry.getClas();
+			    List<SubjectEntity> subjectsss = departmentsByClass.get(clas);
+			    if (subjectsss == null) {
+			        subjectsss = new ArrayList<SubjectEntity>();
+			        departmentsByClass.put(clas, subjectsss);
+			    }
+			    subjectsss.add(department);
+			}
+			
+			Map<String, List<SubjectEntity>> departmentsAndClass = new TreeMap<String, List<SubjectEntity>>();
+			for (Map.Entry<ClassEntity, List<SubjectEntity>> entry : departmentsByClass.entrySet()) {
+				departmentsAndClass.put(entry.getKey().getClassLabel().toString(), entry.getValue());
+			}			
+
+			logger.info("---------------- Finished OK.");
+			return new ResponseEntity<>(departmentsAndClass, HttpStatus.OK);
+		} catch (NumberFormatException e) {
+			logger.error("++++++++++++++++ Number format exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(2, "Number format exception occurred: "+ e.getLocalizedMessage()), HttpStatus.NOT_ACCEPTABLE);
+		} catch(Exception e) {
+			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+
+	@Secured({"ROLE_ADMIN"})
+	@JsonView(Views.Admin.class)
+	@RequestMapping(method = RequestMethod.GET, value = "/{id}/subjects")
+	public ResponseEntity<?> getClassWithSubjects(@PathVariable Integer id, Principal principal) {
+		logger.info("################ /project/class/{id}/subjects/getClassWithSubjects started.");
+		logger.info("Logged user: " + principal.getName());
+		try {
+			ClassEntity classes= classRepository.findByIdAndStatusLike(id, 1);
+			List<SubjectClassDto> cd = new ArrayList<SubjectClassDto>();
+				for(final ClassSubjectEntity d : classes.getSubjects()) {
+					if (d.getStatus() == 1) {
+						cd.add(new SubjectClassDto(d.getClas(), d.getSubject()));
+					}
+				}
+			
+			Map<ClassEntity, List<SubjectEntity>> departmentsByClass = new HashMap<ClassEntity, List<SubjectEntity>>();
+			for (SubjectClassDto entry : cd) {
+				SubjectEntity department = entry.getSubject();
+			    ClassEntity clas = entry.getClas();
+			    List<SubjectEntity> subjectsss = departmentsByClass.get(clas);
+			    if (subjectsss == null) {
+			        subjectsss = new ArrayList<SubjectEntity>();
+			        departmentsByClass.put(clas, subjectsss);
+			    }
+			    subjectsss.add(department);
+			}
+			
+			Map<String, List<SubjectEntity>> departmentsAndClass = new TreeMap<String, List<SubjectEntity>>();
+			for (Map.Entry<ClassEntity, List<SubjectEntity>> entry : departmentsByClass.entrySet()) {
+				departmentsAndClass.put(entry.getKey().getClassLabel().toString(), entry.getValue());
+			}			
+
+			logger.info("---------------- Finished OK.");
+			return new ResponseEntity<>(departmentsAndClass, HttpStatus.OK);
+		} catch (NumberFormatException e) {
+			logger.error("++++++++++++++++ Number format exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(2, "Number format exception occurred: "+ e.getLocalizedMessage()), HttpStatus.NOT_ACCEPTABLE);
 		} catch(Exception e) {
 			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
 			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -230,6 +422,9 @@ public class ClassController {
 			}
 			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<>(class_, HttpStatus.OK);
+		} catch (NumberFormatException e) {
+			logger.error("++++++++++++++++ Number format exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(2, "Number format exception occurred: "+ e.getLocalizedMessage()), HttpStatus.NOT_ACCEPTABLE);
 		} catch (Exception e) {
 			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
 			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);

@@ -3,6 +3,10 @@ package com.iktpreobuka.projekat_za_kraj.repositories;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 
+import com.iktpreobuka.projekat_za_kraj.entities.AdminEntity;
+import com.iktpreobuka.projekat_za_kraj.entities.ParentEntity;
+import com.iktpreobuka.projekat_za_kraj.entities.StudentEntity;
+import com.iktpreobuka.projekat_za_kraj.entities.TeacherEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.UserAccountEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.UserEntity;
 import com.iktpreobuka.projekat_za_kraj.enumerations.EUserRole;
@@ -19,5 +23,8 @@ public interface UserAccountRepository extends CrudRepository<UserAccountEntity,
 	public UserAccountEntity findByIdAndStatusLike(Integer id, Integer status);
 	public UserAccountEntity findByUserAndAccessRoleAndStatusLike(UserEntity user, EUserRole role, Integer status);
 	public UserAccountEntity findByUsernameAndStatusLike(String name, Integer Status);
-
+	public UserAccountEntity findByUserAndAccessRoleLike(TeacherEntity user, EUserRole role);
+	public UserAccountEntity findByUserAndAccessRoleLike(StudentEntity user, EUserRole role);
+	public UserAccountEntity findByUserAndAccessRoleLike(ParentEntity user, EUserRole role);
+	public UserAccountEntity findByUserAndAccessRoleLike(AdminEntity user, EUserRole role);
 }

@@ -33,6 +33,10 @@ import com.iktpreobuka.projekat_za_kraj.entities.UserAccountEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.UserEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.dto.UserAccountDto;
 import com.iktpreobuka.projekat_za_kraj.enumerations.EUserRole;
+import com.iktpreobuka.projekat_za_kraj.repositories.AdminRepository;
+import com.iktpreobuka.projekat_za_kraj.repositories.ParentRepository;
+import com.iktpreobuka.projekat_za_kraj.repositories.StudentRepository;
+import com.iktpreobuka.projekat_za_kraj.repositories.TeacherRepository;
 import com.iktpreobuka.projekat_za_kraj.repositories.UserAccountRepository;
 import com.iktpreobuka.projekat_za_kraj.repositories.UserRepository;
 import com.iktpreobuka.projekat_za_kraj.security.Views;
@@ -52,6 +56,18 @@ public class UserAccountController {
 	@Autowired
 	private UserRepository userRepository;
 
+	@Autowired
+	private AdminRepository adminRepository;
+	
+	@Autowired
+	private ParentRepository parentRepository;
+	
+	@Autowired
+	private StudentRepository studentRepository;
+	
+	@Autowired
+	private TeacherRepository teacherRepository;
+	
 	@Autowired 
 	private UserCustomValidator userValidator;
 
@@ -192,32 +208,44 @@ public class UserAccountController {
 		    }
 			if (newUserAccount.getUserId() != null) {
 				user = userRepository.getById(Integer.parseInt(newUserAccount.getUserId()));
+				if (user == null) {
+					logger.info("---------------- User not found.");
+					return new ResponseEntity<>("User not found.", HttpStatus.NOT_FOUND);
+				}
 				Integer userStatus = null;
 				if (user != null) {
-					if (user instanceof AdminEntity && newUserAccount.getAccessRole() == "ROLE_ADMIN") {
-						AdminEntity userWithRole = (AdminEntity) user;
-						userStatus = userWithRole.getStatus();
-						role = EUserRole.ROLE_ADMIN;
-					} else if (user instanceof TeacherEntity && newUserAccount.getAccessRole() == "ROLE_TEACHER") {
-						TeacherEntity userWithRole = (TeacherEntity) user;
-						userStatus = userWithRole.getStatus();
-						role = EUserRole.ROLE_TEACHER;
-					} else if (user instanceof ParentEntity && newUserAccount.getAccessRole() == "ROLE_PARENT") {
-						ParentEntity userWithRole = (ParentEntity) user;
-						userStatus = userWithRole.getStatus();
-						role = EUserRole.ROLE_PARENT;
-					} else if (user instanceof StudentEntity && newUserAccount.getAccessRole() == "ROLE_STUDENT") {
-						StudentEntity userWithRole = (StudentEntity) user;
-						userStatus = userWithRole.getStatus();
-						role = EUserRole.ROLE_STUDENT;						
+					if (newUserAccount.getAccessRole().equals("ROLE_ADMIN")) {
+						AdminEntity userWithRole = adminRepository.getByIdAndStatusLike(Integer.parseInt(newUserAccount.getUserId()), 1);
+						if (userWithRole != null) {
+							userStatus = userWithRole.getStatus();
+							role = EUserRole.ROLE_ADMIN;
+						}
+					} else if (newUserAccount.getAccessRole().equals("ROLE_TEACHER")) {
+						TeacherEntity userWithRole = teacherRepository.getByIdAndStatusLike(Integer.parseInt(newUserAccount.getUserId()), 1);
+						if (userWithRole != null) {
+							userStatus = userWithRole.getStatus();
+							role = EUserRole.ROLE_TEACHER;
+						}
+					} else if (newUserAccount.getAccessRole().equals("ROLE_PARENT")) {
+						ParentEntity userWithRole = parentRepository.findByIdAndStatusLike(Integer.parseInt(newUserAccount.getUserId()), 1);
+						if (userWithRole != null) {
+							userStatus = userWithRole.getStatus();
+							role = EUserRole.ROLE_PARENT;
+						}
+					} else if (newUserAccount.getAccessRole().equals("ROLE_STUDENT")) {
+						StudentEntity userWithRole = studentRepository.findByIdAndStatusLike(Integer.parseInt(newUserAccount.getUserId()), 1);
+						if (userWithRole != null) {
+							userStatus = userWithRole.getStatus();
+							role = EUserRole.ROLE_STUDENT;		
+						}
 					} else {
 						logger.info("---------------- User not exist or wrong access role.");
 						return new ResponseEntity<>("User not exist or wrong access role.", HttpStatus.BAD_REQUEST);
 					}
 				}
 				if (user == null || userStatus == null || userStatus != 1) {
-					logger.info("---------------- User not exist.");
-					return new ResponseEntity<>("User not exist.", HttpStatus.NOT_FOUND);
+					logger.info("---------------- User not found for that role.");
+					return new ResponseEntity<>("User not found for that role.", HttpStatus.NOT_FOUND);
 				}
 			}		
 			if (user != null && role !=null && userAccountRepository.findByUserAndAccessRoleAndStatusLike(user, role, 1) != null) {
@@ -276,33 +304,41 @@ public class UserAccountController {
 				user = userRepository.getById(Integer.parseInt(updateUserAccount.getUserId()));
 				Integer userStatus = null;
 				if (user != null) {
-					if (user instanceof AdminEntity && ((account.getAccessRole() == EUserRole.ROLE_ADMIN && updateUserAccount.getAccessRole() == null) || updateUserAccount.getAccessRole() == "ROLE_ADMIN")) {
-						AdminEntity userWithRole = (AdminEntity) user;
-						userStatus = userWithRole.getStatus();
-						role = EUserRole.ROLE_ADMIN;
-					} else if (user instanceof TeacherEntity && ((account.getAccessRole() == EUserRole.ROLE_TEACHER && updateUserAccount.getAccessRole() == null) || updateUserAccount.getAccessRole() == "ROLE_TEACHER")) {
-						TeacherEntity userWithRole = (TeacherEntity) user;
-						userStatus = userWithRole.getStatus();
-						role = EUserRole.ROLE_TEACHER;
-					} else if (user instanceof ParentEntity && ((account.getAccessRole() == EUserRole.ROLE_PARENT && updateUserAccount.getAccessRole() == null) || updateUserAccount.getAccessRole() == "ROLE_PARENT")) {
-						ParentEntity userWithRole = (ParentEntity) user;
-						userStatus = userWithRole.getStatus();
-						role = EUserRole.ROLE_PARENT;
-					} else if (user instanceof StudentEntity && ((account.getAccessRole() == EUserRole.ROLE_STUDENT && updateUserAccount.getAccessRole() == null) || updateUserAccount.getAccessRole() == "ROLE_STUDENT")) {
-						StudentEntity userWithRole = (StudentEntity) user;
-						userStatus = userWithRole.getStatus();
-						role = EUserRole.ROLE_STUDENT;						
+					if (((account.getAccessRole().equals(EUserRole.ROLE_ADMIN) && updateUserAccount.getAccessRole() == null) || updateUserAccount.getAccessRole().equals("ROLE_ADMIN"))) {
+						AdminEntity userWithRole = adminRepository.getByIdAndStatusLike(Integer.parseInt(updateUserAccount.getUserId()), 1);
+						if (userWithRole != null) {
+							userStatus = userWithRole.getStatus();
+							role = EUserRole.ROLE_ADMIN;
+						}
+					} else if (((account.getAccessRole().equals(EUserRole.ROLE_TEACHER) && updateUserAccount.getAccessRole() == null) || updateUserAccount.getAccessRole().equals("ROLE_TEACHER"))) {
+						TeacherEntity userWithRole = teacherRepository.getByIdAndStatusLike(Integer.parseInt(updateUserAccount.getUserId()), 1);
+						if (userWithRole != null) {
+							userStatus = userWithRole.getStatus();
+							role = EUserRole.ROLE_TEACHER;
+						}
+					} else if (((account.getAccessRole().equals(EUserRole.ROLE_PARENT) && updateUserAccount.getAccessRole() == null) || updateUserAccount.getAccessRole().equals("ROLE_PARENT"))) {
+						ParentEntity userWithRole = parentRepository.findByIdAndStatusLike(Integer.parseInt(updateUserAccount.getUserId()), 1);
+						if (userWithRole != null) {
+							userStatus = userWithRole.getStatus();
+							role = EUserRole.ROLE_PARENT;
+						}
+					} else if (((account.getAccessRole().equals(EUserRole.ROLE_STUDENT) && updateUserAccount.getAccessRole() == null) || updateUserAccount.getAccessRole().equals("ROLE_STUDENT"))) {
+						StudentEntity userWithRole = studentRepository.findByIdAndStatusLike(Integer.parseInt(updateUserAccount.getUserId()), 1);
+						if (userWithRole != null) {
+							userStatus = userWithRole.getStatus();
+							role = EUserRole.ROLE_STUDENT;		
+						}
 					} else {
 						logger.info("---------------- User not exist or wrong access role.");
 						return new ResponseEntity<>("User not exist or wrong access role.", HttpStatus.BAD_REQUEST);
 					}
 				}
 				if (user == null || userStatus == null || userStatus != 1) {
-					logger.info("---------------- User not exist.");
-					return new ResponseEntity<>("User not exist.", HttpStatus.BAD_REQUEST);
+					logger.info("---------------- User not found with that role.");
+					return new ResponseEntity<>("User not found with that role.", HttpStatus.BAD_REQUEST);
 				}
 			}		
-			if (user != null && role !=null && userAccountRepository.findByUserAndAccessRoleAndStatusLike(user, role, 1) != null) {
+			if (user != null && role !=null && userAccountRepository.findByUserAndAccessRoleAndStatusLike(user, EUserRole.valueOf(updateUserAccount.getAccessRole()), 1) != null) {
 				logger.info("---------------- User already have account with that role.");
 		        return new ResponseEntity<>("User already have account with that role.", HttpStatus.FORBIDDEN);
 		    }	
@@ -312,7 +348,7 @@ public class UserAccountController {
 		    }	
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
-			if (updateUserAccount.getUsername() != null && !updateUserAccount.getUsername().equals("") && !updateUserAccount.getUsername().equals(" ") && userAccountRepository.getByUsername(updateUserAccount.getUsername()) != null) {
+			if (updateUserAccount.getUsername() != null && !updateUserAccount.getUsername().equals("") && !updateUserAccount.getUsername().equals(" ") && userAccountRepository.getByUsername(updateUserAccount.getUsername()) == null) {
 				userAccountDao.modifyAccountUsername(loggedUser, account, updateUserAccount.getUsername());
 				logger.info("Username modified.");					
 			}
@@ -320,13 +356,13 @@ public class UserAccountController {
 				userAccountDao.modifyAccountPassword(loggedUser, account, updateUserAccount.getPassword());
 				logger.info("Password modified.");
 			}
-			if (updateUserAccount.getUserId() != null && updateUserAccount.getAccessRole() != null && user != account.getUser() && role != account.getAccessRole()) {
+			if (updateUserAccount.getUserId() != null && updateUserAccount.getAccessRole() != null && user != account.getUser() && !role.equals(account.getAccessRole())) {
 				userAccountDao.modifyAccountUserAndAccessRole(loggedUser, account, user, role);
 				logger.info("User and access role modified.");
 			} else if (updateUserAccount.getUserId() != null && user != account.getUser()) {
 				userAccountDao.modifyAccountUser(loggedUser, account, user);
 				logger.info("User modified.");
-			} else if (updateUserAccount.getAccessRole() != null && role != account.getAccessRole()) {
+			} else if (updateUserAccount.getAccessRole() != null && !role.equals(account.getAccessRole())) {
 				userAccountDao.modifyAccountAccessRole(loggedUser, account, EUserRole.valueOf(updateUserAccount.getAccessRole()));
 				logger.info("Access role modified.");
 			}

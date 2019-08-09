@@ -2,6 +2,11 @@ package com.iktpreobuka.projekat_za_kraj.controllers;
 
 import java.security.Principal;
 import java.sql.Date;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 import javax.validation.Valid;
@@ -33,11 +38,15 @@ import com.iktpreobuka.projekat_za_kraj.entities.StudentEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.UserAccountEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.UserEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.dto.StudentDto;
+import com.iktpreobuka.projekat_za_kraj.entities.dto.StudentSubjectTeacherDto;
+import com.iktpreobuka.projekat_za_kraj.entities.dto.SubjectTeacherDto;
+import com.iktpreobuka.projekat_za_kraj.entities.dto.TrioStudentSubjecTeachertDto;
 import com.iktpreobuka.projekat_za_kraj.enumerations.EUserRole;
 import com.iktpreobuka.projekat_za_kraj.repositories.DepartmentRepository;
 import com.iktpreobuka.projekat_za_kraj.repositories.ParentRepository;
 import com.iktpreobuka.projekat_za_kraj.repositories.StudentDepartmentRepository;
 import com.iktpreobuka.projekat_za_kraj.repositories.StudentRepository;
+import com.iktpreobuka.projekat_za_kraj.repositories.SubjectRepository;
 import com.iktpreobuka.projekat_za_kraj.repositories.UserAccountRepository;
 import com.iktpreobuka.projekat_za_kraj.repositories.UserRepository;
 import com.iktpreobuka.projekat_za_kraj.security.Views;
@@ -60,6 +69,9 @@ public class StudentController {
 
 	@Autowired
 	private StudentRepository studentRepository;
+	
+	@Autowired
+	private SubjectRepository subjectRepository;
 	
 	@Autowired
 	private UserAccountRepository userAccountRepository;
@@ -179,6 +191,94 @@ public class StudentController {
 			StudentEntity user= studentRepository.findByIdAndStatusLike(id, -1);
 			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<StudentEntity>(user, HttpStatus.OK);
+		} catch(Exception e) {
+			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+
+	@Secured("ROLE_ADMIN")
+	@JsonView(Views.Admin.class)
+	@RequestMapping(method = RequestMethod.GET, value = "/teaching")
+	public ResponseEntity<?> getAllWithTeachersAndSubjects(Principal principal) {
+		logger.info("################ /project/student/teaching/getAllWithTeachersAndSubjects started.");
+		logger.info("Logged username: " + principal.getName());
+		try {			
+			List<TrioStudentSubjecTeachertDto> students= subjectRepository.findStudentAndSubjectAndTeacher();
+			List<StudentSubjectTeacherDto> subjectsAndTeachers = new ArrayList<StudentSubjectTeacherDto>();
+			for(final TrioStudentSubjecTeachertDto t : students) {
+			   StudentSubjectTeacherDto temp = new StudentSubjectTeacherDto();
+			   SubjectTeacherDto temp1 = new SubjectTeacherDto();
+			   temp1.setSubject(t.getSubject());
+			   temp1.setTeacher(t.getTeacher());
+			   temp.setStudent(t.getStudent());
+			   temp.setSubject(temp1);
+			   subjectsAndTeachers.add(temp);
+			}
+
+			Map<StudentEntity, List<SubjectTeacherDto>> subjectsByStudent = new HashMap<StudentEntity, List<SubjectTeacherDto>>();
+			for (StudentSubjectTeacherDto entry : subjectsAndTeachers) {
+				SubjectTeacherDto subject = entry.getSubject();
+			    StudentEntity student = entry.getStudent();
+			    List<SubjectTeacherDto> subjectsss = subjectsByStudent.get(student);
+			    if (subjectsss == null) {
+			        subjectsss = new ArrayList<SubjectTeacherDto>();
+			        subjectsByStudent.put(student, subjectsss);
+			    }
+			    subjectsss.add(subject);
+			}
+			
+			Map<String, List<SubjectTeacherDto>> subjectsAndStudent = new TreeMap<String, List<SubjectTeacherDto>>();
+			for (Map.Entry<StudentEntity, List<SubjectTeacherDto>> entry : subjectsByStudent.entrySet()) {
+				subjectsAndStudent.put("Id: " + entry.getKey().getId() + ", " + entry.getKey().getFirstName() + " " + entry.getKey().getLastName(), entry.getValue());
+			}			
+						
+			logger.info("---------------- Finished OK.");
+			return new ResponseEntity<>(subjectsAndStudent, HttpStatus.OK);
+		} catch(Exception e) {
+			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+
+	@Secured("ROLE_ADMIN")
+	@JsonView(Views.Admin.class)
+	@RequestMapping(method = RequestMethod.GET, value = "/{id}/teaching")
+	public ResponseEntity<?> getTeachersAndSubjects(@PathVariable Integer id, Principal principal) {
+		logger.info("################ /project/student/{id}/teaching/getTeachersAndSubjects started.");
+		logger.info("Logged username: " + principal.getName());
+		try {			
+			List<TrioStudentSubjecTeachertDto> students= subjectRepository.findStudentAndSubjectAndTeacherForStudent(id);
+			List<StudentSubjectTeacherDto> subjectsAndTeachers = new ArrayList<StudentSubjectTeacherDto>();
+			for(final TrioStudentSubjecTeachertDto t : students) {
+			   StudentSubjectTeacherDto temp = new StudentSubjectTeacherDto();
+			   SubjectTeacherDto temp1 = new SubjectTeacherDto();
+			   temp1.setSubject(t.getSubject());
+			   temp1.setTeacher(t.getTeacher());
+			   temp.setStudent(t.getStudent());
+			   temp.setSubject(temp1);
+			   subjectsAndTeachers.add(temp);
+			}
+
+			Map<StudentEntity, List<SubjectTeacherDto>> subjectsByStudent = new HashMap<StudentEntity, List<SubjectTeacherDto>>();
+			for (StudentSubjectTeacherDto entry : subjectsAndTeachers) {
+				SubjectTeacherDto subject = entry.getSubject();
+			    StudentEntity student = entry.getStudent();
+			    List<SubjectTeacherDto> subjectsss = subjectsByStudent.get(student);
+			    if (subjectsss == null) {
+			        subjectsss = new ArrayList<SubjectTeacherDto>();
+			        subjectsByStudent.put(student, subjectsss);
+			    }
+			    subjectsss.add(subject);
+			}
+			
+			Map<String, List<SubjectTeacherDto>> subjectsAndStudent = new TreeMap<String, List<SubjectTeacherDto>>();
+			for (Map.Entry<StudentEntity, List<SubjectTeacherDto>> entry : subjectsByStudent.entrySet()) {
+				subjectsAndStudent.put("Id: " + entry.getKey().getId() + ", " + entry.getKey().getFirstName() + " " + entry.getKey().getLastName(), entry.getValue());
+			}			
+						
+			logger.info("---------------- Finished OK.");
+			return new ResponseEntity<>(subjectsAndStudent, HttpStatus.OK);
 		} catch(Exception e) {
 			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
 			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -488,9 +588,9 @@ public class StudentController {
 		      }	
 			studentDao.archiveStudent(loggedUser, user);
 			logger.info("Student archived.");
-			UserAccountEntity account = userAccountRepository.findByUserAndAccessRoleLikeAndStatusLike(user, EUserRole.ROLE_STUDENT, 1);
+			UserAccountEntity account = userAccountRepository.findByUserAndAccessRoleLike(user, EUserRole.ROLE_STUDENT);
 			logger.info("Student's user account identified.");
-			if (account != null) {
+			if (account != null && account.getStatus() != -1) {
 				userAccountDao.archiveAccount(loggedUser, account);
 				logger.info("Account archived.");
 				return new ResponseEntity<UserAccountEntity>(account, HttpStatus.OK);

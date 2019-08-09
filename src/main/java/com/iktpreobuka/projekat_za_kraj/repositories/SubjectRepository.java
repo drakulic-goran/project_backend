@@ -7,6 +7,8 @@ import org.springframework.data.repository.CrudRepository;
 
 import com.iktpreobuka.projekat_za_kraj.entities.SubjectEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.dto.StudentSubjectDto;
+import com.iktpreobuka.projekat_za_kraj.entities.dto.SubjectTeacherDto;
+import com.iktpreobuka.projekat_za_kraj.entities.dto.TrioStudentSubjecTeachertDto;
 
 public interface SubjectRepository extends CrudRepository<SubjectEntity, Integer> {
 	
@@ -20,6 +22,12 @@ public interface SubjectRepository extends CrudRepository<SubjectEntity, Integer
 	@Query("select sub from StudentEntity s join s.departments d join d.department sd join sd.classes cl join cl.clas cd join cd.subjects su join su.subject sub where s.id=:student and s.status=1 and d.status=1 and sd.status=1 and cl.status=1 and cd.status=1 and su.status=1 and sub.status=1")
 	public Iterable<SubjectEntity> findByStudent(Integer student);
 	
+	@Query("select new com.iktpreobuka.projekat_za_kraj.entities.dto.SubjectTeacherDto(tsd.teachingTeacher, sub) from StudentEntity s join s.departments d join d.department sd join sd.classes cl join cl.clas cd join cd.subjects su join su.subject sub join sub.teachers_departments tsd where s.id=:student and s.status=1 and d.status=1 and sd.status=1 and cl.status=1 and cd.status=1 and su.status=1 and sub.status=1 and tsd.status=1")
+	public Iterable<SubjectTeacherDto> findSubjectAndTeacherByStudent(Integer student);
+	
+	@Query("select new com.iktpreobuka.projekat_za_kraj.entities.dto.TrioStudentSubjecTeachertDto(s, sub, tsd.teachingTeacher) from ParentEntity p join p.students s join s.departments d join d.department sd join sd.classes cl join cl.clas cd join cd.subjects su join su.subject sub join sub.teachers_departments tsd where p.id=:parent and s.status=1 and d.status=1 and cl.status=1 and su.status=1 and sub.status=1 and tsd.status=1")
+	public List<TrioStudentSubjecTeachertDto> findStudentAndSubjectAndTeacherByStudent(Integer parent);
+
 	@Query("select sub from StudentEntity s join s.departments d join d.department sd join sd.classes cl join cl.clas cd join cd.subjects su join su.subject sub where s.id=:student")
 	public Iterable<SubjectEntity> findActiveAndDeletedSubjectsByStudent(Integer student);
 
@@ -34,5 +42,11 @@ public interface SubjectRepository extends CrudRepository<SubjectEntity, Integer
 	public Iterable<SubjectEntity> findByPrimaryTeacher(Integer teacher);
 
 	public SubjectEntity findBySubjectName(String subjectName);
+
+	@Query("select new com.iktpreobuka.projekat_za_kraj.entities.dto.TrioStudentSubjecTeachertDto(s, sub, tsd.teachingTeacher) from StudentEntity s join s.departments d join d.department sd join sd.classes cl join cl.clas cd join cd.subjects su join su.subject sub join sub.teachers_departments tsd where s.status=1 and d.status=1 and cl.status=1 and su.status=1 and sub.status=1 and tsd.status=1")
+	public List<TrioStudentSubjecTeachertDto> findStudentAndSubjectAndTeacher();
+
+	@Query("select new com.iktpreobuka.projekat_za_kraj.entities.dto.TrioStudentSubjecTeachertDto(s, sub, tsd.teachingTeacher) from StudentEntity s join s.departments d join d.department sd join sd.classes cl join cl.clas cd join cd.subjects su join su.subject sub join sub.teachers_departments tsd where s.id=:student and s.status=1 and d.status=1 and cl.status=1 and su.status=1 and sub.status=1 and tsd.status=1")
+	public List<TrioStudentSubjecTeachertDto> findStudentAndSubjectAndTeacherForStudent(Integer student);
 
 }

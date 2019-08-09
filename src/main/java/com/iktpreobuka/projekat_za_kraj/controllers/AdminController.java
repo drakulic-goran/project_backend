@@ -314,9 +314,9 @@ public class AdminController {
 		      }	
 			adminDao.archiveAdmin(loggedUser, user);
 			logger.info("Admin archived.");
-			UserAccountEntity account = userAccountRepository.findByUserAndAccessRoleLikeAndStatusLike(user, EUserRole.ROLE_ADMIN, 1);
+			UserAccountEntity account = userAccountRepository.findByUserAndAccessRoleLike(user, EUserRole.ROLE_ADMIN);
 			logger.info("Admin's user account identified.");
-			if (account != null) {
+			if (account != null && account.getStatus() != -1) {
 				userAccountDao.archiveAccount(loggedUser, account);
 				logger.info("---------------- Finished OK.");
 				return new ResponseEntity<UserAccountEntity>(account, HttpStatus.OK);

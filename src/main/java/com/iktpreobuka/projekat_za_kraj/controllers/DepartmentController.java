@@ -1,6 +1,11 @@
 package com.iktpreobuka.projekat_za_kraj.controllers;
 
 import java.security.Principal;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 import javax.validation.Valid;
@@ -33,6 +38,7 @@ import com.iktpreobuka.projekat_za_kraj.entities.TeacherEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.TeacherSubjectDepartmentEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.UserEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.dto.DepartmentDto;
+import com.iktpreobuka.projekat_za_kraj.entities.dto.DepartmentStudentDto;
 import com.iktpreobuka.projekat_za_kraj.enumerations.EClass;
 import com.iktpreobuka.projekat_za_kraj.repositories.ClassRepository;
 import com.iktpreobuka.projekat_za_kraj.repositories.DepartmentClassRepository;
@@ -176,6 +182,90 @@ public class DepartmentController {
 		}
 	}
 
+	@Secured({"ROLE_ADMIN"})
+	@JsonView(Views.Admin.class)
+	@RequestMapping(method = RequestMethod.GET, value = "/students")
+	public ResponseEntity<?> getAllAndStudents(Principal principal) {
+		logger.info("################ /project/department/students/getAllAndStudents started.");
+		logger.info("Logged user: " + principal.getName());
+		try {
+			Iterable<DepartmentEntity> departments= departmentRepository.findByStatusLike(1);
+			
+			List<DepartmentStudentDto> cd = new ArrayList<DepartmentStudentDto>();
+			for(final DepartmentEntity c : departments) {
+				for(final StudentDepartmentEntity d : c.getStudents()) {
+					if (d.getStatus() == 1) {
+						cd.add(new DepartmentStudentDto(d.getDepartment(), d.getStudent()));
+					}
+				}
+			}
+			
+			Map<DepartmentEntity, List<StudentEntity>> departmentsByClass = new HashMap<DepartmentEntity, List<StudentEntity>>();
+			for (DepartmentStudentDto entry : cd) {
+				DepartmentEntity department = entry.getDepartment();
+				StudentEntity clas = entry.getStudent();
+			    List<StudentEntity> subjectsss = departmentsByClass.get(department);
+			    if (subjectsss == null) {
+			        subjectsss = new ArrayList<StudentEntity>();
+			        departmentsByClass.put(department, subjectsss);
+			    }
+			    subjectsss.add(clas);
+			}
+			
+			Map<String, List<StudentEntity>> departmentsAndClass = new TreeMap<String, List<StudentEntity>>();
+			for (Map.Entry<DepartmentEntity, List<StudentEntity>> entry : departmentsByClass.entrySet()) {
+				departmentsAndClass.put("Id: " + entry.getKey().getId() + ", department: " + entry.getKey().getDepartmentLabel(), entry.getValue());
+			}			
+
+			logger.info("---------------- Finished OK.");
+			return new ResponseEntity<>(departmentsAndClass, HttpStatus.OK);
+		} catch(Exception e) {
+			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+
+	@Secured({"ROLE_ADMIN"})
+	@JsonView(Views.Admin.class)
+	@RequestMapping(method = RequestMethod.GET, value = "/{id}/students")
+	public ResponseEntity<?> getDepartmentWithStudents(@PathVariable Integer id, Principal principal) {
+		logger.info("################ /project/department/{id}/students/getDepartmentWithStudents started.");
+		logger.info("Logged user: " + principal.getName());
+		try {
+			DepartmentEntity department= departmentRepository.findByIdAndStatusLike(id, 1);
+			
+			List<DepartmentStudentDto> cd = new ArrayList<DepartmentStudentDto>();
+			for(final StudentDepartmentEntity d : department.getStudents()) {
+				if (d.getStatus() == 1) {
+					cd.add(new DepartmentStudentDto(d.getDepartment(), d.getStudent()));
+				}
+			}
+			
+			Map<DepartmentEntity, List<StudentEntity>> departmentsByClass = new HashMap<DepartmentEntity, List<StudentEntity>>();
+			for (DepartmentStudentDto entry : cd) {
+				DepartmentEntity dep = entry.getDepartment();
+				StudentEntity clas = entry.getStudent();
+			    List<StudentEntity> subjectsss = departmentsByClass.get(dep);
+			    if (subjectsss == null) {
+			        subjectsss = new ArrayList<StudentEntity>();
+			        departmentsByClass.put(dep, subjectsss);
+			    }
+			    subjectsss.add(clas);
+			}
+			
+			Map<String, List<StudentEntity>> departmentsAndClass = new TreeMap<String, List<StudentEntity>>();
+			for (Map.Entry<DepartmentEntity, List<StudentEntity>> entry : departmentsByClass.entrySet()) {
+				departmentsAndClass.put("Id: " + entry.getKey().getId() + ", department: " + entry.getKey().getDepartmentLabel(), entry.getValue());
+			}			
+
+			logger.info("---------------- Finished OK.");
+			return new ResponseEntity<>(departmentsAndClass, HttpStatus.OK);
+		} catch(Exception e) {
+			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+
 	@Secured("ROLE_ADMIN")
 	@JsonView(Views.Admin.class)
 	@RequestMapping(method = RequestMethod.POST)
@@ -278,6 +368,9 @@ public class DepartmentController {
 			}
 			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<>(department, HttpStatus.OK);
+		} catch (NumberFormatException e) {
+			logger.error("++++++++++++++++ Number format exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(2, "Number format exception occurred: "+ e.getLocalizedMessage()), HttpStatus.NOT_ACCEPTABLE);
 		} catch (Exception e) {
 			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
 			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
