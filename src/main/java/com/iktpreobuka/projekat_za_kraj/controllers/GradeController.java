@@ -37,6 +37,7 @@ import com.iktpreobuka.projekat_za_kraj.entities.TeacherSubjectDepartmentEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.UserAccountEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.UserEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.dto.GradeDto;
+import com.iktpreobuka.projekat_za_kraj.entities.dto.SubjectFinalGradesDto;
 import com.iktpreobuka.projekat_za_kraj.entities.dto.SubjectGradesDto;
 import com.iktpreobuka.projekat_za_kraj.enumerations.ESemester;
 import com.iktpreobuka.projekat_za_kraj.enumerations.EUserRole;
@@ -296,6 +297,42 @@ public class GradeController {
 		}
 	}
 	
+	@Secured({"ROLE_STUDENT"})
+	@JsonView(Views.Student.class)
+	@RequestMapping(method = RequestMethod.GET, value = "/student/semester/{semester}/finalbysubject")
+	public ResponseEntity<?> getAllStudentFinalBySubjectForSemester(@PathVariable String semester, Principal principal) {
+		logger.info("################ /project/grades/student/semester/{semester}/finalbysubject/getAllStudentFinalBySubjectForSemester started.");
+		logger.info("Logged user: " + principal.getName());
+		try {
+			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
+			logger.info("Logged user identified.");
+			StudentEntity user = studentRepository.findByIdAndStatusLike(loggedUser.getId(), 1);
+			List<SubjectFinalGradesDto> grades= gradeRepository.findFinalGradesWithSubjectBySemesterAndStudent(user.getId(), ESemester.valueOf(semester));
+			Map<SubjectEntity, List<Double>> gradesBySubject = new HashMap<SubjectEntity, List<Double>>();
+			for (SubjectFinalGradesDto  entry : grades) {
+				SubjectEntity subject = entry.getSubject();
+				Double grade = entry.getGrade();
+			    List<Double> gradess = gradesBySubject.get(subject);
+			    if (gradess == null) {
+			        gradess = new ArrayList<Double>();
+			        gradesBySubject.put(subject, gradess);
+			    }
+			    gradess.add(grade);
+			}
+			
+			Map<String, List<Double>> gradesAndSubject = new TreeMap<String, List<Double>>();
+			for (Map.Entry<SubjectEntity, List<Double>> entry : gradesBySubject.entrySet()) {
+				gradesAndSubject.put(entry.getKey().getSubjectName(), entry.getValue());
+			}			
+
+			logger.info("---------------- Finished OK.");
+			return new ResponseEntity<>(gradesAndSubject, HttpStatus.OK);
+		} catch(Exception e) {
+			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+
 	@Secured({"ROLE_PARENT"})
 	@JsonView(Views.Student.class)
 	@RequestMapping(method = RequestMethod.GET, value = "/parent/semester/{semester}/groupedbysubject")
@@ -377,6 +414,433 @@ public class GradeController {
 				}			
 				finalna.put(user, gradesAndSubject);
 			}
+			
+			Map<String, Map<String, List<GradeEntity>>> zaispis = new TreeMap<String, Map<String, List<GradeEntity>>>();
+			for (Map.Entry<StudentEntity, Map<String, List<GradeEntity>>> entry : finalna.entrySet()) {
+				zaispis.put(entry.getKey().getFirstName() + " " + entry.getKey().getLastName(), entry.getValue());
+			}			
+
+			logger.info("---------------- Finished OK.");
+			return new ResponseEntity<>(zaispis, HttpStatus.OK);
+
+		} catch(Exception e) {
+			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+
+	@Secured({"ROLE_PARENT"})
+	@JsonView(Views.Student.class)
+	@RequestMapping(method = RequestMethod.GET, value = "/parent/semester/{semester}/finalbysubject")
+	public ResponseEntity<?> getParentStudentsFinalBySubjectForSemester(@PathVariable String semester, Principal principal) {
+		logger.info("################ /project/grades/parent/semester/{semester}/finalbysubject/getParentStudentsFinalBySubjectForSemester started.");
+		logger.info("Logged user: " + principal.getName());
+		try {
+			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
+			logger.info("Logged user identified.");
+			ParentEntity parent = parentRepository.findByIdAndStatusLike(loggedUser.getId(), 1);
+			List<StudentEntity> students = studentRepository.findByParent(parent.getId());
+			
+			Map<StudentEntity, Map<String, List<Double>>> finalna = new HashMap<StudentEntity, Map<String, List<Double>>>();
+
+			for (StudentEntity user : students) {
+				Map<SubjectEntity, List<Double>> gradesBySubject = new HashMap<SubjectEntity, List<Double>>();
+				List<SubjectFinalGradesDto> grades= gradeRepository.findFinalGradesWithSubjectBySemesterAndStudent(user.getId(), ESemester.valueOf(semester));
+				for (SubjectFinalGradesDto  entry : grades) {
+					SubjectEntity subject = entry.getSubject();
+				    Double grade = entry.getGrade();
+				    List<Double> gradess = gradesBySubject.get(subject);
+				    if (gradess == null) {
+				        gradess = new ArrayList<Double>();
+				        gradesBySubject.put(subject, gradess);
+				    }
+				    gradess.add(grade);
+				}
+				Map<String, List<Double>> gradesAndSubject = new TreeMap<String, List<Double>>();
+				for (Map.Entry<SubjectEntity, List<Double>> entry : gradesBySubject.entrySet()) {
+					gradesAndSubject.put(entry.getKey().getSubjectName(), entry.getValue());
+				}			
+				finalna.put(user, gradesAndSubject);
+			}
+			
+			Map<String, Map<String, List<Double>>> zaispis = new TreeMap<String, Map<String, List<Double>>>();
+			for (Map.Entry<StudentEntity, Map<String, List<Double>>> entry : finalna.entrySet()) {
+				zaispis.put(entry.getKey().getFirstName() + " " + entry.getKey().getLastName(), entry.getValue());
+			}			
+
+			logger.info("---------------- Finished OK.");
+			return new ResponseEntity<>(zaispis, HttpStatus.OK);
+
+		} catch(Exception e) {
+			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+
+	@Secured({"ROLE_TEACHER"})
+	@JsonView(Views.Student.class)
+	@RequestMapping(method = RequestMethod.GET, value = "/primary-teacher/semester/{semester}/groupedbysubject")
+	public ResponseEntity<?> getPrimaryTeacherStudentsGroupedBySubjectForSemester(@PathVariable String semester, Principal principal) {
+		logger.info("################ /project/grades/primary-teacher/semester/{semester}/groupedbysubject/getPrimaryTeacherStudentsGroupedBySubjectForSemester started.");
+		logger.info("Logged user: " + principal.getName());
+		try {
+			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
+			logger.info("Logged user identified.");
+			TeacherEntity teacher = teacherRepository.findByIdAndStatusLike(loggedUser.getId(), 1);
+			List<StudentEntity> students = studentRepository.findByPrimaryTeacherId(teacher.getId());
+			
+			Map<StudentEntity, Map<String, List<GradeEntity>>> finalna = new HashMap<StudentEntity, Map<String, List<GradeEntity>>>();
+
+			for (StudentEntity user : students) {
+				Map<SubjectEntity, List<GradeEntity>> gradesBySubject = new HashMap<SubjectEntity, List<GradeEntity>>();
+				List<SubjectGradesDto> grades= gradeRepository.findGradesWithSubjectBySemesterAndStudent(user.getId(), ESemester.valueOf(semester));
+				for (SubjectGradesDto  entry : grades) {
+					SubjectEntity subject = entry.getSubject();
+				    GradeEntity grade = entry.getGrade();
+				    List<GradeEntity> gradess = gradesBySubject.get(subject);
+				    if (gradess == null) {
+				        gradess = new ArrayList<GradeEntity>();
+				        gradesBySubject.put(subject, gradess);
+				    }
+				    gradess.add(grade);
+				}
+				Map<String, List<GradeEntity>> gradesAndSubject = new TreeMap<String, List<GradeEntity>>();
+				for (Map.Entry<SubjectEntity, List<GradeEntity>> entry : gradesBySubject.entrySet()) {
+					gradesAndSubject.put(entry.getKey().getSubjectName(), entry.getValue());
+				}			
+				finalna.put(user, gradesAndSubject);
+			}
+			
+			Map<String, Map<String, List<GradeEntity>>> zaispis = new TreeMap<String, Map<String, List<GradeEntity>>>();
+			for (Map.Entry<StudentEntity, Map<String, List<GradeEntity>>> entry : finalna.entrySet()) {
+				zaispis.put(entry.getKey().getFirstName() + " " + entry.getKey().getLastName(), entry.getValue());
+			}			
+
+			logger.info("---------------- Finished OK.");
+			return new ResponseEntity<>(zaispis, HttpStatus.OK);
+
+		} catch(Exception e) {
+			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+
+	@Secured({"ROLE_TEACHER"})
+	@JsonView(Views.Student.class)
+	@RequestMapping(method = RequestMethod.GET, value = "/primary-teacher/semester/{semester}/bysubject/{id}")
+	public ResponseEntity<?> getPrimaryTeacherStudentsGroupedBySubjectForSemesterAndSubject(@PathVariable String semester, @PathVariable Integer id, Principal principal) {
+		logger.info("################ /project/grades/primary-teacher/semester/{semester}/bysubject/{id}/getPrimaryTeacherStudentsGroupedBySubjectForSemesterAndSubject started.");
+		logger.info("Logged user: " + principal.getName());
+		try {
+			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
+			logger.info("Logged user identified.");
+			TeacherEntity teacher = teacherRepository.findByIdAndStatusLike(loggedUser.getId(), 1);
+			List<StudentEntity> students = studentRepository.findByPrimaryTeacherId(teacher.getId());
+			
+			Map<StudentEntity, Map<String, List<GradeEntity>>> finalna = new HashMap<StudentEntity, Map<String, List<GradeEntity>>>();
+
+			for (StudentEntity user : students) {
+				Map<SubjectEntity, List<GradeEntity>> gradesBySubject = new HashMap<SubjectEntity, List<GradeEntity>>();
+				List<SubjectGradesDto> grades= gradeRepository.findGradesWithSubjectBySemesterAndStudentAndSubject(user.getId(), id, ESemester.valueOf(semester));
+				for (SubjectGradesDto  entry : grades) {
+					SubjectEntity subject = entry.getSubject();
+				    GradeEntity grade = entry.getGrade();
+				    List<GradeEntity> gradess = gradesBySubject.get(subject);
+				    if (gradess == null) {
+				        gradess = new ArrayList<GradeEntity>();
+				        gradesBySubject.put(subject, gradess);
+				    }
+				    gradess.add(grade);
+				}
+				Map<String, List<GradeEntity>> gradesAndSubject = new TreeMap<String, List<GradeEntity>>();
+				for (Map.Entry<SubjectEntity, List<GradeEntity>> entry : gradesBySubject.entrySet()) {
+					gradesAndSubject.put(entry.getKey().getSubjectName(), entry.getValue());
+				}			
+				finalna.put(user, gradesAndSubject);
+			}
+			
+			Map<String, Map<String, List<GradeEntity>>> zaispis = new TreeMap<String, Map<String, List<GradeEntity>>>();
+			for (Map.Entry<StudentEntity, Map<String, List<GradeEntity>>> entry : finalna.entrySet()) {
+				zaispis.put(entry.getKey().getFirstName() + " " + entry.getKey().getLastName(), entry.getValue());
+			}			
+
+			logger.info("---------------- Finished OK.");
+			return new ResponseEntity<>(zaispis, HttpStatus.OK);
+
+		} catch(Exception e) {
+			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+
+	@Secured({"ROLE_TEACHER"})
+	@JsonView(Views.Student.class)
+	@RequestMapping(method = RequestMethod.GET, value = "/primary-teacher/semester/{semester}/finalbysubject")
+	public ResponseEntity<?> getPrimaryTeacherStudentsFinalBySubjectForSemester(@PathVariable String semester, Principal principal) {
+		logger.info("################ /project/grades/primary-teacher/semester/{semester}/finalbysubject/getPrimaryTeacherStudentsFinalBySubjectForSemester started.");
+		logger.info("Logged user: " + principal.getName());
+		try {
+			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
+			logger.info("Logged user identified.");
+			TeacherEntity teacher = teacherRepository.findByIdAndStatusLike(loggedUser.getId(), 1);
+			List<StudentEntity> students = studentRepository.findByPrimaryTeacherId(teacher.getId());
+			
+			Map<StudentEntity, Map<String, List<Double>>> finalna = new HashMap<StudentEntity, Map<String, List<Double>>>();
+
+			for (StudentEntity user : students) {
+				Map<SubjectEntity, List<Double>> gradesBySubject = new HashMap<SubjectEntity, List<Double>>();
+				List<SubjectFinalGradesDto> grades= gradeRepository.findFinalGradesWithSubjectBySemesterAndStudent(user.getId(), ESemester.valueOf(semester));
+				for (SubjectFinalGradesDto  entry : grades) {
+					SubjectEntity subject = entry.getSubject();
+					Double grade = entry.getGrade();
+				    List<Double> gradess = gradesBySubject.get(subject);
+				    if (gradess == null) {
+				        gradess = new ArrayList<Double>();
+				        gradesBySubject.put(subject, gradess);
+				    }
+				    gradess.add(grade);
+				}
+				Map<String, List<Double>> gradesAndSubject = new TreeMap<String, List<Double>>();
+				for (Map.Entry<SubjectEntity, List<Double>> entry : gradesBySubject.entrySet()) {
+					gradesAndSubject.put(entry.getKey().getSubjectName(), entry.getValue());
+				}			
+				finalna.put(user, gradesAndSubject);
+			}
+			
+			Map<String, Map<String, List<Double>>> zaispis = new TreeMap<String, Map<String, List<Double>>>();
+			for (Map.Entry<StudentEntity, Map<String, List<Double>>> entry : finalna.entrySet()) {
+				zaispis.put(entry.getKey().getFirstName() + " " + entry.getKey().getLastName(), entry.getValue());
+			}			
+
+			logger.info("---------------- Finished OK.");
+			return new ResponseEntity<>(zaispis, HttpStatus.OK);
+
+		} catch(Exception e) {
+			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+
+	@Secured({"ROLE_TEACHER"})
+	@JsonView(Views.Student.class)
+	@RequestMapping(method = RequestMethod.GET, value = "/teacher/semester/{semester}/groupedbysubject")
+	public ResponseEntity<?> getTeacherStudentsGroupedBySubjectForSemester(@PathVariable String semester, Principal principal) {
+		logger.info("################ /project/grades/teacher/semester/{semester}/groupedbysubject/getTeacherStudentsGroupedBySubjectForSemester started.");
+		logger.info("Logged user: " + principal.getName());
+		try {
+			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
+			logger.info("Logged user identified.");
+			TeacherEntity teacher = teacherRepository.findByIdAndStatusLike(loggedUser.getId(), 1);
+			List<StudentEntity> students = studentRepository.findByTeachingTeacher(teacher.getId());
+			
+			Map<StudentEntity, Map<String, List<GradeEntity>>> finalna = new HashMap<StudentEntity, Map<String, List<GradeEntity>>>();
+
+			for (StudentEntity user : students) {
+				Map<SubjectEntity, List<GradeEntity>> gradesBySubject = new HashMap<SubjectEntity, List<GradeEntity>>();
+				List<SubjectGradesDto> grades= gradeRepository.findGradesWithSubjectBySemesterAndStudentAndTeacher(user.getId(), teacher.getId(), ESemester.valueOf(semester));
+				for (SubjectGradesDto  entry : grades) {
+					SubjectEntity subject = entry.getSubject();
+				    GradeEntity grade = entry.getGrade();
+				    List<GradeEntity> gradess = gradesBySubject.get(subject);
+				    if (gradess == null) {
+				        gradess = new ArrayList<GradeEntity>();
+				        gradesBySubject.put(subject, gradess);
+				    }
+				    gradess.add(grade);
+				}
+				Map<String, List<GradeEntity>> gradesAndSubject = new TreeMap<String, List<GradeEntity>>();
+				for (Map.Entry<SubjectEntity, List<GradeEntity>> entry : gradesBySubject.entrySet()) {
+					gradesAndSubject.put(entry.getKey().getSubjectName(), entry.getValue());
+				}			
+				finalna.put(user, gradesAndSubject);
+			}
+			
+			Map<String, Map<String, List<GradeEntity>>> zaispis = new TreeMap<String, Map<String, List<GradeEntity>>>();
+			for (Map.Entry<StudentEntity, Map<String, List<GradeEntity>>> entry : finalna.entrySet()) {
+				zaispis.put(entry.getKey().getFirstName() + " " + entry.getKey().getLastName(), entry.getValue());
+			}			
+
+			logger.info("---------------- Finished OK.");
+			return new ResponseEntity<>(zaispis, HttpStatus.OK);
+
+		} catch(Exception e) {
+			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+
+	@Secured({"ROLE_TEACHER"})
+	@JsonView(Views.Student.class)
+	@RequestMapping(method = RequestMethod.GET, value = "/teacher/semester/{semester}/bysubject/{id}")
+	public ResponseEntity<?> getTeacherStudentsGroupedBySubjectForSemesterAndSubject(@PathVariable String semester, @PathVariable Integer id, Principal principal) {
+		logger.info("################ /project/grades/teacher/semester/{semester}/bysubject/{id}/getTeacherStudentsGroupedBySubjectForSemesterAndSubject started.");
+		logger.info("Logged user: " + principal.getName());
+		try {
+			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
+			logger.info("Logged user identified.");
+			TeacherEntity teacher = teacherRepository.findByIdAndStatusLike(loggedUser.getId(), 1);
+			List<StudentEntity> students = studentRepository.findByTeachingTeacher(teacher.getId());
+			
+			Map<StudentEntity, Map<String, List<GradeEntity>>> finalna = new HashMap<StudentEntity, Map<String, List<GradeEntity>>>();
+
+			for (StudentEntity user : students) {
+				Map<SubjectEntity, List<GradeEntity>> gradesBySubject = new HashMap<SubjectEntity, List<GradeEntity>>();
+				List<SubjectGradesDto> grades= gradeRepository.findGradesWithSubjectBySemesterAndStudentAndSubjectAndTeacher(user.getId(), teacher.getId(), id, ESemester.valueOf(semester));
+				for (SubjectGradesDto  entry : grades) {
+					SubjectEntity subject = entry.getSubject();
+				    GradeEntity grade = entry.getGrade();
+				    List<GradeEntity> gradess = gradesBySubject.get(subject);
+				    if (gradess == null) {
+				        gradess = new ArrayList<GradeEntity>();
+				        gradesBySubject.put(subject, gradess);
+				    }
+				    gradess.add(grade);
+				}
+				Map<String, List<GradeEntity>> gradesAndSubject = new TreeMap<String, List<GradeEntity>>();
+				for (Map.Entry<SubjectEntity, List<GradeEntity>> entry : gradesBySubject.entrySet()) {
+					gradesAndSubject.put(entry.getKey().getSubjectName(), entry.getValue());
+				}			
+				finalna.put(user, gradesAndSubject);
+			}
+			
+			Map<String, Map<String, List<GradeEntity>>> zaispis = new TreeMap<String, Map<String, List<GradeEntity>>>();
+			for (Map.Entry<StudentEntity, Map<String, List<GradeEntity>>> entry : finalna.entrySet()) {
+				zaispis.put(entry.getKey().getFirstName() + " " + entry.getKey().getLastName(), entry.getValue());
+			}			
+
+			logger.info("---------------- Finished OK.");
+			return new ResponseEntity<>(zaispis, HttpStatus.OK);
+
+		} catch(Exception e) {
+			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+
+	@Secured({"ROLE_ADMIN"})
+	@JsonView(Views.Student.class)
+	@RequestMapping(method = RequestMethod.GET, value = "/admin/semester/{semester}/groupedbysubject")
+	public ResponseEntity<?> getAdminStudentsGroupedBySubjectForSemester(@PathVariable String semester, Principal principal) {
+		logger.info("################ /project/grades/admin/semester/{semester}/groupedbysubject/getAdminStudentsGroupedBySubjectForSemester started.");
+		logger.info("Logged user: " + principal.getName());
+		try {
+			logger.info("Logged user identified.");
+
+			Iterable<StudentEntity> students = studentRepository.findByStatusLike(1);
+			
+			Map<StudentEntity, Map<String, List<GradeEntity>>> finalna = new HashMap<StudentEntity, Map<String, List<GradeEntity>>>();
+
+			for (StudentEntity user : students) {
+				Map<SubjectEntity, List<GradeEntity>> gradesBySubject = new HashMap<SubjectEntity, List<GradeEntity>>();
+				List<SubjectGradesDto> grades= gradeRepository.findGradesWithSubjectBySemesterAndStudent(user.getId(), ESemester.valueOf(semester));
+				for (SubjectGradesDto  entry : grades) {
+					SubjectEntity subject = entry.getSubject();
+				    GradeEntity grade = entry.getGrade();
+				    List<GradeEntity> gradess = gradesBySubject.get(subject);
+				    if (gradess == null) {
+				        gradess = new ArrayList<GradeEntity>();
+				        gradesBySubject.put(subject, gradess);
+				    }
+				    gradess.add(grade);
+				}
+				Map<String, List<GradeEntity>> gradesAndSubject = new TreeMap<String, List<GradeEntity>>();
+				for (Map.Entry<SubjectEntity, List<GradeEntity>> entry : gradesBySubject.entrySet()) {
+					gradesAndSubject.put(entry.getKey().getSubjectName(), entry.getValue());
+				}			
+				finalna.put(user, gradesAndSubject);
+			}
+			
+			Map<String, Map<String, List<GradeEntity>>> zaispis = new TreeMap<String, Map<String, List<GradeEntity>>>();
+			for (Map.Entry<StudentEntity, Map<String, List<GradeEntity>>> entry : finalna.entrySet()) {
+				zaispis.put(entry.getKey().getFirstName() + " " + entry.getKey().getLastName(), entry.getValue());
+			}			
+
+			logger.info("---------------- Finished OK.");
+			return new ResponseEntity<>(zaispis, HttpStatus.OK);
+
+		} catch(Exception e) {
+			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+
+	@Secured({"ROLE_ADMIN"})
+	@JsonView(Views.Student.class)
+	@RequestMapping(method = RequestMethod.GET, value = "/admin/semester/{semester}/bysubject/{id}")
+	public ResponseEntity<?> getAdminStudentsGroupedBySubjectForSemesterAndSubject(@PathVariable String semester, @PathVariable Integer id, Principal principal) {
+		logger.info("################ /project/grades/admin/semester/{semester}/bysubject/{id}/getAdminStudentsGroupedBySubjectForSemesterAndSubject started.");
+		logger.info("Logged user: " + principal.getName());
+		try {
+			logger.info("Logged user identified.");
+
+			Iterable<StudentEntity> students = studentRepository.findByStatusLike(1);
+			
+			Map<StudentEntity, Map<String, List<GradeEntity>>> finalna = new HashMap<StudentEntity, Map<String, List<GradeEntity>>>();
+
+			for (StudentEntity user : students) {
+				Map<SubjectEntity, List<GradeEntity>> gradesBySubject = new HashMap<SubjectEntity, List<GradeEntity>>();
+				List<SubjectGradesDto> grades= gradeRepository.findGradesWithSubjectBySemesterAndStudentAndSubject(user.getId(), id, ESemester.valueOf(semester));
+				for (SubjectGradesDto  entry : grades) {
+					SubjectEntity subject = entry.getSubject();
+				    GradeEntity grade = entry.getGrade();
+				    List<GradeEntity> gradess = gradesBySubject.get(subject);
+				    if (gradess == null) {
+				        gradess = new ArrayList<GradeEntity>();
+				        gradesBySubject.put(subject, gradess);
+				    }
+				    gradess.add(grade);
+				}
+				Map<String, List<GradeEntity>> gradesAndSubject = new TreeMap<String, List<GradeEntity>>();
+				for (Map.Entry<SubjectEntity, List<GradeEntity>> entry : gradesBySubject.entrySet()) {
+					gradesAndSubject.put(entry.getKey().getSubjectName(), entry.getValue());
+				}			
+				finalna.put(user, gradesAndSubject);
+			}
+			
+			Map<String, Map<String, List<GradeEntity>>> zaispis = new TreeMap<String, Map<String, List<GradeEntity>>>();
+			for (Map.Entry<StudentEntity, Map<String, List<GradeEntity>>> entry : finalna.entrySet()) {
+				zaispis.put(entry.getKey().getFirstName() + " " + entry.getKey().getLastName(), entry.getValue());
+			}			
+
+			logger.info("---------------- Finished OK.");
+			return new ResponseEntity<>(zaispis, HttpStatus.OK);
+
+		} catch(Exception e) {
+			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+
+	@Secured({"ROLE_ADMIN"})
+	@JsonView(Views.Student.class)
+	@RequestMapping(method = RequestMethod.GET, value = "/admin/semester/{semester}/bystudent/{id}")
+	public ResponseEntity<?> getAdminStudentsGroupedByStudentForSemesterAndSubject(@PathVariable String semester, @PathVariable Integer id, Principal principal) {
+		logger.info("################ /project/grades/admin/semester/{semester}/bystudent/{id}/getAdminStudentsGroupedBySubjectForSemesterAndSubject started.");
+		logger.info("Logged user: " + principal.getName());
+		try {
+			logger.info("Logged user identified.");
+
+			StudentEntity student = studentRepository.findByIdAndStatusLike(id, 1);
+			
+			Map<StudentEntity, Map<String, List<GradeEntity>>> finalna = new HashMap<StudentEntity, Map<String, List<GradeEntity>>>();
+
+				Map<SubjectEntity, List<GradeEntity>> gradesBySubject = new HashMap<SubjectEntity, List<GradeEntity>>();
+				List<SubjectGradesDto> grades= gradeRepository.findGradesWithSubjectBySemesterAndStudent(student.getId(), ESemester.valueOf(semester));
+				for (SubjectGradesDto  entry : grades) {
+					SubjectEntity subject = entry.getSubject();
+				    GradeEntity grade = entry.getGrade();
+				    List<GradeEntity> gradess = gradesBySubject.get(subject);
+				    if (gradess == null) {
+				        gradess = new ArrayList<GradeEntity>();
+				        gradesBySubject.put(subject, gradess);
+				    }
+				    gradess.add(grade);
+				}
+				Map<String, List<GradeEntity>> gradesAndSubject = new TreeMap<String, List<GradeEntity>>();
+				for (Map.Entry<SubjectEntity, List<GradeEntity>> entry : gradesBySubject.entrySet()) {
+					gradesAndSubject.put(entry.getKey().getSubjectName(), entry.getValue());
+				}			
+				finalna.put(student, gradesAndSubject);
 			
 			Map<String, Map<String, List<GradeEntity>>> zaispis = new TreeMap<String, Map<String, List<GradeEntity>>>();
 			for (Map.Entry<StudentEntity, Map<String, List<GradeEntity>>> entry : finalna.entrySet()) {

@@ -10,6 +10,7 @@ import com.iktpreobuka.projekat_za_kraj.entities.ParentEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.StudentEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.SubjectEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.TeacherEntity;
+import com.iktpreobuka.projekat_za_kraj.entities.dto.SubjectFinalGradesDto;
 import com.iktpreobuka.projekat_za_kraj.entities.dto.SubjectGradesDto;
 import com.iktpreobuka.projekat_za_kraj.entities.dto.TrioStudentSubjecGradeDto;
 import com.iktpreobuka.projekat_za_kraj.enumerations.ESemester;
@@ -61,5 +62,14 @@ public interface GradeRepository extends CrudRepository<GradeEntity, Integer> {
 
 	@Query("select new com.iktpreobuka.projekat_za_kraj.entities.dto.SubjectGradesDto(tsd.teachingSubject, g) from GradeEntity g join g.teacher_subject_department tsd where g.semester=:semester and g.student.id=:student and g.status=1 and tsd.teachingSubject.id=:subject")
 	public List<SubjectGradesDto> findGradesWithSubjectBySemesterAndStudentAndSubject(Integer student, Integer subject, ESemester semester);
+
+	@Query("select new com.iktpreobuka.projekat_za_kraj.entities.dto.SubjectGradesDto(tsd.teachingSubject, g) from GradeEntity g join g.teacher_subject_department tsd where g.semester=:semester and g.student.id=:student and tsd.teachingTeacher.id=:teacher and g.status=1")
+	public List<SubjectGradesDto> findGradesWithSubjectBySemesterAndStudentAndTeacher(Integer student, Integer teacher, ESemester semester);
+
+	@Query("select new com.iktpreobuka.projekat_za_kraj.entities.dto.SubjectGradesDto(tsd.teachingSubject, g) from GradeEntity g join g.teacher_subject_department tsd where g.semester=:semester and g.student.id=:student and g.status=1 and tsd.teachingTeacher.id=:teacher and tsd.teachingSubject.id=:subject")
+	public List<SubjectGradesDto> findGradesWithSubjectBySemesterAndStudentAndSubjectAndTeacher(Integer student, Integer teacher, Integer subject, ESemester semester);
+
+	@Query("select new com.iktpreobuka.projekat_za_kraj.entities.dto.SubjectFinalGradesDto(tsd.teachingSubject, ROUND(AVG(g.gradeValue))) from GradeEntity g join g.teacher_subject_department tsd where g.semester=:semester and g.student.id=:student and g.status=1 group by g.student, tsd.teachingSubject")
+	public List<SubjectFinalGradesDto> findFinalGradesWithSubjectBySemesterAndStudent(Integer student, ESemester semester);
 
 }

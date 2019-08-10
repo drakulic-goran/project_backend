@@ -51,5 +51,8 @@ public interface StudentRepository extends CrudRepository<StudentEntity, Integer
 	
 	@Query("select s from StudentEntity s join s.departments dep join dep.department de join de.teachers d join d.primary_teacher t where t.id=:teacher and t.status=1 and dep.status=1 and s.status=1 and de.status=1 and d.status=1")
 	public List<StudentEntity> findByPrimaryTeacherId(Integer teacher);
+	
+	@Query("select s from StudentEntity s join s.departments dep join dep.department de join de.teachers_subjects ts join ts.teachingTeacher tt where tt.id=:teacher and s.status=1 and dep.status=1 and de.status=1 and ts.status=1 and tt.status=1")
+	public List<StudentEntity> findByTeachingTeacher(Integer teacher);
 
 }

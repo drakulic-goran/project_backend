@@ -43,10 +43,12 @@ public interface SubjectRepository extends CrudRepository<SubjectEntity, Integer
 
 	public SubjectEntity findBySubjectName(String subjectName);
 
-	@Query("select new com.iktpreobuka.projekat_za_kraj.entities.dto.TrioStudentSubjecTeachertDto(s, sub, tsd.teachingTeacher) from StudentEntity s join s.departments d join d.department sd join sd.classes cl join cl.clas cd join cd.subjects su join su.subject sub join sub.teachers_departments tsd where s.status=1 and d.status=1 and cl.status=1 and su.status=1 and sub.status=1 and tsd.status=1")
+	//@Query("select new com.iktpreobuka.projekat_za_kraj.entities.dto.TrioStudentSubjecTeachertDto(s, cl.teachingSubject, cl.teachingTeacher) from StudentEntity s join s.departments d join d.department sd join sd.teachers_subjects cl where s.status=1 and d.status=1 and sd.status=1 and cl.status=1")
+	@Query("select new com.iktpreobuka.projekat_za_kraj.entities.dto.TrioStudentSubjecTeachertDto(s.student, tsd.teachingSubject, tsd.teachingTeacher) from TeacherSubjectDepartmentEntity tsd join tsd.teachingDepartment td join td.students s where tsd.teachingTeacher.status=1 and tsd.teachingSubject.status=1 and s.student.status=1 and td.status=1 and tsd.status=1 and s.status=1")
 	public List<TrioStudentSubjecTeachertDto> findStudentAndSubjectAndTeacher();
 
-	@Query("select new com.iktpreobuka.projekat_za_kraj.entities.dto.TrioStudentSubjecTeachertDto(s, sub, tsd.teachingTeacher) from StudentEntity s join s.departments d join d.department sd join sd.classes cl join cl.clas cd join cd.subjects su join su.subject sub join sub.teachers_departments tsd where s.id=:student and s.status=1 and d.status=1 and cl.status=1 and su.status=1 and sub.status=1 and tsd.status=1")
+	//@Query("select new com.iktpreobuka.projekat_za_kraj.entities.dto.TrioStudentSubjecTeachertDto(s, sub, tsd.teachingTeacher) from StudentEntity s join s.departments d join d.department sd join sd.classes cl join cl.clas cd join cd.subjects su join su.subject sub join sub.teachers_departments tsd where s.id=:student and s.status=1 and d.status=1 and cl.status=1 and su.status=1 and sub.status=1 and tsd.status=1")
+	@Query("select new com.iktpreobuka.projekat_za_kraj.entities.dto.TrioStudentSubjecTeachertDto(s.student, tsd.teachingSubject, tsd.teachingTeacher) from TeacherSubjectDepartmentEntity tsd join tsd.teachingDepartment td join td.students s where s.student.id=:student and tsd.teachingTeacher.status=1 and tsd.teachingSubject.status=1 and s.student.status=1 and td.status=1 and tsd.status=1 and s.status=1")
 	public List<TrioStudentSubjecTeachertDto> findStudentAndSubjectAndTeacherForStudent(Integer student);
 
 }
