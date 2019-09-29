@@ -13,6 +13,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.web.cors.CorsConfiguration;
 
 @Configuration
 @EnableWebSecurity
@@ -34,8 +35,12 @@ public class SpringSecurityConfig extends WebSecurityConfigurerAdapter {
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
 		http
+		.cors().configurationSource(request -> new CorsConfiguration().applyPermitDefaultValues())
+		.and()
 		.csrf().disable()
-		.authorizeRequests().anyRequest().authenticated()
+		.authorizeRequests()
+		//.antMatchers(HttpMethod.OPTIONS, "http://localhost:8080").permitAll() // Ovo sam dodao
+		.anyRequest().authenticated()
 		.and().httpBasic()
 		.authenticationEntryPoint(authEntryPoint)
 		.and().sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);;
@@ -56,4 +61,22 @@ public class SpringSecurityConfig extends WebSecurityConfigurerAdapter {
 		BCryptPasswordEncoder encoder= new BCryptPasswordEncoder();
 	return encoder;
 	}
+	
+	/*@Bean
+	CorsConfigurationSource corsConfigurationSource() {
+		CorsConfiguration configuration = new CorsConfiguration();
+		configuration.setAllowedOrigins(Arrays.asList("http://localhost:8080"));
+		configuration.setAllowedMethods(Arrays.asList("GET", "PUT", "POST", "DELETE", "OPTIONS", "HEAD"));
+		configuration.setAllowedHeaders(Arrays.asList("X-Requested-With", "Origin", "Content-Type", "Accept",
+            "Authorization", "Access-Control-Allow-Credentials", "Access-Control-Allow-Headers", "Access-Control-Allow-Methods",
+            "Access-Control-Allow-Origin", "Access-Control-Expose-Headers", "Access-Control-Max-Age",
+            "Access-Control-Request-Headers", "Access-Control-Request-Method", "Age", "Allow", "Alternates",
+            "Content-Range", "Content-Disposition", "Content-Description"));
+		configuration.setAllowCredentials(true);
+		UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+		source.registerCorsConfiguration("/**", configuration);
+		return source;
+	}*/
+	
+	
 }

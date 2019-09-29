@@ -9,16 +9,21 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.annotation.JsonView;
 import com.iktpreobuka.projekat_za_kraj.controllers.util.RESTError;
+import com.iktpreobuka.projekat_za_kraj.entities.UserAccountEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.UserEntity;
+import com.iktpreobuka.projekat_za_kraj.entities.dto.UserAccountDto;
+import com.iktpreobuka.projekat_za_kraj.repositories.UserAccountRepository;
 import com.iktpreobuka.projekat_za_kraj.repositories.UserRepository;
 import com.iktpreobuka.projekat_za_kraj.security.Views;
 
+//@CrossOrigin(origins = "*", maxAge = 3600)
 @Controller
 @RestController
 @RequestMapping(value= "/project/users")
@@ -27,10 +32,15 @@ public class UserController {
 	@Autowired
 	private UserRepository userRepository;
 	
+	@Autowired
+	private UserAccountRepository userAccountRepository;
+
+	
 	
 	private final Logger logger = (Logger) LoggerFactory.getLogger(this.getClass());
 	
 
+	@CrossOrigin
 	@Secured("ROLE_ADMIN")
 	@JsonView(Views.Admin.class)
 	@RequestMapping(method = RequestMethod.GET)
@@ -48,7 +58,28 @@ public class UserController {
 		}
 	}		
 
+	
+	@RequestMapping(method = RequestMethod.GET, value = "/LogIn")
+	public boolean LogIn(Principal principal) {
+		logger.info("################ /project/users/LogIn started.");
+		logger.info("Logged username: " + principal.getName());
+		try {
+			/*UserAccountEntity loggedUser = userAccountRepository.getByUsername(principal.getName());
+			UserAccountDto userLogged = new UserAccountDto();
+			userLogged.setUsername(loggedUser.getUsername());
+			userLogged.setPassword(loggedUser.getPassword());
+			logger.info("---------------- Finished OK.");
+			return new ResponseEntity<UserAccountDto>(userLogged, HttpStatus.OK);*/
+			return true;
+		} catch(Exception e) {
+			logger.error("---------------- This is an exception message:" + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR) != null;
+		}
+	}		
+
 }
+
+
 
 	
 	/*########################
