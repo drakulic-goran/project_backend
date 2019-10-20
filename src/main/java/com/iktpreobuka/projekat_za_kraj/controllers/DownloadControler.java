@@ -15,6 +15,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -24,6 +25,7 @@ import com.iktpreobuka.projekat_za_kraj.security.Views;
 
 @Secured({"ROLE_ADMIN"})
 @Controller
+@CrossOrigin(origins = "http://localhost:3000")
 @RequestMapping(path = "/project/download")
 public class DownloadControler {
 

@@ -109,7 +109,6 @@ public class StudentDaoImpl implements StudentDao {
 		}
 		try {
 			Integer i = 0;
-			System.out.println(i);
 			if (updateStudent.getFirstName() != null && !updateStudent.getFirstName().equals(" ") && !updateStudent.getFirstName().equals("") && !updateStudent.getFirstName().equals(student.getFirstName())) {
 				student.setFirstName(updateStudent.getFirstName());
 				i++;

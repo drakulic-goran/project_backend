@@ -1,8 +1,9 @@
 package com.iktpreobuka.projekat_za_kraj.services;
 
+import java.sql.Date;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
+import java.util.Calendar;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -107,7 +108,7 @@ public class TeacherDaoImpl implements TeacherDao {
 					user.setLastName(newTeacher.getLastName());
 					user.setjMBG(newTeacher.getjMBG());
 					user.setGender(EGender.valueOf(newTeacher.getGender()));
-				    Date employmentDate = formatter.parse(newTeacher.getEmploymentDate());
+				    Date employmentDate = Date.valueOf(newTeacher.getEmploymentDate());
 				    user.setEmploymentDate(employmentDate);
 					//user.setEmploymentDate(Date.valueOf(newTeacher.getEmploymentDate()));
 					user.setCertificate(newTeacher.getCertificate());
@@ -155,10 +156,10 @@ public class TeacherDaoImpl implements TeacherDao {
 				teacher.setCertificate(updateTeacher.getCertificate());
 				i++;
 			}
-			if (updateTeacher.getEmploymentDate() != null && !formatter.parse(updateTeacher.getEmploymentDate()).equals(teacher.getEmploymentDate()) && !updateTeacher.getEmploymentDate().equals(" ") && !updateTeacher.getEmploymentDate().equals("")) {
-			    Date employmentDate = formatter.parse(updateTeacher.getEmploymentDate());
-			    teacher.setEmploymentDate(employmentDate);
-				//teacher.setEmploymentDate(Date.valueOf(updateTeacher.getEmploymentDate()));
+			if (updateTeacher.getEmploymentDate() != null && !/*formatter.parse*/Date.valueOf(updateTeacher.getEmploymentDate()).equals(teacher.getEmploymentDate()) && !updateTeacher.getEmploymentDate().equals(" ") && !updateTeacher.getEmploymentDate().equals("")) {
+			    //Date employmentDate = formatter.parse(updateTeacher.getEmploymentDate());
+			    //teacher.setEmploymentDate(employmentDate);
+				teacher.setEmploymentDate(Date.valueOf(updateTeacher.getEmploymentDate()));
 				i++;
 			}
 			if (i>0) {
@@ -263,7 +264,7 @@ public class TeacherDaoImpl implements TeacherDao {
 							}
 						}
 						if (!contains) {
-							TeacherSubjectEntity teaching = new TeacherSubjectEntity(user, sub, new Date(), loggedUser.getId());
+							TeacherSubjectEntity teaching = new TeacherSubjectEntity(user, sub, new Date(Calendar.getInstance().getTime().getTime()), loggedUser.getId());
 							teacherSubjectRepository.save(teaching);
 							user.getSubjects().add(teaching);
 							user.setUpdatedById(loggedUser.getId());
@@ -342,7 +343,7 @@ public class TeacherDaoImpl implements TeacherDao {
 							primaryTeacherDepartmentRepository.save(te);
 						}
 					}
-					pt = new PrimaryTeacherDepartmentEntity(user, dep, new Date(), loggedUser.getId());
+					pt = new PrimaryTeacherDepartmentEntity(user, dep, new Date(Calendar.getInstance().getTime().getTime()), loggedUser.getId());
 					primaryTeacherDepartmentRepository.save(pt);
 					user.getDepartments().add(pt);
 					user.setUpdatedById(loggedUser.getId());

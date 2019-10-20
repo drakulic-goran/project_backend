@@ -16,9 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.annotation.JsonView;
 import com.iktpreobuka.projekat_za_kraj.controllers.util.RESTError;
-import com.iktpreobuka.projekat_za_kraj.entities.UserAccountEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.UserEntity;
-import com.iktpreobuka.projekat_za_kraj.entities.dto.UserAccountDto;
 import com.iktpreobuka.projekat_za_kraj.repositories.UserAccountRepository;
 import com.iktpreobuka.projekat_za_kraj.repositories.UserRepository;
 import com.iktpreobuka.projekat_za_kraj.security.Views;
@@ -26,6 +24,7 @@ import com.iktpreobuka.projekat_za_kraj.security.Views;
 //@CrossOrigin(origins = "*", maxAge = 3600)
 @Controller
 @RestController
+@CrossOrigin(origins = "http://localhost:3000")
 @RequestMapping(value= "/project/users")
 public class UserController {
 	
@@ -40,7 +39,7 @@ public class UserController {
 	private final Logger logger = (Logger) LoggerFactory.getLogger(this.getClass());
 	
 
-	@CrossOrigin
+	//@CrossOrigin
 	@Secured("ROLE_ADMIN")
 	@JsonView(Views.Admin.class)
 	@RequestMapping(method = RequestMethod.GET)

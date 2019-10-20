@@ -15,6 +15,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -44,6 +45,7 @@ import com.iktpreobuka.projekat_za_kraj.services.UserAccountDao;
 
 @Controller
 @RestController
+@CrossOrigin(origins = "http://localhost:3000")
 @RequestMapping(value= "/project/account")
 public class UserAccountController {
 

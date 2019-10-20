@@ -17,6 +17,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -46,6 +47,7 @@ import com.iktpreobuka.projekat_za_kraj.services.UserAccountDao;
 
 @Controller
 @RestController
+@CrossOrigin(origins = "http://localhost:3000")
 @RequestMapping(value= "/project/teacher")
 public class TeacherController {
 
@@ -274,6 +276,7 @@ public class TeacherController {
 			logger.info("Teacher identified.");
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
+			logger.info(updateTeacher.getEmploymentDate());
 			if (updateTeacher.getFirstName() != null || updateTeacher.getLastName() != null || updateTeacher.getCertificate() != null || updateTeacher.getEmploymentDate() != null|| updateTeacher.getGender() != null || updateTeacher.getjMBG() != null) {
 				teacherDao.modifyTeacher(loggedUser, user, updateTeacher);
 				logger.info("Teacher modified.");
