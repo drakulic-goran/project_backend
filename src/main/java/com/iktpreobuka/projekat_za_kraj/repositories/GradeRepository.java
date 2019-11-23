@@ -10,7 +10,9 @@ import com.iktpreobuka.projekat_za_kraj.entities.ParentEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.StudentEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.SubjectEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.TeacherEntity;
+import com.iktpreobuka.projekat_za_kraj.entities.dto.StudentSubjectGradesClassDTO;
 import com.iktpreobuka.projekat_za_kraj.entities.dto.SubjectFinalGradesDto;
+import com.iktpreobuka.projekat_za_kraj.entities.dto.SubjectGradesClassDTO;
 import com.iktpreobuka.projekat_za_kraj.entities.dto.SubjectGradesDto;
 import com.iktpreobuka.projekat_za_kraj.entities.dto.TrioStudentSubjecGradeDto;
 import com.iktpreobuka.projekat_za_kraj.enumerations.ESemester;
@@ -36,6 +38,9 @@ public interface GradeRepository extends CrudRepository<GradeEntity, Integer> {
 	//@Query("select g from GradeEntity g join g.teacher_subject_department tsd where tsd.teachingTeacher=:teacher and g.status=1 and tsd.status=1")
 	@Query("select g from GradeEntity g join g.teacher_subject_department tsd where tsd.teachingTeacher=:teacher and g.status=1")
 	public List<GradeEntity> findByTeacher(TeacherEntity teacher);
+	
+	/*@Query("select tsd.grades from TeacherEntity t join t.subjects_departments tsd join tsd.teachingDepartment d join d.students where t=:teacher")
+	public List<GradeEntity> findByTeacherWithNullGrades(TeacherEntity teacher);*/
 
 	//@Query("select g from GradeEntity g join g.teacher_subject_department tsd where tsd.teachingTeacher=:teacher and g.status=1 and g.id=:grade and tsd.status=1")
 	@Query("select g from GradeEntity g join g.teacher_subject_department tsd where tsd.teachingTeacher=:teacher and g.status=1 and g.id=:grade")
@@ -46,6 +51,12 @@ public interface GradeRepository extends CrudRepository<GradeEntity, Integer> {
 	//@Query("select new com.iktpreobuka.projekat_za_kraj.entities.dto.SubjectGradesDto(tsd.teachingSubject, g) from GradeEntity g join g.teacher_subject_department tsd where g.student.id=:student and g.status=1 and tsd.status=1")
 	@Query("select new com.iktpreobuka.projekat_za_kraj.entities.dto.SubjectGradesDto(tsd.teachingSubject, g) from GradeEntity g join g.teacher_subject_department tsd where g.student.id=:student and g.status=1")
 	public List<SubjectGradesDto> findGradesWithSubjectByStudent(Integer student);
+	
+	@Query("select new com.iktpreobuka.projekat_za_kraj.entities.dto.SubjectGradesClassDTO(g, tsd.teachingSubject, tsd.teachingClass, tsd.teachingDepartment) from GradeEntity g join g.teacher_subject_department tsd where g.student.id=:student and g.status=1")
+	public List<SubjectGradesClassDTO> findGradesWithClassAndSubjectByStudent(Integer student);
+	
+	@Query("select new com.iktpreobuka.projekat_za_kraj.entities.dto.StudentSubjectGradesClassDTO(g, s, tsd.teachingSubject, tsd.teachingClass, tsd.teachingDepartment) from ParentEntity p join p.students s join s.grades g join g.teacher_subject_department tsd join g.student s where p=:parent and g.status=1")
+	public List<StudentSubjectGradesClassDTO> findGradesWithStudentAndClassAndSubjectByParent(ParentEntity parent);
 
 	//@Query("select g from GradeEntity g join g.teacher_subject_department tsd where g.student=:student and tsd.teachingSubject=:subject and g.status=1 and tsd.status=1")
 	@Query("select g from GradeEntity g join g.teacher_subject_department tsd where g.student=:student and tsd.teachingSubject=:subject and g.status=1")

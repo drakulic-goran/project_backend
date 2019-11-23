@@ -56,7 +56,7 @@ public class DepartmentDaoImpl implements DepartmentDao {
 			     throw new Exception("Some data is null.");
 			}
 		} catch (Exception e) {
-			throw new Exception("ClassDto check failed.");
+			throw new Exception("DepartmentDto check failed.");
 		}
 		DepartmentEntity department = new DepartmentEntity();
 		try {
@@ -79,11 +79,11 @@ public class DepartmentDaoImpl implements DepartmentDao {
 	@Override
 	public void modifyDepartment(UserEntity loggedUser, DepartmentEntity department, DepartmentDto updateDepartment) throws Exception {
 		try {
-			if (updateDepartment.getDepartmentLabel() == null && updateDepartment.getEnrollmentYear() == null ) {
+			if (updateDepartment.getDepartmentLabel() == null && updateDepartment.getEnrollmentYear() == null && (updateDepartment.getSchoolYear() == null || updateDepartment.getDepartment_class() == null) ) {
 			     throw new Exception("All data is null.");
 			}
 		} catch (Exception e) {
-			throw new Exception("modifyClass ClassDto check failed.");
+			throw new Exception("modifyClass DepartmentDto check failed.");
 		}
 		try {
 			Integer i = 0;

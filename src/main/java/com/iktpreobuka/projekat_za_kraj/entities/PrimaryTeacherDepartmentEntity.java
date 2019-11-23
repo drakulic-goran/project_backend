@@ -34,7 +34,7 @@ public class PrimaryTeacherDepartmentEntity {
 	
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
-	@JsonView(Views.Admin.class)
+	@JsonView(Views.Teacher.class)
 	@Column(name="primary_teacher_id")
 	private Integer id;
 
@@ -43,15 +43,15 @@ public class PrimaryTeacherDepartmentEntity {
 	@ManyToOne(cascade = CascadeType.REFRESH, fetch = FetchType.LAZY)
 	@JoinColumn(name = "teacher_id", nullable=false)
 	@NotNull (message = "Primary teacher must be provided.")
-	private TeacherEntity primary_teacher;
+	private TeacherEntity primaryTeacher;
 	
-	@JsonIgnore
-	@JsonView(Views.Admin.class)
+	//@JsonIgnore - Skinuto zbog FE
+	@JsonView(Views.Teacher.class)
 	@ManyToOne(cascade = CascadeType.REFRESH, fetch = FetchType.LAZY)
 	@JoinColumn(name = "department_id", nullable=false)
 	//@Pattern(regexp = "^([0][1-9]|[1|2][0-9]|[3][0|1])[./-]([0][1-9]|[1][0-2])[./-]([1-2][0-9]{3})$", message="Enrollment date is not valid, must be in dd-MM-yyyy format.")
 	@NotNull (message = "Department must be provided.")
-	private DepartmentEntity primary_department;
+	private DepartmentEntity primaryDepartment;
 
 	
 	@JsonView(Views.Teacher.class)
@@ -81,8 +81,8 @@ public class PrimaryTeacherDepartmentEntity {
 			@NotNull(message = "Assignment date must be provided.") Date assignmentDate,
 			Integer createdById) {
 		super();
-		this.primary_teacher = primary_teacher;
-		this.primary_department = primary_department;
+		this.primaryTeacher = primary_teacher;
+		this.primaryDepartment = primary_department;
 		this.assignmentDate = assignmentDate;
 		this.status = getStatusActive();
 		this.createdById = createdById;
@@ -97,19 +97,19 @@ public class PrimaryTeacherDepartmentEntity {
 	}
 
 	public TeacherEntity getTeacher() {
-		return primary_teacher;
+		return primaryTeacher;
 	}
 
 	public void setTeacher(TeacherEntity teacher) {
-		this.primary_teacher = teacher;
+		this.primaryTeacher = teacher;
 	}
 
 	public DepartmentEntity getDepartment() {
-		return primary_department;
+		return primaryDepartment;
 	}
 
 	public void setDepartment(DepartmentEntity department) {
-		this.primary_department = department;
+		this.primaryDepartment = department;
 	}
 
 	public Integer getStatus() {

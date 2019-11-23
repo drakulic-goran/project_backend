@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -53,6 +55,7 @@ public class SubjectDaoImpl implements SubjectDao {
 	@Autowired
 	private TeacherSubjectDepartmentRepository teacherSubjectDepartmentRepository;
 	
+	private final Logger logger = (Logger) LoggerFactory.getLogger(this.getClass());
 	
 	
 	@Override
@@ -69,29 +72,36 @@ public class SubjectDaoImpl implements SubjectDao {
 			subjectRepository.save(subject);
 			return subject;
 		} catch (Exception e) {
-			throw new Exception("addNewSubject save failed.");
+			throw new Exception("addNewSubject failed on saving.");
 		}
 	}
 	
-	@SuppressWarnings("unlikely-arg-type")
 	@Override
 	public void modifySubject(UserEntity loggedUser, SubjectEntity subject, SubjectDto updateSubject) throws Exception {
 		if (updateSubject.getSubjectName() == null && updateSubject.getWeekClassesNumber() == null) {
+			logger.info("All data is null.");
 			throw new Exception("All data is null.");
 		}
 		try {
 			Integer i = 0;
+			logger.info("modify");
 			if (updateSubject.getSubjectName() != null && !updateSubject.getSubjectName().equals(" ") && !updateSubject.getSubjectName().equals("")) {
 				subject.setSubjectName(updateSubject.getSubjectName());
 				i++;
+				logger.info("setSubjectName");
 			}
-			if (updateSubject.getWeekClassesNumber() != null || !updateSubject.getWeekClassesNumber().equals(" ") || !updateSubject.getWeekClassesNumber().equals("")) {
+			if (updateSubject.getWeekClassesNumber() != null ) {
+				logger.info("1");
 				subject.setWeekClassesNumber(updateSubject.getWeekClassesNumber());
 				i++;
+				logger.info("setWeekClassesNumber");
 			}
 			if (i>0) {
+				logger.info("2");
 				subject.setUpdatedById(loggedUser.getId());
+				logger.info("3");
 				subjectRepository.save(subject);
+				logger.info("4");
 			}
 		} catch (Exception e) {
 			throw new Exception("modifySubject failed on saving.");

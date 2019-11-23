@@ -11,7 +11,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.iktpreobuka.projekat_za_kraj.entities.TeacherEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.UserEntity;
+import com.iktpreobuka.projekat_za_kraj.entities.dto.SearchTeachersDto;
 import com.iktpreobuka.projekat_za_kraj.entities.dto.TeacherDto;
+import com.iktpreobuka.projekat_za_kraj.enumerations.EUserRole;
 
 public interface TeacherRepository extends CrudRepository<TeacherEntity, Integer> {
 
@@ -46,5 +48,8 @@ public interface TeacherRepository extends CrudRepository<TeacherEntity, Integer
     @Query (value ="INSERT INTO teacher (user_id, certificate, employment_date, status, created_by) VALUES (:user, :certificate, :employment, 1, :logged)", nativeQuery = true)
 	public void addAdminFromExistUser(String certificate, String employment, Integer user, Integer logged);
 	public TeacherEntity getByIdAndStatusLike(Integer userId, Integer status);
+	
+	@Query("select new com.iktpreobuka.projekat_za_kraj.entities.dto.SearchTeachersDto(u, ua) from TeacherEntity u join u.accounts ua where ua.accessRole=:role and u.status=:status and ua.status=1")
+	public Iterable<SearchTeachersDto> findByStatusWithUserAccount(Integer status, EUserRole role);
 
 }

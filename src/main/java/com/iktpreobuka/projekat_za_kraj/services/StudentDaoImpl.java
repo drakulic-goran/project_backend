@@ -2,6 +2,8 @@ package com.iktpreobuka.projekat_za_kraj.services;
 
 import java.sql.Date;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -29,6 +31,8 @@ public class StudentDaoImpl implements StudentDao {
 	
 	@Autowired
 	private StudentDepartmentRepository studentDepartmentRepository;
+
+	private final Logger logger = (Logger) LoggerFactory.getLogger(this.getClass());
 
 	/*@Override
 	public StudentEntity findById(Integer id) throws Exception {
@@ -76,11 +80,17 @@ public class StudentDaoImpl implements StudentDao {
 			if (temporaryUser == null) {
 				try {
 					user.setFirstName(newStudent.getFirstName());
+					logger.info("setFirstName");
 					user.setLastName(newStudent.getLastName());
+					logger.info("setLastName");
 					user.setjMBG(newStudent.getjMBG());
+					logger.info("setjMBG");
 					user.setGender(EGender.valueOf(newStudent.getGender()));
+					logger.info("setGender");
 					user.setEnrollmentDate(Date.valueOf(newStudent.getEnrollmentDate()));
+					logger.info("setEnrollmentDate");
 					user.setSchoolIdentificationNumber(newStudent.getSchoolIdentificationNumber());
+					logger.info("setSchoolIdentificationNumber");
 					user.setRole(EUserRole.ROLE_STUDENT);
 					user.setStatusActive();
 					user.setCreatedById(loggedUser.getId());

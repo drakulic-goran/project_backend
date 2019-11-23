@@ -116,7 +116,22 @@ public class UserAccountController {
 			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
-
+	
+	@Secured("ROLE_ADMIN")
+	@JsonView(Views.Admin.class)
+	@RequestMapping(method = RequestMethod.GET, value = "/byaccessrole/{role}")
+	public ResponseEntity<?> getAllByAccessRole(@PathVariable String role, Principal principal) {
+		logger.info("################ /project/account/user/getAllByAccessRole started.");
+		logger.info("Logged username: " + principal.getName());
+		try {
+			Iterable<UserAccountEntity> accounts= userAccountRepository.findByAccessRoleLikeAndStatusLike(EUserRole.valueOf(role), 1);
+			logger.info("---------------- Finished OK.");
+			return new ResponseEntity<Iterable<UserAccountEntity>>(accounts, HttpStatus.OK);
+		} catch(Exception e) {
+			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
 	
 	@Secured("ROLE_ADMIN")
 	@JsonView(Views.Admin.class)
@@ -194,11 +209,11 @@ public class UserAccountController {
 			}
 		if (newUserAccount == null) {
 			logger.info("---------------- New user account is null.");
-	        return new ResponseEntity<>("New user account is null", HttpStatus.BAD_REQUEST);
+	        return new ResponseEntity<RESTError>(new RESTError(5, "New user account is null"), HttpStatus.BAD_REQUEST);
 	      }
 		if (newUserAccount.getUsername() == null || newUserAccount.getAccessRole() == null || (newUserAccount.getPassword() == null && newUserAccount.getConfirmedPassword() == null) || newUserAccount.getUserId() == null) {
 			logger.info("---------------- Some or all atributes is null.");
-			return new ResponseEntity<>("Some or all atributes is null.", HttpStatus.BAD_REQUEST);
+			return new ResponseEntity<RESTError>(new RESTError(5, "Some or all atributes is null."), HttpStatus.BAD_REQUEST);
 		}
 		UserAccountEntity account = new UserAccountEntity();
 		try {
@@ -206,13 +221,13 @@ public class UserAccountController {
 			EUserRole role = null;
 			if (newUserAccount.getUsername() != null && userAccountRepository.getByUsername(newUserAccount.getUsername()) != null) {
 				logger.info("---------------- Username already exist.");
-		        return new ResponseEntity<>("Username already exist.", HttpStatus.NOT_ACCEPTABLE);
+		        return new ResponseEntity<RESTError>(new RESTError(2, "Username already exist."), HttpStatus.NOT_ACCEPTABLE);
 		    }
 			if (newUserAccount.getUserId() != null) {
 				user = userRepository.getById(Integer.parseInt(newUserAccount.getUserId()));
 				if (user == null) {
 					logger.info("---------------- User not found.");
-					return new ResponseEntity<>("User not found.", HttpStatus.NOT_FOUND);
+					return new ResponseEntity<RESTError>(new RESTError(4, "User not found."), HttpStatus.NOT_FOUND);
 				}
 				Integer userStatus = null;
 				if (user != null) {
@@ -242,17 +257,17 @@ public class UserAccountController {
 						}
 					} else {
 						logger.info("---------------- User not exist or wrong access role.");
-						return new ResponseEntity<>("User not exist or wrong access role.", HttpStatus.BAD_REQUEST);
+						return new ResponseEntity<RESTError>(new RESTError(5, "User not exist or wrong access role."), HttpStatus.BAD_REQUEST);
 					}
 				}
 				if (user == null || userStatus == null || userStatus != 1) {
 					logger.info("---------------- User not found for that role.");
-					return new ResponseEntity<>("User not found for that role.", HttpStatus.NOT_FOUND);
+					return new ResponseEntity<RESTError>(new RESTError(4, "User not found for that role."), HttpStatus.NOT_FOUND);
 				}
 			}		
 			if (user != null && role !=null && userAccountRepository.findByUserAndAccessRoleAndStatusLike(user, role, 1) != null) {
 				logger.info("---------------- User already have account for that role.");
-		        return new ResponseEntity<>("User already have account for that role.", HttpStatus.FORBIDDEN);
+		        return new ResponseEntity<RESTError>(new RESTError(3, "User already have account for that role."), HttpStatus.FORBIDDEN);
 		    }
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
@@ -282,25 +297,25 @@ public class UserAccountController {
 			}
 		if (updateUserAccount == null) {
 			logger.info("---------------- New user account is null.");
-	        return new ResponseEntity<>("New user account is null", HttpStatus.BAD_REQUEST);
+	        return new ResponseEntity<RESTError>(new RESTError(5, "New user account is null"), HttpStatus.BAD_REQUEST);
 	      }
 		if (updateUserAccount.getUsername() == null && updateUserAccount.getAccessRole() == null && (updateUserAccount.getPassword() == null || updateUserAccount.getConfirmedPassword() == null) && updateUserAccount.getUserId() == null) {
 			logger.info("---------------- All atributes is null.");
-			return new ResponseEntity<>("All atributes is null.", HttpStatus.BAD_REQUEST);
+			return new ResponseEntity<RESTError>(new RESTError(5, "All atributes is null."), HttpStatus.BAD_REQUEST);
 		}
 		UserAccountEntity account = new UserAccountEntity();
 		try {
 			account = userAccountRepository.findByIdAndStatusLike(id, 1);
 			if (account == null) {
 				logger.info("---------------- User account not found.");
-		        return new ResponseEntity<>("User account not found.", HttpStatus.NOT_FOUND);
+		        return new ResponseEntity<RESTError>(new RESTError(4, "User account not found."), HttpStatus.NOT_FOUND);
 		      }
 			logger.info("User account identified.");			
 			UserEntity user = new UserEntity();
 			EUserRole role = null;
 			if (updateUserAccount.getUsername() != null && userAccountRepository.getByUsername(updateUserAccount.getUsername()) != null) {
 				logger.info("---------------- Username already exist.");
-		        return new ResponseEntity<>("Username already exist.", HttpStatus.NOT_ACCEPTABLE);
+		        return new ResponseEntity<RESTError>(new RESTError(2, "Username already exist."), HttpStatus.NOT_ACCEPTABLE);
 		    }
 			if (updateUserAccount.getUserId() != null && Integer.parseInt(updateUserAccount.getUserId()) != account.getUser().getId()) {
 				user = userRepository.getById(Integer.parseInt(updateUserAccount.getUserId()));
@@ -332,21 +347,21 @@ public class UserAccountController {
 						}
 					} else {
 						logger.info("---------------- User not exist or wrong access role.");
-						return new ResponseEntity<>("User not exist or wrong access role.", HttpStatus.BAD_REQUEST);
+						return new ResponseEntity<RESTError>(new RESTError(5, "User not exist or wrong access role."), HttpStatus.BAD_REQUEST);
 					}
 				}
 				if (user == null || userStatus == null || userStatus != 1) {
 					logger.info("---------------- User not found with that role.");
-					return new ResponseEntity<>("User not found with that role.", HttpStatus.BAD_REQUEST);
+					return new ResponseEntity<RESTError>(new RESTError(5, "User not found with that role."), HttpStatus.BAD_REQUEST);
 				}
 			}		
 			if (user != null && role !=null && userAccountRepository.findByUserAndAccessRoleAndStatusLike(user, EUserRole.valueOf(updateUserAccount.getAccessRole()), 1) != null) {
 				logger.info("---------------- User already have account with that role.");
-		        return new ResponseEntity<>("User already have account with that role.", HttpStatus.FORBIDDEN);
+		        return new ResponseEntity<RESTError>(new RESTError(3, "User already have account with that role."), HttpStatus.FORBIDDEN);
 		    }	
 			if (updateUserAccount.getUserId() == null && updateUserAccount.getAccessRole() != null && userAccountRepository.findByUserAndAccessRoleAndStatusLike(account.getUser(), EUserRole.valueOf(updateUserAccount.getAccessRole()), 1) != null) {
 				logger.info("---------------- Other account of same user with that role already exist.");
-		        return new ResponseEntity<>("Other account of same user with that role already exist.", HttpStatus.FORBIDDEN);
+		        return new ResponseEntity<RESTError>(new RESTError(3, "Other account of same user with that role already exist."), HttpStatus.FORBIDDEN);
 		    }	
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
@@ -390,14 +405,14 @@ public class UserAccountController {
 			account = userAccountRepository.getById(id);
 			if (account == null || account.getStatus() == -1) {
 				logger.info("---------------- User account not found.");
-		        return new ResponseEntity<>("User account not found.", HttpStatus.NOT_FOUND);
+		        return new ResponseEntity<RESTError>(new RESTError(4, "User account not found."), HttpStatus.NOT_FOUND);
 		      }
 			logger.info("User account for archiving identified.");
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
 			if (account.getUser().getId() == loggedUser.getId()) {
 				logger.info("---------------- Selected Id is ID of logged User account: Cann't archive your account.");
-				return new ResponseEntity<>("Selected Id is ID of logged User account: Cann't archive your account.", HttpStatus.FORBIDDEN);
+				return new ResponseEntity<RESTError>(new RESTError(3, "Selected Id is ID of logged User account: Cann't archive your account."), HttpStatus.FORBIDDEN);
 		      }	
 			userAccountDao.archiveAccount(loggedUser, account);
 			logger.info("---------------- Finished OK.");
@@ -422,7 +437,7 @@ public class UserAccountController {
 			account = userAccountRepository.findByIdAndStatusLike(id, 0);
 			if (account == null) {
 				logger.info("---------------- User account not found.");
-		        return new ResponseEntity<>("User account not found.", HttpStatus.NOT_FOUND);
+		        return new ResponseEntity<RESTError>(new RESTError(4, "User account not found."), HttpStatus.NOT_FOUND);
 		      }
 			logger.info("User account for undeleting identified.");
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
@@ -450,14 +465,14 @@ public class UserAccountController {
 			account = userAccountRepository.findByIdAndStatusLike(id, 1);
 			if (account == null) {
 				logger.info("---------------- User account not found.");
-		        return new ResponseEntity<>("User account not found.", HttpStatus.NOT_FOUND);
+		        return new ResponseEntity<RESTError>(new RESTError(4, "User account not found."), HttpStatus.NOT_FOUND);
 		      }
 			logger.info("User account for deleting identified.");
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
 			if (account.getUser().getId() == loggedUser.getId()) {
 				logger.info("---------------- Selected Id is ID of logged User account: Cann't delete your account.");
-				return new ResponseEntity<>("Selected Id is ID of logged User account: Cann't delete your account.", HttpStatus.FORBIDDEN);
+				return new ResponseEntity<RESTError>(new RESTError(3, "Selected Id is ID of logged User account: Cann't delete your account."), HttpStatus.FORBIDDEN);
 		      }	
 			userAccountDao.deleteAccount(loggedUser, account);
 			logger.info("---------------- Finished OK.");

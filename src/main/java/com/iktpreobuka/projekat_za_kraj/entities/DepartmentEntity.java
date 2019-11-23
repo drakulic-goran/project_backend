@@ -45,9 +45,9 @@ public class DepartmentEntity {
 	private List<StudentDepartmentEntity> students = new ArrayList<>();
 
 	
-	@JsonView(Views.Student.class)
+	@JsonView(Views.Teacher.class)
 	@JsonIgnore
-	@OneToMany(mappedBy = "primary_department", fetch = FetchType.LAZY, cascade = { CascadeType.REFRESH})
+	@OneToMany(mappedBy = "primaryDepartment", fetch = FetchType.LAZY, cascade = { CascadeType.REFRESH})
 	private List<PrimaryTeacherDepartmentEntity> teachers = new ArrayList<>();
 	
 /*	@JsonIgnore
@@ -64,7 +64,7 @@ public class DepartmentEntity {
 	private List<DepartmentClassEntity> classes = new ArrayList<>();
 
 
-	@JsonView(Views.Admin.class)
+	@JsonView(Views.Student.class)
 	@JsonIgnore
 	@OneToMany(mappedBy = "teachingDepartment", fetch = FetchType.LAZY, cascade = { CascadeType.REFRESH})
 	private List<TeacherSubjectDepartmentEntity> teachers_subjects = new ArrayList<>();
@@ -72,7 +72,7 @@ public class DepartmentEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
-	@JsonView(Views.Admin.class)
+	@JsonView(Views.Student.class)
 	@Column(name="department_id")
 	private Integer id;
 	@Column(name="department_label", nullable=false)

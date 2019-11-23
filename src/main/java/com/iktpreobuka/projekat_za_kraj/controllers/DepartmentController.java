@@ -38,6 +38,7 @@ import com.iktpreobuka.projekat_za_kraj.entities.SubjectEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.TeacherEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.TeacherSubjectDepartmentEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.UserEntity;
+import com.iktpreobuka.projekat_za_kraj.entities.dto.ClassDepartmentClDepDto;
 import com.iktpreobuka.projekat_za_kraj.entities.dto.DepartmentDto;
 import com.iktpreobuka.projekat_za_kraj.entities.dto.DepartmentStudentDto;
 import com.iktpreobuka.projekat_za_kraj.enumerations.EClass;
@@ -96,6 +97,22 @@ public class DepartmentController {
 		logger.info("Logged user: " + principal.getName());
 		try {
 			Iterable<DepartmentEntity> departments= departmentRepository.findByStatusLike(1);
+			logger.info("---------------- Finished OK.");
+			return new ResponseEntity<>(departments, HttpStatus.OK);
+		} catch(Exception e) {
+			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+	
+	@Secured({"ROLE_ADMIN"})
+	@JsonView(Views.Admin.class)
+	@RequestMapping(method = RequestMethod.GET, value = "/withclass")
+	public ResponseEntity<?> getAllWithClass(Principal principal) {
+		logger.info("################ /project/department/getAllWithClass started.");
+		logger.info("Logged user: " + principal.getName());
+		try {
+			Iterable<ClassDepartmentClDepDto> departments= departmentRepository.findWithClassByStatusLike(1);
 			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<>(departments, HttpStatus.OK);
 		} catch(Exception e) {
@@ -280,22 +297,38 @@ public class DepartmentController {
 			}
 		if (newDepartment == null) {
 			logger.info("---------------- New department is null.");
-	        return new ResponseEntity<>("New department is null.", HttpStatus.BAD_REQUEST);
+	        return new ResponseEntity<RESTError>(new RESTError(5, "New department is null."), HttpStatus.BAD_REQUEST);
 	      }
 		if (newDepartment.getDepartment_class() == null || newDepartment.getSchoolYear() == null || newDepartment.getDepartmentLabel() == null || newDepartment.getEnrollmentYear() == null) {
 			logger.info("---------------- Some data is null.");
-	        return new ResponseEntity<>("Some data is null.", HttpStatus.BAD_REQUEST);
+	        return new ResponseEntity<RESTError>(new RESTError(5, "Some data is null."), HttpStatus.BAD_REQUEST);
+		}
+		if (newDepartment.getDepartment_class() != null && (newDepartment.getDepartment_class().equals(" ") || newDepartment.getDepartment_class().equals("") ) ) {
+			logger.info("---------------- Correct class label must be provided.");
+	        return new ResponseEntity<RESTError>(new RESTError(2, "Correct class label must be provided."), HttpStatus.NOT_ACCEPTABLE);
+		}
+		if (newDepartment.getDepartmentLabel() != null && (newDepartment.getDepartmentLabel().equals(" ") || newDepartment.getDepartmentLabel().equals("") ) ) {
+			logger.info("---------------- Correct department label must be provided.");
+	        return new ResponseEntity<RESTError>(new RESTError(2, "Correct department label must be provided."), HttpStatus.NOT_ACCEPTABLE);
+		}
+		if (newDepartment.getEnrollmentYear() != null && (newDepartment.getEnrollmentYear().equals(" ") || newDepartment.getEnrollmentYear().equals("") ) ) {
+			logger.info("---------------- Correct enrollment year must be provided.");
+	        return new ResponseEntity<RESTError>(new RESTError(2, "Correct enrollment year must be provided."), HttpStatus.NOT_ACCEPTABLE);
+		}
+		if (newDepartment.getSchoolYear() != null && (newDepartment.getSchoolYear().equals(" ") || newDepartment.getSchoolYear().equals("") ) ) {
+			logger.info("---------------- Correct school year must be provided.");
+	        return new ResponseEntity<RESTError>(new RESTError(2, "Correct school year must be provided."), HttpStatus.NOT_ACCEPTABLE);
 		}
 		DepartmentEntity department = new DepartmentEntity();
 		try {
 			if (newDepartment.getDepartmentLabel() != null && newDepartment.getEnrollmentYear() != null && departmentRepository.findByDepartmentLabelAndEnrollmentYearAndStatusLike(newDepartment.getDepartmentLabel(), newDepartment.getEnrollmentYear(), 1) != null) {
 				logger.info("---------------- Department label for that enrollment year already exist.");
-				return new ResponseEntity<>("Department label for that enrollment year already exist.", HttpStatus.NOT_ACCEPTABLE);
+				return new ResponseEntity<RESTError>(new RESTError(2, "Department label for that enrollment year already exist."), HttpStatus.NOT_ACCEPTABLE);
 			}
 			ClassEntity class_ = classRepository.findByClassLabelAndStatusLike(EClass.valueOf(newDepartment.getDepartment_class()), 1);
 			if (class_==null || class_.getStatus()!=1) {
 				logger.info("---------------- Class not found.");
-				return new ResponseEntity<>("Class not found.", HttpStatus.NOT_FOUND);
+				return new ResponseEntity<RESTError>(new RESTError(4, "Class not found."), HttpStatus.NOT_FOUND);
 			}
 			logger.info("Class identified.");
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
@@ -321,41 +354,57 @@ public class DepartmentController {
 			}
 		if (id == null) {
 			logger.info("---------------- Department is null.");
-	        return new ResponseEntity<>("Department is null.", HttpStatus.BAD_REQUEST);
+	        return new ResponseEntity<RESTError>(new RESTError(5, "Department is null."), HttpStatus.BAD_REQUEST);
 	      }
 		if (updateDepartment == null) {
 			logger.info("---------------- New department is null.");
-	        return new ResponseEntity<>("New department is null.", HttpStatus.BAD_REQUEST);
+	        return new ResponseEntity<RESTError>(new RESTError(5, "New department is null."), HttpStatus.BAD_REQUEST);
 	      }
+		if (updateDepartment.getDepartment_class() != null && (updateDepartment.getDepartment_class().equals(" ") || updateDepartment.getDepartment_class().equals("") ) ) {
+			logger.info("---------------- Correct class label must be provided.");
+	        return new ResponseEntity<RESTError>(new RESTError(2, "Correct class label must be provided."), HttpStatus.NOT_ACCEPTABLE);
+		}
+		if (updateDepartment.getDepartmentLabel() != null && (updateDepartment.getDepartmentLabel().equals(" ") || updateDepartment.getDepartmentLabel().equals("") ) ) {
+			logger.info("---------------- Correct department label must be provided.");
+	        return new ResponseEntity<RESTError>(new RESTError(2, "Correct department label must be provided."), HttpStatus.NOT_ACCEPTABLE);
+		}
+		if (updateDepartment.getEnrollmentYear() != null && (updateDepartment.getEnrollmentYear().equals(" ") || updateDepartment.getEnrollmentYear().equals("") ) ) {
+			logger.info("---------------- Correct enrollment year must be provided.");
+	        return new ResponseEntity<RESTError>(new RESTError(2, "Correct enrollment year must be provided."), HttpStatus.NOT_ACCEPTABLE);
+		}
+		if (updateDepartment.getSchoolYear() != null && (updateDepartment.getSchoolYear().equals(" ") || updateDepartment.getSchoolYear().equals("") ) ) {
+			logger.info("---------------- Correct school year must be provided.");
+	        return new ResponseEntity<RESTError>(new RESTError(2, "Correct school year must be provided."), HttpStatus.NOT_ACCEPTABLE);
+		}
 		DepartmentEntity department = new DepartmentEntity();
 		try {
 			if (updateDepartment.getDepartmentLabel() != null && updateDepartment.getEnrollmentYear() != null && departmentRepository.findByDepartmentLabelAndEnrollmentYearAndStatusLike(updateDepartment.getDepartmentLabel(), updateDepartment.getEnrollmentYear(), 1) != null) {
 				logger.info("---------------- Department label and enrollment year already exist.");
-		        return new ResponseEntity<>("Department label and enrollment year already exist.", HttpStatus.NOT_ACCEPTABLE);
+		        return new ResponseEntity<RESTError>(new RESTError(2, "Department label and enrollment year already exist."), HttpStatus.NOT_ACCEPTABLE);
 			}
 			if (updateDepartment.getDepartmentLabel() != null && updateDepartment.getEnrollmentYear() == null && departmentRepository.findByDepartmentLabelAndEnrollmentYearAndStatusLike(updateDepartment.getDepartmentLabel(), department.getEnrollmentYear(), 1) != null) {
 				logger.info("---------------- Department label already exist.");
-		        return new ResponseEntity<>("Department label already exist.", HttpStatus.NOT_ACCEPTABLE);
+		        return new ResponseEntity<RESTError>(new RESTError(2, "Department label already exist."), HttpStatus.NOT_ACCEPTABLE);
 			}
 			department = departmentRepository.findByIdAndStatusLike(Integer.parseInt(id), 1);
 			if (department==null || department.getStatus()!=1) {
 				logger.info("---------------- Department not found.");
-				return new ResponseEntity<>("Department not found.", HttpStatus.NOT_FOUND);
+				return new ResponseEntity<RESTError>(new RESTError(4, "Department not found."), HttpStatus.NOT_FOUND);
 			}
 			logger.info("Department identified.");
 			if (updateDepartment.getDepartmentLabel() == null && updateDepartment.getEnrollmentYear() != null && departmentRepository.findByDepartmentLabelAndEnrollmentYearAndStatusLike(department.getDepartmentLabel(), updateDepartment.getEnrollmentYear(), 1) != null) {
 				logger.info("---------------- Enrollment year already exist.");
-		        return new ResponseEntity<>("Enrollment year already exist.", HttpStatus.NOT_ACCEPTABLE);
+		        return new ResponseEntity<RESTError>(new RESTError(2, "Enrollment year already exist."), HttpStatus.NOT_ACCEPTABLE);
 			}
 			if ((updateDepartment.getDepartment_class() != null && updateDepartment.getSchoolYear() == null) || (updateDepartment.getDepartment_class() == null && updateDepartment.getSchoolYear() != null)) {
 				logger.info("---------------- School year and class must be provided together.");
-		        return new ResponseEntity<>("School year and class must be provided together.", HttpStatus.NOT_ACCEPTABLE);
+		        return new ResponseEntity<RESTError>(new RESTError(2, "School year and class must be provided together."), HttpStatus.NOT_ACCEPTABLE);
 			}
 			if (updateDepartment.getDepartment_class() != null && !updateDepartment.getDepartment_class().equals(" ") && !updateDepartment.getDepartment_class().equals("")) {
 				ClassEntity class_ = classRepository.findByClassLabelAndStatusLike(EClass.valueOf(updateDepartment.getDepartment_class()), 1);
 				if (class_==null || class_.getStatus()!=1) {
 					logger.info("---------------- Class not found.");
-					return new ResponseEntity<>("Class not found.", HttpStatus.NOT_FOUND);
+					return new ResponseEntity<RESTError>(new RESTError(4, "Class not found."), HttpStatus.NOT_FOUND);
 				}
 			}
 			logger.info("Class identified.");
@@ -366,7 +415,7 @@ public class DepartmentController {
 				logger.info("Department modified.");
 			} else {
 				logger.info("---------------- School year missing.");
-				return new ResponseEntity<>("School year missing.", HttpStatus.BAD_REQUEST);
+				return new ResponseEntity<RESTError>(new RESTError(5, "School year missing."), HttpStatus.BAD_REQUEST);
 			}
 			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<>(department, HttpStatus.OK);
@@ -470,32 +519,32 @@ public class DepartmentController {
 		logger.info("Data: " + id.toString() + "  " + s_id.toString() + "   " + t_id.toString() + "   " + school_year.toString());
 		if (id == null || t_id == null || s_id == null || school_year == null) {
 			logger.info("---------------- Some data is null.");
-	        return new ResponseEntity<>("Some data is null.", HttpStatus.BAD_REQUEST);
+	        return new ResponseEntity<RESTError>(new RESTError(5, "Some data is null."), HttpStatus.BAD_REQUEST);
 	      }
 		TeacherSubjectDepartmentEntity tsd = new TeacherSubjectDepartmentEntity();
 		try {
 			DepartmentEntity department = departmentRepository.findByIdAndStatusLike(id, 1);
 			if (department == null || department.getStatus()!=1) {
 				logger.info("---------------- Department not found.");
-		        return new ResponseEntity<>("Department not found.", HttpStatus.NOT_FOUND);
+		        return new ResponseEntity<RESTError>(new RESTError(4, "Department not found."), HttpStatus.NOT_FOUND);
 		      }
 			logger.info("Department identified.");
 			ClassEntity clas = departmentClassRepository.getClasByDepartmentAndStatusLike(department, 1);
 			if (department == null || department.getStatus()!=1) {
 				logger.info("---------------- Class not found.");
-		        return new ResponseEntity<>("Class not found.", HttpStatus.NOT_FOUND);
+		        return new ResponseEntity<RESTError>(new RESTError(4, "Class not found."), HttpStatus.NOT_FOUND);
 		      }
 			logger.info("Class identified.");
 			TeacherEntity teacher = teacherRepository.findByIdAndStatusLike(t_id, 1);
 			if (teacher == null || teacher.getStatus()!=1) {
 				logger.info("---------------- Teacher not found.");
-		        return new ResponseEntity<>("Teacher not found.", HttpStatus.NOT_FOUND);
+		        return new ResponseEntity<RESTError>(new RESTError(4, "Teacher not found."), HttpStatus.NOT_FOUND);
 		      }
 			logger.info("Teacher identified.");
 			SubjectEntity subject = subjectRepository.findByIdAndStatusLike(s_id, 1);
 			if (subject == null || subject.getStatus()!=1) {
 				logger.info("---------------- Subject not found.");
-		        return new ResponseEntity<>("Subject not found.", HttpStatus.NOT_FOUND);
+		        return new ResponseEntity<RESTError>(new RESTError(4, "Subject not found."), HttpStatus.NOT_FOUND);
 		      }
 			logger.info("Subject identified.");
 			if (school_year != null && !school_year.equals(" ") && !school_year.equals("")) {
@@ -523,32 +572,32 @@ public class DepartmentController {
 		logger.info("Logged user: " + principal.getName());
 		if (id == null || t_id == null || s_id == null) {
 			logger.info("---------------- Some data is null.");
-	        return new ResponseEntity<>("Some data is null.", HttpStatus.BAD_REQUEST);
+	        return new ResponseEntity<RESTError>(new RESTError(5, "Some data is null."), HttpStatus.BAD_REQUEST);
 	      }
 		TeacherSubjectDepartmentEntity tsd = new TeacherSubjectDepartmentEntity();
 		try {
 			DepartmentEntity department = departmentRepository.findByIdAndStatusLike(id, 1);
 			if (department == null || department.getStatus()!=1) {
 				logger.info("---------------- Department not found.");
-		        return new ResponseEntity<>("Department not found.", HttpStatus.NOT_FOUND);
+		        return new ResponseEntity<RESTError>(new RESTError(4, "Department not found."), HttpStatus.NOT_FOUND);
 		      }
 			logger.info("Department identified.");
 			ClassEntity clas = departmentClassRepository.getClasByDepartmentAndStatusLike(department, 1);
 			if (department == null || department.getStatus()!=1) {
 				logger.info("---------------- Class not found.");
-		        return new ResponseEntity<>("Class not found.", HttpStatus.NOT_FOUND);
+		        return new ResponseEntity<RESTError>(new RESTError(4, "Class not found."), HttpStatus.NOT_FOUND);
 		      }
 			logger.info("Class identified.");
 			TeacherEntity teacher = teacherRepository.findByIdAndStatusLike(t_id, 1);
 			if (teacher == null || teacher.getStatus()!=1) {
 				logger.info("---------------- Teacher not found.");
-		        return new ResponseEntity<>("Teacher not found.", HttpStatus.NOT_FOUND);
+		        return new ResponseEntity<RESTError>(new RESTError(4, "Teacher not found."), HttpStatus.NOT_FOUND);
 		      }
 			logger.info("Teacher identified.");
 			SubjectEntity subject = subjectRepository.findByIdAndStatusLike(s_id, 1);
 			if (subject == null || subject.getStatus()!=1) {
 				logger.info("---------------- Subject not found.");
-		        return new ResponseEntity<>("Subject not found.", HttpStatus.NOT_FOUND);
+		        return new ResponseEntity<RESTError>(new RESTError(4, "Subject not found."), HttpStatus.NOT_FOUND);
 		      }
 			logger.info("Subject identified.");
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
@@ -573,20 +622,20 @@ public class DepartmentController {
 		logger.info("Logged user: " + principal.getName());
 		if (id == null || t_id == null || assignmentDate == null) {
 			logger.info("---------------- Some data is null.");
-	        return new ResponseEntity<>("Some data is null.", HttpStatus.BAD_REQUEST);
+	        return new ResponseEntity<RESTError>(new RESTError(5, "Some data is null."), HttpStatus.BAD_REQUEST);
 	      }
 		PrimaryTeacherDepartmentEntity pt = new PrimaryTeacherDepartmentEntity();
 		try {
 			DepartmentEntity department = departmentRepository.findByIdAndStatusLike(id, 1);
 			if (department == null) {
 				logger.info("---------------- Department not found.");
-		        return new ResponseEntity<>("Department not found.", HttpStatus.NOT_FOUND);
+		        return new ResponseEntity<RESTError>(new RESTError(4, "Department not found."), HttpStatus.NOT_FOUND);
 		      }
 			logger.info("Department identified.");
 			TeacherEntity teacher = teacherRepository.findByIdAndStatusLike(t_id, 1);
 			if (teacher == null || teacher.getStatus()!=1) {
 				logger.info("---------------- Teacher not found.");
-		        return new ResponseEntity<>("Teacher not found.", HttpStatus.NOT_FOUND);
+		        return new ResponseEntity<RESTError>(new RESTError(4, "Teacher not found."), HttpStatus.NOT_FOUND);
 		      }
 			logger.info("Teacher identified.");
 			if (assignmentDate != null && !assignmentDate.equals(" ") && !assignmentDate.equals("")) {
@@ -614,20 +663,20 @@ public class DepartmentController {
 		logger.info("Logged user: " + principal.getName());
 		if (id == null || t_id == null) {
 			logger.info("---------------- Some data is null.");
-	        return new ResponseEntity<>("Some data is null.", HttpStatus.BAD_REQUEST);
+	        return new ResponseEntity<RESTError>(new RESTError(5, "Some data is null."), HttpStatus.BAD_REQUEST);
 	      }
 		PrimaryTeacherDepartmentEntity pt = new PrimaryTeacherDepartmentEntity();
 		try {
 			DepartmentEntity department = departmentRepository.findByIdAndStatusLike(id, 1);
 			if (department == null || department.getStatus()!=1) {
 				logger.info("---------------- Department not found.");
-		        return new ResponseEntity<>("Department not found.", HttpStatus.NOT_FOUND);
+		        return new ResponseEntity<RESTError>(new RESTError(4, "Department not found."), HttpStatus.NOT_FOUND);
 		      }
 			logger.info("Department identified.");
 			TeacherEntity teacher = teacherRepository.findByIdAndStatusLike(t_id, 1);
 			if (teacher == null || teacher.getStatus()!=1) {
 				logger.info("---------------- Teacher not found.");
-		        return new ResponseEntity<>("Teacher not found.", HttpStatus.NOT_FOUND);
+		        return new ResponseEntity<RESTError>(new RESTError(4, "Teacher not found."), HttpStatus.NOT_FOUND);
 		      }
 			logger.info("Teacher identified.");
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
@@ -652,20 +701,20 @@ public class DepartmentController {
 		logger.info("Logged user: " + principal.getName());
 		if (id == null || c_id == null || schoolyear == null) {
 			logger.info("---------------- Some data is null.");
-	        return new ResponseEntity<>("Some data is null.", HttpStatus.BAD_REQUEST);
+	        return new ResponseEntity<RESTError>(new RESTError(5, "Some data is null."), HttpStatus.BAD_REQUEST);
 	      }
 		DepartmentClassEntity dce = new DepartmentClassEntity();
 		try {
 			DepartmentEntity department = departmentRepository.findByIdAndStatusLike(id, 1);
 			if (department == null || department.getStatus()!=1) {
 				logger.info("---------------- Department not found.");
-		        return new ResponseEntity<>("Department not found.", HttpStatus.NOT_FOUND);
+		        return new ResponseEntity<RESTError>(new RESTError(4, "Department not found."), HttpStatus.NOT_FOUND);
 		      }
 			logger.info("Department identified.");
 			ClassEntity class_ = classRepository.findByIdAndStatusLike(c_id, 1);
 			if (class_ == null || class_.getStatus()!=1) {
 				logger.info("---------------- Class not found.");
-		        return new ResponseEntity<>("Class not found.", HttpStatus.NOT_FOUND);
+		        return new ResponseEntity<RESTError>(new RESTError(4, "Class not found."), HttpStatus.NOT_FOUND);
 		      }
 			logger.info("Class identified.");
 			if (schoolyear != null && !schoolyear.equals(" ") && !schoolyear.equals("")) {
@@ -693,20 +742,20 @@ public class DepartmentController {
 		logger.info("Logged user: " + principal.getName());
 		if (id == null || c_id == null) {
 			logger.info("---------------- Some data is null.");
-	        return new ResponseEntity<>("Some data is null.", HttpStatus.BAD_REQUEST);
+	        return new ResponseEntity<RESTError>(new RESTError(5, "Some data is null."), HttpStatus.BAD_REQUEST);
 	      }
 		DepartmentClassEntity dce = new DepartmentClassEntity();
 		try {
 			DepartmentEntity department = departmentRepository.findByIdAndStatusLike(id, 1);
 			if (department == null || department.getStatus()!=1) {
 				logger.info("---------------- Department not found.");
-		        return new ResponseEntity<>("Department not found.", HttpStatus.NOT_FOUND);
+		        return new ResponseEntity<RESTError>(new RESTError(4, "Department not found."), HttpStatus.NOT_FOUND);
 		      }
 			logger.info("Department identified.");
 			ClassEntity class_ = classRepository.findByIdAndStatusLike(c_id, 1);
 			if (class_ == null || class_.getStatus()!=1) {
 				logger.info("---------------- Class not found.");
-		        return new ResponseEntity<>("Class not found.", HttpStatus.NOT_FOUND);
+		        return new ResponseEntity<RESTError>(new RESTError(4, "Class not found."), HttpStatus.NOT_FOUND);
 		      }
 			logger.info("Class identified.");
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
@@ -731,20 +780,20 @@ public class DepartmentController {
 		logger.info("Logged user: " + principal.getName());
 		if (id == null || s_id == null || transferdate == null) {
 			logger.info("---------------- Some data is null.");
-	        return new ResponseEntity<>("Some data is null.", HttpStatus.BAD_REQUEST);
+	        return new ResponseEntity<RESTError>(new RESTError(5, "Some data is null."), HttpStatus.BAD_REQUEST);
 	      }
 		StudentDepartmentEntity sde = new StudentDepartmentEntity();
 		try {
 			DepartmentEntity department = departmentRepository.findByIdAndStatusLike(id, 1);
 			if (department == null || department.getStatus()!=1) {
 				logger.info("---------------- Department not found.");
-		        return new ResponseEntity<>("Department not found.", HttpStatus.NOT_FOUND);
+		        return new ResponseEntity<RESTError>(new RESTError(4, "Department not found."), HttpStatus.NOT_FOUND);
 		      }
 			logger.info("Department identified.");
 			StudentEntity student = studentRepository.findByIdAndStatusLike(s_id, 1);
 			if (student == null || student.getStatus()!=1) {
 				logger.info("---------------- Student not found.");
-		        return new ResponseEntity<>("Student not found.", HttpStatus.NOT_FOUND);
+		        return new ResponseEntity<RESTError>(new RESTError(4, "Student not found."), HttpStatus.NOT_FOUND);
 		      }
 			logger.info("Student identified.");
 			if (transferdate != null && !transferdate.equals(" ") && !transferdate.equals("")) {
@@ -775,13 +824,13 @@ public class DepartmentController {
 			DepartmentEntity department = departmentRepository.findByIdAndStatusLike(id, 1);
 			if (department == null || department.getStatus()!=1) {
 				logger.info("---------------- Department not found.");
-		        return new ResponseEntity<>("Department not found.", HttpStatus.NOT_FOUND);
+		        return new ResponseEntity<RESTError>(new RESTError(4, "Department not found."), HttpStatus.NOT_FOUND);
 		      }
 			logger.info("Department identified.");
 			StudentEntity student = studentRepository.findByIdAndStatusLike(s_id, 1);
 			if (student == null || student.getStatus()!=1) {
 				logger.info("---------------- Student not found.");
-		        return new ResponseEntity<>("Student not found.", HttpStatus.NOT_FOUND);
+		        return new ResponseEntity<RESTError>(new RESTError(4, "Student not found."), HttpStatus.NOT_FOUND);
 		      }
 			logger.info("Student identified.");
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
@@ -806,14 +855,14 @@ public class DepartmentController {
 		logger.info("Logged user: " + principal.getName());
 		if (id == null) {
 			logger.info("---------------- Department is null.");
-	        return new ResponseEntity<>("Department is null.", HttpStatus.BAD_REQUEST);
+	        return new ResponseEntity<RESTError>(new RESTError(5, "Department is null."), HttpStatus.BAD_REQUEST);
 	      }
 		DepartmentEntity department = new DepartmentEntity();
 		try {
 			department = departmentRepository.findById(Integer.parseInt(id)).orElse(null);
 			if (department==null || department.getStatus()!=0) {
 				logger.info("----------------  Department not found.");
-		        return new ResponseEntity<>("Department not found.", HttpStatus.NOT_FOUND);
+		        return new ResponseEntity<RESTError>(new RESTError(4, "Department not found."), HttpStatus.NOT_FOUND);
 			}
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
@@ -837,14 +886,14 @@ public class DepartmentController {
 		logger.info("Logged user: " + principal.getName());
 		if (id == null) {
 			logger.info("---------------- Department is null.");
-	        return new ResponseEntity<>("Department is null.", HttpStatus.BAD_REQUEST);
+	        return new ResponseEntity<RESTError>(new RESTError(5, "Department is null."), HttpStatus.BAD_REQUEST);
 	      }
 		DepartmentEntity department = new DepartmentEntity();
 		try {
 			department = departmentRepository.findById(Integer.parseInt(id)).orElse(null);
 			if (department==null || department.getStatus()==-1) {
 				logger.info("----------------  Department not found.");
-		        return new ResponseEntity<>("Department not found.", HttpStatus.NOT_FOUND);
+		        return new ResponseEntity<RESTError>(new RESTError(4, "Department not found."), HttpStatus.NOT_FOUND);
 			}
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
@@ -868,14 +917,14 @@ public class DepartmentController {
 		logger.info("Logged user: " + principal.getName());
 		if (id == null) {
 			logger.info("---------------- Department is null.");
-	        return new ResponseEntity<>("Department is null.", HttpStatus.BAD_REQUEST);
+	        return new ResponseEntity<RESTError>(new RESTError(5, "Department is null."), HttpStatus.BAD_REQUEST);
 	      }
 		DepartmentEntity department = new DepartmentEntity();
 		try {
 			department = departmentRepository.findById(Integer.parseInt(id)).orElse(null);
 			if (department==null || department.getStatus()!=1) {
 				logger.info("----------------  Department not found.");
-		        return new ResponseEntity<>("Department not found.", HttpStatus.NOT_FOUND);
+		        return new ResponseEntity<RESTError>(new RESTError(4, "Department not found."), HttpStatus.NOT_FOUND);
 			}
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");

@@ -37,8 +37,10 @@ import com.iktpreobuka.projekat_za_kraj.entities.TeacherSubjectEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.UserEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.dto.StudentSubjectDto;
 import com.iktpreobuka.projekat_za_kraj.entities.dto.StudentSubjectTeacherDto;
+import com.iktpreobuka.projekat_za_kraj.entities.dto.SubjectDepartmentClassSchoolYearDTO;
 import com.iktpreobuka.projekat_za_kraj.entities.dto.SubjectDto;
 import com.iktpreobuka.projekat_za_kraj.entities.dto.SubjectTeacherDto;
+import com.iktpreobuka.projekat_za_kraj.entities.dto.TeacherSubjectDepartmentDTO;
 import com.iktpreobuka.projekat_za_kraj.entities.dto.TrioStudentSubjecTeachertDto;
 import com.iktpreobuka.projekat_za_kraj.repositories.ClassRepository;
 import com.iktpreobuka.projekat_za_kraj.repositories.DepartmentRepository;
@@ -87,6 +89,15 @@ public class SubjectController {
 		logger.info("Logged user: " + principal.getName());
 		try {
 			Iterable<SubjectEntity> subjects= subjectRepository.findByStatusLike(1);
+			for (SubjectEntity s : subjects) {
+				List<ClassSubjectEntity> tempClasses = new ArrayList<ClassSubjectEntity>();
+				for (ClassSubjectEntity cse : s.getClasses()) {
+					if (cse.getStatus()==1) {
+						tempClasses.add(cse);
+					}
+				}
+				s.setClasses(tempClasses);
+			}
 			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<Iterable<SubjectEntity>>(subjects, HttpStatus.OK);
 		} catch(Exception e) {
@@ -203,7 +214,7 @@ public class SubjectController {
 			ClassEntity class_ = classRepository.findByIdAndStatusLike(Integer.parseInt(id), 1);
 			if (class_==null) { 
 				logger.info("---------------- Searched class not found.");
-		        return new ResponseEntity<>("Searched class not found", HttpStatus.NOT_FOUND);
+		        return new ResponseEntity<RESTError>(new RESTError(4, "Searched class not found"), HttpStatus.NOT_FOUND);
 			}
 			Iterable<SubjectEntity> classes= classRepository.findSubjectsByClass(class_);
 			logger.info("---------------- Finished OK.");
@@ -227,8 +238,90 @@ public class SubjectController {
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
 			Iterable<SubjectEntity> subjects= subjectRepository.findByTeacher(loggedUser.getId());
+			//Iterable<TeacherSubjectDepartmentDTO> subjects= subjectRepository.findByTeacherWithDepartments(loggedUser.getId());
+			for (SubjectEntity s : subjects) {
+				List<ClassSubjectEntity> tempClasses = new ArrayList<ClassSubjectEntity>();
+				for (ClassSubjectEntity cse : s.getClasses()) {
+					if (cse.getStatus()==1) {
+						tempClasses.add(cse);
+					}
+				}
+				s.setClasses(tempClasses);
+			}
 			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<Iterable<SubjectEntity>>(subjects, HttpStatus.OK);
+		} catch(Exception e) {
+			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+	
+	@Secured({"ROLE_TEACHER"})
+	@JsonView(Views.Teacher.class)
+	@RequestMapping(method = RequestMethod.GET, value = "/teacher/departments")
+	public ResponseEntity<?> getAllDepartmentsForTeacher(Principal principal) {
+		logger.info("################ /project/subjects/teacher/departments/getAllDepartmentsForTeacher started.");
+		logger.info("Logged user: " + principal.getName());
+		try {
+			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
+			logger.info("Logged user identified.");
+			//Iterable<SubjectEntity> subjects= subjectRepository.findByTeacher(loggedUser.getId());
+			Iterable<TeacherSubjectDepartmentDTO> subjects= subjectRepository.findByTeacherWithDepartments(loggedUser.getId());
+			logger.info("---------------- Finished OK.");
+			return new ResponseEntity<Iterable<TeacherSubjectDepartmentDTO>>(subjects, HttpStatus.OK);
+		} catch(Exception e) {
+			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+	
+	@Secured({"ROLE_ADMIN"})
+	@JsonView(Views.Admin.class)
+	@RequestMapping(method = RequestMethod.GET, value = "/admin/departments")
+	public ResponseEntity<?> getAllWithDepartments(Principal principal) {
+		logger.info("################ /project/subjects/admin/departments/getAllWithDepartments started.");
+		logger.info("Logged user: " + principal.getName());
+		try {
+			logger.info("Logged user identified.");
+			//Iterable<SubjectEntity> subjects= subjectRepository.findByTeacher(loggedUser.getId());
+			Iterable<TeacherSubjectDepartmentDTO> subjects= subjectRepository.findAllWithDepartmentsStatusLike(1);
+			logger.info("---------------- Finished OK.");
+			return new ResponseEntity<Iterable<TeacherSubjectDepartmentDTO>>(subjects, HttpStatus.OK);
+		} catch(Exception e) {
+			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+	
+	@Secured({"ROLE_TEACHER"})
+	@JsonView(Views.Teacher.class)
+	@RequestMapping(method = RequestMethod.GET, value = "/teacher/students")
+	public ResponseEntity<?> getAllForTeacherWithStudents(Principal principal) {
+		logger.info("################ /project/subjects/teacher/students/getAllForTeacher started.");
+		logger.info("Logged user: " + principal.getName());
+		try {
+			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
+			logger.info("Logged user identified.");
+			Iterable<SubjectDepartmentClassSchoolYearDTO> subjects= subjectRepository.findByTeacherWithStudentAndClassAndDepartment(loggedUser.getId());
+			logger.info("---------------- Finished OK.");
+			return new ResponseEntity<Iterable<SubjectDepartmentClassSchoolYearDTO>>(subjects, HttpStatus.OK);
+		} catch(Exception e) {
+			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+
+	@Secured({"ROLE_ADMIN"})
+	@JsonView(Views.Admin.class)
+	@RequestMapping(method = RequestMethod.GET, value = "/admin/students")
+	public ResponseEntity<?> getAllWithStudents(Principal principal) {
+		logger.info("################ /project/subjects/admin/students/getAllWithStudents started.");
+		logger.info("Logged user: " + principal.getName());
+		try {
+			logger.info("Logged user identified.");
+			Iterable<SubjectDepartmentClassSchoolYearDTO> subjects= subjectRepository.findAllWithStudentAndClassAndDepartmentStatusLike();
+			logger.info("---------------- Finished OK.");
+			return new ResponseEntity<Iterable<SubjectDepartmentClassSchoolYearDTO>>(subjects, HttpStatus.OK);
 		} catch(Exception e) {
 			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
 			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -261,8 +354,8 @@ public class SubjectController {
 		logger.info("Logged user: " + principal.getName());
 		try {
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
-			logger.info("Logged user identified.");
-			List<StudentSubjectDto> subjects= subjectRepository.findByParent(loggedUser.getId());
+			logger.info("Logged user identified.");	
+			/*List<StudentSubjectDto> subjects= subjectRepository.findByParent(loggedUser.getId());
 			logger.info("Lista predmeta za decu.");
 
 			Map<StudentEntity, List<SubjectEntity>> subjectsByStudent = new HashMap<StudentEntity, List<SubjectEntity>>();
@@ -280,7 +373,11 @@ public class SubjectController {
 			Map<String, List<SubjectEntity>> subjectsAndStudent = new TreeMap<String, List<SubjectEntity>>();
 			for (Map.Entry<StudentEntity, List<SubjectEntity>> entry : subjectsByStudent.entrySet()) {
 				subjectsAndStudent.put(entry.getKey().getFirstName() + " " + entry.getKey().getLastName(), entry.getValue());
-			}			
+			}			*/
+			
+			Iterable<SubjectDepartmentClassSchoolYearDTO> subjectsAndStudent= subjectRepository.findByParentWithClassAndDepartment(loggedUser.getId());
+			logger.info("Lista predmeta za decu.");
+
 			
 			return new ResponseEntity<>(subjectsAndStudent, HttpStatus.OK);
 		} catch(Exception e) {
@@ -344,7 +441,8 @@ public class SubjectController {
 		try {
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
-			Iterable<SubjectEntity> subjects= subjectRepository.findByStudent(loggedUser.getId());
+			//Iterable<SubjectEntity> subjects= subjectRepository.findByStudent(loggedUser.getId());
+			Iterable<TeacherSubjectDepartmentEntity> subjects= subjectRepository.findByStudentWithClassAndDepartment(loggedUser.getId());
 			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<>(subjects, HttpStatus.OK);
 		} catch(Exception e) {
@@ -383,18 +481,22 @@ public class SubjectController {
 			}
 		if (newSubject == null) {
 			logger.info("---------------- New subject is null.");
-	        return new ResponseEntity<>("New subject is null.", HttpStatus.BAD_REQUEST);
+	        return new ResponseEntity<RESTError>(new RESTError(5, "New subject is null."), HttpStatus.BAD_REQUEST);
 	      }
 		if (newSubject.getWeekClassesNumber() == null || newSubject.getWeekClassesNumber()<1 ) {
 			logger.info("---------------- Week classes number must be 1 or more.");
-	        return new ResponseEntity<>("Week classes number must be 1 or more.", HttpStatus.BAD_REQUEST);
+	        return new ResponseEntity<RESTError>(new RESTError(5, "Week classes number must be 1 or more."), HttpStatus.BAD_REQUEST);
+		}
+		if (newSubject.getSubjectName() == null || newSubject.getSubjectName().equals("") || newSubject.getSubjectName().equals(" ")) {
+			logger.info("---------------- Subject name is null.");
+	        return new ResponseEntity<RESTError>(new RESTError(5, "Subject name is null."), HttpStatus.BAD_REQUEST);			
 		}
 		SubjectEntity subject = new SubjectEntity();
 		try {
 			if (newSubject.getSubjectName() != null && !newSubject.getSubjectName().equals("") && !newSubject.getSubjectName().equals(" ") && newSubject.getWeekClassesNumber() != null) {
 				if (subjectRepository.findBySubjectName(newSubject.getSubjectName()) != null) {
 					logger.info("---------------- Subect name already exist.");
-			        return new ResponseEntity<>("Subect name already exist.", HttpStatus.BAD_REQUEST);
+			        return new ResponseEntity<RESTError>(new RESTError(5, "Subect name already exist."), HttpStatus.BAD_REQUEST);
 				}
 				UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 				logger.info("Logged user identified.");
@@ -416,7 +518,7 @@ public class SubjectController {
 	@JsonView(Views.Admin.class)
 	@RequestMapping(method = RequestMethod.PUT, value = "/{id}")
 	public ResponseEntity<?> modify(@PathVariable String id, @Valid @RequestBody SubjectDto updateSubject, Principal principal, BindingResult result) {
-		logger.info("################ /project/departments/modify started.");
+		logger.info("################ /project/subjects/modify started.");
 		logger.info("Logged user: " + principal.getName());
 		if (result.hasErrors()) { 
 			logger.info("---------------- Validation has errors - " + createErrorMessage(result));
@@ -424,25 +526,26 @@ public class SubjectController {
 			}
 		if (updateSubject == null) {
 			logger.info("---------------- New subject is null.");
-	        return new ResponseEntity<>("New subject is null.", HttpStatus.BAD_REQUEST);
+	        return new ResponseEntity<RESTError>(new RESTError(5, "New subject is null."), HttpStatus.BAD_REQUEST);
 	      }
-		if (updateSubject.getWeekClassesNumber() == null || updateSubject.getWeekClassesNumber()<1 ) {
+		if (updateSubject.getWeekClassesNumber() != null && updateSubject.getWeekClassesNumber()<1 ) {
 			logger.info("---------------- Week classes number must be 1 or more.");
-	        return new ResponseEntity<>("Week classes number must be 1 or more.", HttpStatus.BAD_REQUEST);
-		}
-		if (updateSubject.getSubjectName() == null || updateSubject.getSubjectName().equals("") || updateSubject.getSubjectName().equals(" ")) {
-			logger.info("---------------- Subject name is null.");
-	        return new ResponseEntity<>("Subject name is null.", HttpStatus.BAD_REQUEST);			
+	        return new ResponseEntity<RESTError>(new RESTError(5, "Week classes number must be 1 or more."), HttpStatus.BAD_REQUEST);
 		}
 		try {
-			if (subjectRepository.findBySubjectName(updateSubject.getSubjectName()) != null) {
-				logger.info("---------------- Subect name already exist.");
-			    return new ResponseEntity<>("Subect name already exist.", HttpStatus.BAD_REQUEST);
-			}
 			SubjectEntity subject = subjectRepository.findById(Integer.parseInt(id)).orElse(null);
 			if (subject==null || subject.getStatus()!=1) {
 				logger.info("---------------- Subject not found.");
-				return new ResponseEntity<>("Subject not found.", HttpStatus.NOT_FOUND);
+				return new ResponseEntity<RESTError>(new RESTError(4, "Subject not found."), HttpStatus.NOT_FOUND);
+			}
+			logger.info("Subject identified.");
+			if (updateSubject.getSubjectName() != null && updateSubject.getSubjectName().equals(subject.getSubjectName()) ) {
+				logger.info("---------------- Same subject name.");
+			    return new ResponseEntity<RESTError>(new RESTError(5, "Same subject name."), HttpStatus.BAD_REQUEST);
+			}
+			if (subjectRepository.findBySubjectName(updateSubject.getSubjectName()) != null) {
+				logger.info("---------------- Subject name already exist.");
+			    return new ResponseEntity<RESTError>(new RESTError(5, "Subject name already exist."), HttpStatus.BAD_REQUEST);
 			}
 			if (updateSubject.getSubjectName() != null || updateSubject.getWeekClassesNumber() != null) {
 				UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
@@ -474,16 +577,16 @@ public class SubjectController {
 			}
 		if (updateSubject == null) {
 			logger.info("---------------- Data is null.");
-	        return new ResponseEntity<>("Data is null.", HttpStatus.BAD_REQUEST);
+	        return new ResponseEntity<RESTError>(new RESTError(5, "Data is null."), HttpStatus.BAD_REQUEST);
 	      }
 		if (updateSubject.getSubjectName() != null || updateSubject.getWeekClassesNumber() != null) {
 			logger.info("---------------- Update have non acceptable atrributes.");
-	        return new ResponseEntity<>("Update have non acceptable atrributes.", HttpStatus.NOT_ACCEPTABLE);
+	        return new ResponseEntity<RESTError>(new RESTError(2, "Update have non acceptable atrributes."), HttpStatus.NOT_ACCEPTABLE);
 		}
 		for (String t : updateSubject.getTeachers()) {
 			if (t ==null || t.equals("") || t.equals(" ")) {
 				logger.info("---------------- New teacher/s is null.");
-		        return new ResponseEntity<>("New teacher/s is null.", HttpStatus.BAD_REQUEST);
+		        return new ResponseEntity<RESTError>(new RESTError(5, "New teacher/s is null."), HttpStatus.BAD_REQUEST);
 			}
 		}
 		List<TeacherSubjectEntity> ts = new ArrayList<TeacherSubjectEntity>();
@@ -491,13 +594,13 @@ public class SubjectController {
 			for (String t : updateSubject.getTeachers()) {
 				if (teacherRepository.findByIdAndStatusLike(Integer.parseInt(t), 1) == null ) {
 					logger.info("---------------- Teacher/s not found.");
-			        return new ResponseEntity<>("Teacher/s not found.", HttpStatus.NOT_FOUND);
+			        return new ResponseEntity<RESTError>(new RESTError(4, "Teacher/s not found."), HttpStatus.NOT_FOUND);
 				}
 			}
 			SubjectEntity subject = subjectRepository.findByIdAndStatusLike(id, 1);
 			if (subject == null) {
 				logger.info("---------------- Subject not found.");
-		        return new ResponseEntity<>("Subject not found.", HttpStatus.NOT_FOUND);
+		        return new ResponseEntity<RESTError>(new RESTError(4, "Subject not found."), HttpStatus.NOT_FOUND);
 		      }
 			logger.info("Subject identified.");
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
@@ -507,7 +610,7 @@ public class SubjectController {
 				logger.info("Teacher/s added.");
 			} else {
 				logger.info("---------------- Some data is null.");
-		        return new ResponseEntity<>("Some data is null.", HttpStatus.BAD_REQUEST);
+		        return new ResponseEntity<RESTError>(new RESTError(5, "Some data is null."), HttpStatus.BAD_REQUEST);
 			}
 			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<>(ts, HttpStatus.OK);
@@ -532,34 +635,34 @@ public class SubjectController {
 			}
 		if (updateSubject == null) {
 			logger.info("---------------- Data is null.");
-	        return new ResponseEntity<>("Data is null.", HttpStatus.BAD_REQUEST);
+	        return new ResponseEntity<RESTError>(new RESTError(5, "Data is null."), HttpStatus.BAD_REQUEST);
 	      }
 		if (updateSubject.getSubjectName() != null || updateSubject.getWeekClassesNumber() != null) {
 			logger.info("---------------- Update have non acceptable atrributes.");
-	        return new ResponseEntity<>("Update have non acceptable atrributes.", HttpStatus.NOT_ACCEPTABLE);
+	        return new ResponseEntity<RESTError>(new RESTError(2, "Update have non acceptable atrributes."), HttpStatus.NOT_ACCEPTABLE);
 		}
 		for (String c : updateSubject.getClasses()) {
 			if (c ==null || c.equals("") || c.equals(" ")) {
 				logger.info("---------------- New class/es is null.");
-		        return new ResponseEntity<>("New class/es is null.", HttpStatus.BAD_REQUEST);
+		        return new ResponseEntity<RESTError>(new RESTError(5, "New class/es is null."), HttpStatus.BAD_REQUEST);
 			}
 		}
 		if (updateSubject.getLearningProgram() ==null || updateSubject.getLearningProgram().equals("") || updateSubject.getLearningProgram().equals(" ")) {
 			logger.info("---------------- New learning program is null.");
-		       return new ResponseEntity<>("New learning program is null.", HttpStatus.BAD_REQUEST);
+		       return new ResponseEntity<RESTError>(new RESTError(5, "New learning program is null."), HttpStatus.BAD_REQUEST);
 		}
 		List<ClassSubjectEntity> cs = new ArrayList<ClassSubjectEntity>();
 		try {
 			for (String t : updateSubject.getClasses()) {
 				if (classRepository.findByIdAndStatusLike(Integer.parseInt(t), 1) == null ) {
 					logger.info("---------------- Class/es not found.");
-			        return new ResponseEntity<>("Class/es not found.", HttpStatus.NOT_FOUND);
+			        return new ResponseEntity<RESTError>(new RESTError(4, "Class/es not found."), HttpStatus.NOT_FOUND);
 				}
 			}
 			SubjectEntity subject = subjectRepository.findByIdAndStatusLike(id, 1);
 			if (subject == null) {
 				logger.info("---------------- Subject not found.");
-		        return new ResponseEntity<>("Subject not found.", HttpStatus.NOT_FOUND);
+		        return new ResponseEntity<RESTError>(new RESTError(4, "Subject not found."), HttpStatus.NOT_FOUND);
 		      }
 			logger.info("Subject identified.");
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
@@ -569,7 +672,7 @@ public class SubjectController {
 				logger.info("Class/es added.");
 			} else {
 				logger.info("---------------- Some data is null.");
-		        return new ResponseEntity<>("Some data is null.", HttpStatus.BAD_REQUEST);
+		        return new ResponseEntity<RESTError>(new RESTError(5, "Some data is null."), HttpStatus.BAD_REQUEST);
 			}
 			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<>(cs, HttpStatus.OK);
@@ -594,38 +697,38 @@ public class SubjectController {
 			}
 		if (updateSubject == null) {
 			logger.info("---------------- Data is null.");
-	        return new ResponseEntity<>("Data is null.", HttpStatus.BAD_REQUEST);
+	        return new ResponseEntity<RESTError>(new RESTError(5, "Data is null."), HttpStatus.BAD_REQUEST);
 	      }
 		if (updateSubject.getSubjectName() != null || updateSubject.getWeekClassesNumber() != null) {
 			logger.info("---------------- Update have non acceptable atrributes.");
-	        return new ResponseEntity<>("Update have non acceptable atrributes.", HttpStatus.NOT_ACCEPTABLE);
+	        return new ResponseEntity<RESTError>(new RESTError(2, "Update have non acceptable atrributes."), HttpStatus.NOT_ACCEPTABLE);
 		}
 		if (updateSubject.getTeachingTeacher() ==null || updateSubject.getTeachingTeacher().equals("") || updateSubject.getTeachingTeacher().equals(" ")) {
 			logger.info("---------------- New teacher is null.");
-		    return new ResponseEntity<>("New teacher is null.", HttpStatus.BAD_REQUEST);
+		    return new ResponseEntity<RESTError>(new RESTError(5, "New teacher is null."), HttpStatus.BAD_REQUEST);
 		}
 		if (updateSubject.getTeachingDepartment() ==null || updateSubject.getTeachingDepartment().equals("") || updateSubject.getTeachingDepartment().equals(" ")) {
 			logger.info("---------------- New department is null.");
-		    return new ResponseEntity<>("New department is null.", HttpStatus.BAD_REQUEST);
+		    return new ResponseEntity<RESTError>(new RESTError(5, "New department is null."), HttpStatus.BAD_REQUEST);
 		}
 		if (updateSubject.getSchoolYear() ==null || updateSubject.getSchoolYear().equals("") || updateSubject.getSchoolYear().equals(" ")) {
 			logger.info("---------------- New school year is null.");
-		       return new ResponseEntity<>("New school year is null.", HttpStatus.BAD_REQUEST);
+		       return new ResponseEntity<RESTError>(new RESTError(5, "New school year is null."), HttpStatus.BAD_REQUEST);
 		}
 		TeacherSubjectDepartmentEntity tsd = new TeacherSubjectDepartmentEntity();
 		try {
 			if (teacherRepository.findByIdAndStatusLike(Integer.parseInt(updateSubject.getTeachingTeacher()), 1) == null ) {
 				logger.info("---------------- Teacher not found.");
-			    return new ResponseEntity<>("Teacher not found.", HttpStatus.NOT_FOUND);
+			    return new ResponseEntity<RESTError>(new RESTError(4, "Teacher not found."), HttpStatus.NOT_FOUND);
 			}
 			if (departmentRepository.findByIdAndStatusLike(Integer.parseInt(updateSubject.getTeachingDepartment()), 1) == null ) {
 				logger.info("---------------- Department not found.");
-			    return new ResponseEntity<>("Department not found.", HttpStatus.NOT_FOUND);
+			    return new ResponseEntity<RESTError>(new RESTError(4, "Department not found."), HttpStatus.NOT_FOUND);
 			}	
 			SubjectEntity subject = subjectRepository.findByIdAndStatusLike(id, 1);
 			if (subject == null) {
 				logger.info("---------------- Subject not found.");
-		        return new ResponseEntity<>("Subject not found.", HttpStatus.NOT_FOUND);
+		        return new ResponseEntity<RESTError>(new RESTError(4, "Subject not found."), HttpStatus.NOT_FOUND);
 		      }
 			logger.info("Subject identified.");
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
@@ -635,7 +738,7 @@ public class SubjectController {
 				logger.info("Teachers/s in department/s added.");
 			} else {
 				logger.info("---------------- Some data is null.");
-		        return new ResponseEntity<>("Some data is null.", HttpStatus.BAD_REQUEST);
+		        return new ResponseEntity<RESTError>(new RESTError(5, "Some data is null."), HttpStatus.BAD_REQUEST);
 			}
 			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<>(tsd, HttpStatus.OK);
@@ -660,16 +763,16 @@ public class SubjectController {
 			}
 		if (updateSubject == null) {
 			logger.info("---------------- Data is null.");
-	        return new ResponseEntity<>("Data is null.", HttpStatus.BAD_REQUEST);
+	        return new ResponseEntity<RESTError>(new RESTError(5, "Data is null."), HttpStatus.BAD_REQUEST);
 	      }
 		if (updateSubject.getSubjectName() != null || updateSubject.getWeekClassesNumber() != null) {
 			logger.info("---------------- Update have non acceptable atrributes.");
-	        return new ResponseEntity<>("Update have non acceptable atrributes.", HttpStatus.NOT_ACCEPTABLE);
+	        return new ResponseEntity<RESTError>(new RESTError(2, "Update have non acceptable atrributes."), HttpStatus.NOT_ACCEPTABLE);
 		}
 		for (String t : updateSubject.getTeachers()) {
 			if (t ==null || t.equals("") || t.equals(" ")) {
 				logger.info("---------------- Remove teacher/s is null.");
-		        return new ResponseEntity<>("Remove teacher/s is null.", HttpStatus.BAD_REQUEST);
+		        return new ResponseEntity<RESTError>(new RESTError(5, "Remove teacher/s is null."), HttpStatus.BAD_REQUEST);
 			}
 		}
 		List<TeacherSubjectEntity> ts = new ArrayList<TeacherSubjectEntity>();
@@ -677,13 +780,13 @@ public class SubjectController {
 			for (String t : updateSubject.getTeachers()) {
 				if (teacherRepository.findByIdAndStatusLike(Integer.parseInt(t), 1) == null ) {
 					logger.info("---------------- Teacher/s not found.");
-			        return new ResponseEntity<>("Teacher/s not found.", HttpStatus.NOT_FOUND);
+			        return new ResponseEntity<RESTError>(new RESTError(4, "Teacher/s not found."), HttpStatus.NOT_FOUND);
 				}
 			}
 			SubjectEntity subject = subjectRepository.findByIdAndStatusLike(id, 1);
 			if (subject == null) {
 				logger.info("---------------- Subject not found.");
-		        return new ResponseEntity<>("Subject not found.", HttpStatus.NOT_FOUND);
+		        return new ResponseEntity<RESTError>(new RESTError(4, "Subject not found."), HttpStatus.NOT_FOUND);
 		      }
 			logger.info("Subject identified.");
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
@@ -715,16 +818,16 @@ public class SubjectController {
 			}
 		if (updateSubject == null) {
 			logger.info("---------------- Data is null.");
-	        return new ResponseEntity<>("Data is null.", HttpStatus.BAD_REQUEST);
+	        return new ResponseEntity<RESTError>(new RESTError(5, "Data is null."), HttpStatus.BAD_REQUEST);
 	      }
 		if (updateSubject.getSubjectName() != null || updateSubject.getWeekClassesNumber() != null) {
 			logger.info("---------------- Update have non acceptable atrributes.");
-	        return new ResponseEntity<>("Update have non acceptable atrributes.", HttpStatus.NOT_ACCEPTABLE);
+	        return new ResponseEntity<RESTError>(new RESTError(2, "Update have non acceptable atrributes."), HttpStatus.NOT_ACCEPTABLE);
 		}
 		for (String c : updateSubject.getClasses()) {
 			if (c ==null || c.equals("") || c.equals(" ")) {
-				logger.info("---------------- New class/es is null.");
-		        return new ResponseEntity<>("New class/es is null.", HttpStatus.BAD_REQUEST);
+				logger.info("---------------- Removing class/es is null.");
+		        return new ResponseEntity<RESTError>(new RESTError(5, "New class/es is null."), HttpStatus.BAD_REQUEST);
 			}
 		}
 		List<ClassSubjectEntity> cs = new ArrayList<ClassSubjectEntity>();
@@ -732,13 +835,13 @@ public class SubjectController {
 			for (String t : updateSubject.getClasses()) {
 				if (classRepository.findByIdAndStatusLike(Integer.parseInt(t), 1) == null ) {
 					logger.info("---------------- Class/es not found.");
-			        return new ResponseEntity<>("Class/es not found.", HttpStatus.NOT_FOUND);
+			        return new ResponseEntity<RESTError>(new RESTError(4, "Class/es not found."), HttpStatus.NOT_FOUND);
 				}
 			}
 			SubjectEntity subject = subjectRepository.findByIdAndStatusLike(id, 1);
 			if (subject == null) {
 				logger.info("---------------- Subject not found.");
-		        return new ResponseEntity<>("Subject not found.", HttpStatus.NOT_FOUND);
+		        return new ResponseEntity<RESTError>(new RESTError(4, "Subject not found."), HttpStatus.NOT_FOUND);
 		      }
 			logger.info("Subject identified.");
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
@@ -770,34 +873,34 @@ public class SubjectController {
 			}
 		if (updateSubject == null) {
 			logger.info("---------------- Data is null.");
-	        return new ResponseEntity<>("Data is null.", HttpStatus.BAD_REQUEST);
+	        return new ResponseEntity<RESTError>(new RESTError(5, "Data is null."), HttpStatus.BAD_REQUEST);
 	      }
 		if (updateSubject.getSubjectName() != null || updateSubject.getWeekClassesNumber() != null) {
 			logger.info("---------------- Update have non acceptable atrributes.");
-	        return new ResponseEntity<>("Update have non acceptable atrributes.", HttpStatus.NOT_ACCEPTABLE);
+	        return new ResponseEntity<RESTError>(new RESTError(2, "Update have non acceptable atrributes."), HttpStatus.NOT_ACCEPTABLE);
 		}
 		if (updateSubject.getTeachingTeacher() ==null || updateSubject.getTeachingTeacher().equals("") || updateSubject.getTeachingTeacher().equals(" ")) {
 			logger.info("---------------- New teacher is null.");
-		    return new ResponseEntity<>("New teacher is null.", HttpStatus.BAD_REQUEST);
+		    return new ResponseEntity<RESTError>(new RESTError(5, "New teacher is null."), HttpStatus.BAD_REQUEST);
 		}
 		if (updateSubject.getTeachingDepartment() ==null || updateSubject.getTeachingDepartment().equals("") || updateSubject.getTeachingDepartment().equals(" ")) {
 			logger.info("---------------- New department is null.");
-		    return new ResponseEntity<>("New department is null.", HttpStatus.BAD_REQUEST);
+		    return new ResponseEntity<RESTError>(new RESTError(5, "New department is null."), HttpStatus.BAD_REQUEST);
 		}
 		TeacherSubjectDepartmentEntity tsd = new TeacherSubjectDepartmentEntity();
 		try {
 			if (teacherRepository.findByIdAndStatusLike(Integer.parseInt(updateSubject.getTeachingTeacher()), 1) == null ) {
 				logger.info("---------------- Teacher not found.");
-			    return new ResponseEntity<>("Teacher not found.", HttpStatus.NOT_FOUND);
+			    return new ResponseEntity<RESTError>(new RESTError(4, "Teacher not found."), HttpStatus.NOT_FOUND);
 			}
 			if (departmentRepository.findByIdAndStatusLike(Integer.parseInt(updateSubject.getTeachingDepartment()), 1) == null ) {
 				logger.info("---------------- Department not found.");
-			    return new ResponseEntity<>("Department not found.", HttpStatus.NOT_FOUND);
+			    return new ResponseEntity<RESTError>(new RESTError(4, "Department not found."), HttpStatus.NOT_FOUND);
 			}	
 			SubjectEntity subject = subjectRepository.findByIdAndStatusLike(id, 1);
 			if (subject == null) {
 				logger.info("---------------- Subject not found.");
-		        return new ResponseEntity<>("Subject not found.", HttpStatus.NOT_FOUND);
+		        return new ResponseEntity<RESTError>(new RESTError(4, "Subject not found."), HttpStatus.NOT_FOUND);
 		      }
 			logger.info("Subject identified.");
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
@@ -827,7 +930,7 @@ public class SubjectController {
 			SubjectEntity subject = subjectRepository.findByIdAndStatusLike(Integer.parseInt(id), 0);
 			if (subject==null || subject.getStatus()!=0) {
 				logger.info("Subject not found.");
-				return new ResponseEntity<>("---------------- Subject not found.", HttpStatus.NOT_FOUND);
+				return new ResponseEntity<RESTError>(new RESTError(4, "Subject not found."), HttpStatus.NOT_FOUND);
 			}
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
@@ -853,7 +956,7 @@ public class SubjectController {
 			SubjectEntity subject = subjectRepository.findById(Integer.parseInt(id)).orElse(null);
 			if (subject==null || subject.getStatus()==-1) {
 				logger.info("Subject not found.");
-				return new ResponseEntity<>("---------------- Subject not found.", HttpStatus.NOT_FOUND);
+				return new ResponseEntity<RESTError>(new RESTError(4, "Subject not found."), HttpStatus.NOT_FOUND);
 			}
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
@@ -879,7 +982,7 @@ public class SubjectController {
 			SubjectEntity subject = subjectRepository.findByIdAndStatusLike(Integer.parseInt(id), 1);
 			if (subject==null  || subject.getStatus()!=1) {
 				logger.info("Subject not found.");
-				return new ResponseEntity<>("Subject not found.", HttpStatus.NOT_FOUND);
+				return new ResponseEntity<RESTError>(new RESTError(4, "Subject not found."), HttpStatus.NOT_FOUND);
 			}
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");

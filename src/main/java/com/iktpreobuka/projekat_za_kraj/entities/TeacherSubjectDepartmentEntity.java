@@ -36,40 +36,40 @@ public class TeacherSubjectDepartmentEntity {
 	
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
-	@JsonView(Views.Admin.class)
+	@JsonView(Views.Student.class)
 	@Column(name="teacher_subject_department_id")
 	private Integer id;
 	
-	@JsonIgnore
-	@JsonView(Views.Admin.class)
+	//@JsonIgnore - Skinuto zbog FE
+	@JsonView(Views.Student.class)
 	@ManyToOne(cascade = CascadeType.REFRESH, fetch = FetchType.LAZY)
 	@JoinColumn(name = "department_id", nullable=false)
 	@NotNull (message = "Department must be provided.")
 	private DepartmentEntity teachingDepartment;
 	
-	@JsonIgnore
-	@JsonView(Views.Admin.class)
+	//@JsonIgnore - Skinuto zbog FE
+	@JsonView(Views.Student.class)
 	@ManyToOne(cascade = CascadeType.REFRESH, fetch = FetchType.LAZY)
 	@JoinColumn(name = "class_id", nullable=false)
 	@NotNull (message = "Class must be provided.")
 	private ClassEntity teachingClass;
 
-	@JsonIgnore
-	@JsonView(Views.Admin.class)
+	//@JsonIgnore - Skinuto zbog FE
+	@JsonView(Views.Student.class)
 	@ManyToOne(cascade = CascadeType.REFRESH, fetch = FetchType.LAZY)
 	@JoinColumn(name = "subject_id", nullable=false)
 	@NotNull (message = "Subject must be provided.")
 	private SubjectEntity teachingSubject;
 
-	@JsonIgnore
-	@JsonView(Views.Admin.class)
+	//@JsonIgnore - Skinuto zbog FE
+	@JsonView(Views.Student.class)
 	@ManyToOne(cascade = CascadeType.REFRESH, fetch = FetchType.LAZY)
 	@JoinColumn(name = "teacher_id", nullable=false)
 	@NotNull (message = "Teacher must be provided.")
 	private TeacherEntity teachingTeacher;
 	
 	@JsonIgnore
-	@JsonView(Views.Teacher.class)
+	@JsonView(Views.Student.class)
 	@OneToMany(mappedBy = "teacher_subject_department", fetch = FetchType.LAZY, cascade = { CascadeType.REFRESH})
 	private List<GradeEntity> grades = new ArrayList<>();
 	
@@ -79,7 +79,7 @@ public class TeacherSubjectDepartmentEntity {
 	@NotNull (message = "School year must be provided.")
 	//@Pattern(regexp = "^(20|[3-9][0-9])[0-9]{2}\\-(20|[3-9][0-9])[0-9]{2}$", message="School year is not valid, must be in format YYYY-YYYY.")
 	private String schoolYear;
-	@JsonView(Views.Admin.class)
+	@JsonView(Views.Student.class)
 	@Max(1)
     @Min(-1)
     @Column(name = "status", nullable = false)
