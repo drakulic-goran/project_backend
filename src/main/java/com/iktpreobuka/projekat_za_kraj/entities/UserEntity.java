@@ -61,7 +61,7 @@ public class UserEntity {
 	
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
-	@JsonView(Views.Parent.class)
+	@JsonView(Views.Student.class)
 	@Column(name="user_id")
 	protected Integer id;
 	@JsonView(Views.Student.class)
@@ -74,13 +74,13 @@ public class UserEntity {
 	@Pattern(regexp = "^[A-Za-z]{2,}$", message="Last name is not valid.")
 	@NotNull (message = "Last name must be provided.")
 	protected String lastName;
-	@JsonView(Views.Admin.class)
+	@JsonView(Views.Student.class)
 	@Column(name="jmbg", unique=true, length=13, nullable=false)
 	@Pattern(regexp = "^[0-9]{13,13}$", message="JMBG is not valid, can contain only numbers and must be exactly 13 numbers long.")
 	//@Size(min=13, max=13, message = "JMBG must be {min} characters long.")
 	@NotNull (message = "JMBG must be provided.")
 	protected String jMBG;
-	@JsonView(Views.Admin.class)
+	@JsonView(Views.Student.class)
 	@Column(name="gender")
 	@Enumerated(EnumType.STRING)
 	@NotNull (message = "Gender must be provided.")

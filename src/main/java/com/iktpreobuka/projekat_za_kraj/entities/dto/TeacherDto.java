@@ -44,6 +44,8 @@ public class TeacherDto {
 	@JsonView(Views.Teacher.class)
 	private String teachingDepartment;
 	@JsonView(Views.Teacher.class)
+	private List<String> teachingDepartments;
+	@JsonView(Views.Teacher.class)
 	private String teachingSubject;
 	@JsonView(Views.Teacher.class)
 	@Pattern(regexp = "^([2-9][0-9])[0-9]{2}\\-([2-9][0-9])[0-9]{2}$", message="School year is not valid, must be in format YYYY-YYYY.")
@@ -65,6 +67,14 @@ public class TeacherDto {
 
 	public TeacherDto() {
 		super();
+	}
+
+	public TeacherDto(List<String> teachingDepartments, String teachingSubject,
+			@Pattern(regexp = "^([2-9][0-9])[0-9]{2}\\-([2-9][0-9])[0-9]{2}$", message = "School year is not valid, must be in format YYYY-YYYY.") String schoolYear) {
+		super();
+		this.teachingDepartments = teachingDepartments;
+		this.teachingSubject = teachingSubject;
+		this.schoolYear = schoolYear;
 	}
 
 	public TeacherDto(
@@ -299,6 +309,14 @@ public class TeacherDto {
 
 	public List<String> getSubjects() {
 		return subjects;
+	}
+
+	public List<String> getTeachingDepartments() {
+		return teachingDepartments;
+	}
+
+	public void setTeachingDepartments(List<String> teachingDepartments) {
+		this.teachingDepartments = teachingDepartments;
 	}
 
 	public void setSubjects(List<String> subjects) {

@@ -33,7 +33,7 @@ public class DepartmentClassEntity {
 	
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
-	@JsonView(Views.Admin.class)
+	@JsonView(Views.Student.class)
 	@Column(name="department_class_id")
 	private Integer id;
 		
@@ -45,8 +45,8 @@ public class DepartmentClassEntity {
 	private ClassEntity clas;
 
 	
-	@JsonIgnore
-	@JsonView(Views.Admin.class)
+	//@JsonIgnore
+	@JsonView(Views.Student.class)
 	@ManyToOne(cascade = CascadeType.REFRESH, fetch = FetchType.LAZY)
 	@JoinColumn(name = "department_id", nullable=false)
 	@NotNull (message = "Department must be provided.")

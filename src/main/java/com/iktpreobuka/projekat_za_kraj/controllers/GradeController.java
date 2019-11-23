@@ -38,7 +38,9 @@ import com.iktpreobuka.projekat_za_kraj.entities.TeacherSubjectDepartmentEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.UserAccountEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.UserEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.dto.GradeDto;
+import com.iktpreobuka.projekat_za_kraj.entities.dto.StudentSubjectGradesClassDTO;
 import com.iktpreobuka.projekat_za_kraj.entities.dto.SubjectFinalGradesDto;
+import com.iktpreobuka.projekat_za_kraj.entities.dto.SubjectGradesClassDTO;
 import com.iktpreobuka.projekat_za_kraj.entities.dto.SubjectGradesDto;
 import com.iktpreobuka.projekat_za_kraj.enumerations.ESemester;
 import com.iktpreobuka.projekat_za_kraj.enumerations.EUserRole;
@@ -96,7 +98,7 @@ public class GradeController {
 
 	
 	@Secured({"ROLE_ADMIN"})
-	@JsonView(Views.Student.class)
+	@JsonView(Views.Admin.class)
 	@RequestMapping(method = RequestMethod.GET, value = "")
 	public ResponseEntity<?> getAll(Principal principal) {
 		logger.info("################ /project/grades/getAll started.");
@@ -112,7 +114,7 @@ public class GradeController {
 	}
 	
 	@Secured({"ROLE_ADMIN"})
-	@JsonView(Views.Student.class)
+	@JsonView(Views.Admin.class)
 	@RequestMapping(method = RequestMethod.GET, value = "/{id}")
 	public ResponseEntity<?> getById(@PathVariable Integer id, Principal principal) {
 		logger.info("################ /project/grades/{id}/getById started.");
@@ -128,7 +130,7 @@ public class GradeController {
 	}
 
 	@Secured({"ROLE_TEACHER"})
-	@JsonView(Views.Student.class)
+	@JsonView(Views.Teacher.class)
 	@RequestMapping(method = RequestMethod.GET, value = "/teacher")
 	public ResponseEntity<?> getAllTeacher(Principal principal) {
 		logger.info("################ /project/grades/teacher/getAllTeacher started.");
@@ -138,6 +140,7 @@ public class GradeController {
 			logger.info("Logged user identified.");
 			TeacherEntity user = teacherRepository.findByIdAndStatusLike(loggedUser.getId(), 1);
 			List<GradeEntity> grade = gradeRepository.findByTeacher(user);
+			//List<GradeEntity> grade = gradeRepository.findByTeacherWithNullGrades(user);
 			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<List<GradeEntity>>(grade, HttpStatus.OK);
 		} catch(Exception e) {
@@ -147,7 +150,7 @@ public class GradeController {
 	}
 
 	@Secured({"ROLE_TEACHER"})
-	@JsonView(Views.Student.class)
+	@JsonView(Views.Teacher.class)
 	@RequestMapping(method = RequestMethod.GET, value = "/teacher/{id}")
 	public ResponseEntity<?> getByIdTeacher(@PathVariable Integer id, Principal principal) {
 		logger.info("################ /project/grades/teacher/{id}/getByIdTeacher started.");
@@ -166,7 +169,7 @@ public class GradeController {
 	}
 
 	@Secured({"ROLE_PARENT"})
-	@JsonView(Views.Student.class)
+	@JsonView(Views.Parent.class)
 	@RequestMapping(method = RequestMethod.GET, value = "/parent")
 	public ResponseEntity<?> getAllParent(Principal principal) {
 		logger.info("################ /project/grades/parent/getAllParent started.");
@@ -175,9 +178,10 @@ public class GradeController {
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
 			ParentEntity user = parentRepository.findByIdAndStatusLike(loggedUser.getId(), 1);
-			List<GradeEntity> grade = gradeRepository.findByParent(user);
+			//List<GradeEntity> grade = gradeRepository.findByParent(user);
+			List<StudentSubjectGradesClassDTO> grade = gradeRepository.findGradesWithStudentAndClassAndSubjectByParent(user);
 			logger.info("---------------- Finished OK.");
-			return new ResponseEntity<List<GradeEntity>>(grade, HttpStatus.OK);
+			return new ResponseEntity<List<StudentSubjectGradesClassDTO>>(grade, HttpStatus.OK);
 		} catch(Exception e) {
 			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
 			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -185,7 +189,7 @@ public class GradeController {
 	}
 
 	@Secured({"ROLE_PARENT"})
-	@JsonView(Views.Student.class)
+	@JsonView(Views.Parent.class)
 	@RequestMapping(method = RequestMethod.GET, value = "/parent/{id}")
 	public ResponseEntity<?> getByIdParent(@PathVariable Integer id, Principal principal) {
 		logger.info("################ /project/grades/parent/{id}/getByIdParent started.");
@@ -213,9 +217,14 @@ public class GradeController {
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
 			StudentEntity user = studentRepository.findByIdAndStatusLike(loggedUser.getId(), 1);
-			List<GradeEntity> grade = gradeRepository.findByStudentAndStatusLike(user, 1);
+			//List<GradeEntity> grade = gradeRepository.findByStudentAndStatusLike(user, 1);
+			List<SubjectGradesClassDTO> grade = gradeRepository.findGradesWithClassAndSubjectByStudent(user.getId());
+			//logger.info(grade.get(0).getDepartment().getDepartmentLabel());
+			//logger.info(grade.get(0).getClas().getClassLabel().toString());
+			//logger.info(grade.get(0).getSubject().getSubjectName());
+			//logger.info(grade.get(0).getGrade().getGradeValue().toString());
 			logger.info("---------------- Finished OK.");
-			return new ResponseEntity<List<GradeEntity>>(grade, HttpStatus.OK);
+			return new ResponseEntity<List<SubjectGradesClassDTO>>(grade, HttpStatus.OK);
 		} catch(Exception e) {
 			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
 			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -336,7 +345,7 @@ public class GradeController {
 	}
 
 	@Secured({"ROLE_PARENT"})
-	@JsonView(Views.Student.class)
+	@JsonView(Views.Parent.class)
 	@RequestMapping(method = RequestMethod.GET, value = "/parent/semester/{semester}/groupedbysubject")
 	public ResponseEntity<?> getParentStudentsGroupedBySubjectForSemester(@PathVariable String semester, Principal principal) {
 		logger.info("################ /project/grades/parent/semester/{semester}/groupedbysubject/getParentStudentsGroupedBySubjectForSemester started.");
@@ -384,7 +393,7 @@ public class GradeController {
 	}
 
 	@Secured({"ROLE_PARENT"})
-	@JsonView(Views.Student.class)
+	@JsonView(Views.Parent.class)
 	@RequestMapping(method = RequestMethod.GET, value = "/parent/semester/{semester}/bysubject/{id}")
 	public ResponseEntity<?> getParentStudentsGroupedBySubjectForSemesterAndSubject(@PathVariable String semester, @PathVariable Integer id, Principal principal) {
 		logger.info("################ /project/grades/parent/semester/{semester}/bysubject/{id}/getParentStudentsGroupedBySubjectForSemester started.");
@@ -432,7 +441,7 @@ public class GradeController {
 	}
 
 	@Secured({"ROLE_PARENT"})
-	@JsonView(Views.Student.class)
+	@JsonView(Views.Parent.class)
 	@RequestMapping(method = RequestMethod.GET, value = "/parent/semester/{semester}/finalbysubject")
 	public ResponseEntity<?> getParentStudentsFinalBySubjectForSemester(@PathVariable String semester, Principal principal) {
 		logger.info("################ /project/grades/parent/semester/{semester}/finalbysubject/getParentStudentsFinalBySubjectForSemester started.");
@@ -480,7 +489,7 @@ public class GradeController {
 	}
 
 	@Secured({"ROLE_TEACHER"})
-	@JsonView(Views.Student.class)
+	@JsonView(Views.Teacher.class)
 	@RequestMapping(method = RequestMethod.GET, value = "/primary-teacher/semester/{semester}/groupedbysubject")
 	public ResponseEntity<?> getPrimaryTeacherStudentsGroupedBySubjectForSemester(@PathVariable String semester, Principal principal) {
 		logger.info("################ /project/grades/primary-teacher/semester/{semester}/groupedbysubject/getPrimaryTeacherStudentsGroupedBySubjectForSemester started.");
@@ -528,7 +537,7 @@ public class GradeController {
 	}
 
 	@Secured({"ROLE_TEACHER"})
-	@JsonView(Views.Student.class)
+	@JsonView(Views.Teacher.class)
 	@RequestMapping(method = RequestMethod.GET, value = "/primary-teacher/semester/{semester}/bysubject/{id}")
 	public ResponseEntity<?> getPrimaryTeacherStudentsGroupedBySubjectForSemesterAndSubject(@PathVariable String semester, @PathVariable Integer id, Principal principal) {
 		logger.info("################ /project/grades/primary-teacher/semester/{semester}/bysubject/{id}/getPrimaryTeacherStudentsGroupedBySubjectForSemesterAndSubject started.");
@@ -576,7 +585,7 @@ public class GradeController {
 	}
 
 	@Secured({"ROLE_TEACHER"})
-	@JsonView(Views.Student.class)
+	@JsonView(Views.Teacher.class)
 	@RequestMapping(method = RequestMethod.GET, value = "/primary-teacher/semester/{semester}/finalbysubject")
 	public ResponseEntity<?> getPrimaryTeacherStudentsFinalBySubjectForSemester(@PathVariable String semester, Principal principal) {
 		logger.info("################ /project/grades/primary-teacher/semester/{semester}/finalbysubject/getPrimaryTeacherStudentsFinalBySubjectForSemester started.");
@@ -624,7 +633,7 @@ public class GradeController {
 	}
 
 	@Secured({"ROLE_TEACHER"})
-	@JsonView(Views.Student.class)
+	@JsonView(Views.Teacher.class)
 	@RequestMapping(method = RequestMethod.GET, value = "/teacher/semester/{semester}/groupedbysubject")
 	public ResponseEntity<?> getTeacherStudentsGroupedBySubjectForSemester(@PathVariable String semester, Principal principal) {
 		logger.info("################ /project/grades/teacher/semester/{semester}/groupedbysubject/getTeacherStudentsGroupedBySubjectForSemester started.");
@@ -672,7 +681,7 @@ public class GradeController {
 	}
 
 	@Secured({"ROLE_TEACHER"})
-	@JsonView(Views.Student.class)
+	@JsonView(Views.Teacher.class)
 	@RequestMapping(method = RequestMethod.GET, value = "/teacher/semester/{semester}/bysubject/{id}")
 	public ResponseEntity<?> getTeacherStudentsGroupedBySubjectForSemesterAndSubject(@PathVariable String semester, @PathVariable Integer id, Principal principal) {
 		logger.info("################ /project/grades/teacher/semester/{semester}/bysubject/{id}/getTeacherStudentsGroupedBySubjectForSemesterAndSubject started.");
@@ -720,7 +729,7 @@ public class GradeController {
 	}
 
 	@Secured({"ROLE_ADMIN"})
-	@JsonView(Views.Student.class)
+	@JsonView(Views.Admin.class)
 	@RequestMapping(method = RequestMethod.GET, value = "/admin/semester/{semester}/groupedbysubject")
 	public ResponseEntity<?> getAdminStudentsGroupedBySubjectForSemester(@PathVariable String semester, Principal principal) {
 		logger.info("################ /project/grades/admin/semester/{semester}/groupedbysubject/getAdminStudentsGroupedBySubjectForSemester started.");
@@ -767,7 +776,7 @@ public class GradeController {
 	}
 
 	@Secured({"ROLE_ADMIN"})
-	@JsonView(Views.Student.class)
+	@JsonView(Views.Admin.class)
 	@RequestMapping(method = RequestMethod.GET, value = "/admin/semester/{semester}/bysubject/{id}")
 	public ResponseEntity<?> getAdminStudentsGroupedBySubjectForSemesterAndSubject(@PathVariable String semester, @PathVariable Integer id, Principal principal) {
 		logger.info("################ /project/grades/admin/semester/{semester}/bysubject/{id}/getAdminStudentsGroupedBySubjectForSemesterAndSubject started.");
@@ -814,7 +823,7 @@ public class GradeController {
 	}
 
 	@Secured({"ROLE_ADMIN"})
-	@JsonView(Views.Student.class)
+	@JsonView(Views.Admin.class)
 	@RequestMapping(method = RequestMethod.GET, value = "/admin/semester/{semester}/bystudent/{id}")
 	public ResponseEntity<?> getAdminStudentsGroupedByStudentForSemesterAndSubject(@PathVariable String semester, @PathVariable Integer id, Principal principal) {
 		logger.info("################ /project/grades/admin/semester/{semester}/bystudent/{id}/getAdminStudentsGroupedBySubjectForSemesterAndSubject started.");
@@ -870,24 +879,24 @@ public class GradeController {
 			}
 		if (newGrade == null) {
 			logger.info("---------------- New grade is null.");
-	        return new ResponseEntity<>("New grade is null.", HttpStatus.BAD_REQUEST);
+	        return new ResponseEntity<RESTError>(new RESTError(5, "New grade is null."), HttpStatus.BAD_REQUEST);
 	      }
 		if (newGrade.getStudent() == null && newGrade.getSubject() == null && newGrade.getGradeValue() == null && newGrade.getSemester() == null) {
 			logger.info("---------------- Some data is null.");
-	        return new ResponseEntity<>("Some data is null", HttpStatus.BAD_REQUEST);
+	        return new ResponseEntity<RESTError>(new RESTError(5, "Some data is null"), HttpStatus.BAD_REQUEST);
 		}
 		GradeEntity grade = new GradeEntity();
 		try {
 			StudentEntity student = studentRepository.findByIdAndStatusLike(Integer.parseInt(newGrade.getStudent()), 1);
 			if (student==null || student.getStatus()!=1) {
 				logger.info("---------------- Student not found.");
-				return new ResponseEntity<>("Student not found.", HttpStatus.NOT_FOUND);
+				return new ResponseEntity<RESTError>(new RESTError(4, "Student not found."), HttpStatus.NOT_FOUND);
 			}
 			logger.info("Student: " + student.getId().toString());
 			SubjectEntity subject = subjectRepository.findByIdAndStatusLike(Integer.parseInt(newGrade.getSubject()), 1);
 			if (subject==null || subject.getStatus()!=1) {
 				logger.info("---------------- Subject not found.");
-				return new ResponseEntity<>("Subject not found.", HttpStatus.NOT_FOUND);
+				return new ResponseEntity<RESTError>(new RESTError(4, "Subject not found."), HttpStatus.NOT_FOUND);
 			}
 			logger.info("Subject: " + subject.getId().toString());
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
@@ -895,13 +904,13 @@ public class GradeController {
 			TeacherEntity teacher = teacherRepository.findByIdAndStatusLike(loggedUser.getId(), 1);
 			if (teacher==null) {
 				logger.info("---------------- Teacher not found.");
-				return new ResponseEntity<>("Teacher not found.", HttpStatus.NOT_FOUND);
+				return new ResponseEntity<RESTError>(new RESTError(4, "Teacher not found."), HttpStatus.NOT_FOUND);
 			}
 			logger.info("Teacher: " + teacher.getId().toString());
 			TeacherSubjectDepartmentEntity teacherDepartments = teacherSubjectDepartmentRepository.getByTeachingTeacherAndTeachingSubjectAndTeachingDepartmentAndTeachingClass(teacher, subject, student);
 			if (teacherDepartments==null) {
 				logger.info("---------------- Not student teacher or not subject in class or not teacher subject.");
-				return new ResponseEntity<>("Not student teacher or not subject in class or not teacher subject.", HttpStatus.FORBIDDEN);
+				return new ResponseEntity<RESTError>(new RESTError(3, "Not student teacher or not subject in class or not teacher subject."), HttpStatus.FORBIDDEN);
 			}
 			logger.info("Teacher subject department: " + teacherDepartments.getId().toString());
 			grade = gradeDao.addNewGrade(teacher, student, teacherDepartments, newGrade);		
@@ -936,30 +945,30 @@ public class GradeController {
 			}
 		if (id == null) {
 			logger.info("---------------- Grade is null.");
-	        return new ResponseEntity<>("Grade is null.", HttpStatus.BAD_REQUEST);
+	        return new ResponseEntity<RESTError>(new RESTError(5, "Grade is null."), HttpStatus.BAD_REQUEST);
 	      }
 		if (newGrade == null) {
 			logger.info("---------------- New grade is null.");
-	        return new ResponseEntity<>("New grade is null.", HttpStatus.BAD_REQUEST);
+	        return new ResponseEntity<RESTError>(new RESTError(5, "New grade is null."), HttpStatus.BAD_REQUEST);
 	      }
 		GradeEntity ge = new GradeEntity();
 		try {
 			GradeEntity grade = gradeRepository.findByIdAndStatusLike(Integer.parseInt(id), 1);
 			if (grade==null) {
 				logger.info("---------------- Grade not found.");
-				return new ResponseEntity<>("Grade not found.", HttpStatus.NOT_FOUND);
+				return new ResponseEntity<RESTError>(new RESTError(4, "Grade not found."), HttpStatus.NOT_FOUND);
 			}
 			if (newGrade.getStudent() != null && newGrade.getSubject() != null && newGrade.getSemester() != null && newGrade.getGradeValue() != null) {
 				StudentEntity student = studentRepository.findByIdAndStatusLike(Integer.parseInt(newGrade.getStudent()), 1);
 				if (student==null || student.getStatus()!=1) {
 					logger.info("---------------- Student not found.");
-					return new ResponseEntity<>("Student not found.", HttpStatus.NOT_FOUND);
+					return new ResponseEntity<RESTError>(new RESTError(4, "Student not found."), HttpStatus.NOT_FOUND);
 				}
 				logger.info("Student identified.");
 				SubjectEntity subject = subjectRepository.findByIdAndStatusLike(Integer.parseInt(newGrade.getSubject()), 1);
 				if (subject==null || subject.getStatus()!=1) {
 					logger.info("---------------- Subject not found.");
-					return new ResponseEntity<>("Subject not found.", HttpStatus.NOT_FOUND);
+					return new ResponseEntity<RESTError>(new RESTError(4, "Subject not found."), HttpStatus.NOT_FOUND);
 				}
 				logger.info("Subject identified.");
 				UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
@@ -978,18 +987,18 @@ public class GradeController {
 				}
 				if (teacher==null) {
 					logger.info("---------------- Teacher not found.");
-					return new ResponseEntity<>("Teacher not found.", HttpStatus.NOT_FOUND);
+					return new ResponseEntity<RESTError>(new RESTError(4, "Teacher not found."), HttpStatus.NOT_FOUND);
 				}
 				if (teacher != grade.getTeacher_subject_department().getTeachingTeacher() || !updateDate.before(grade.getGradeMadeDate())) {
 					logger.info("---------------- Teacher doesn't match or time for change expired.");
-					return new ResponseEntity<>("Teacher doesn't match or time for change expired.", HttpStatus.FORBIDDEN);
+					return new ResponseEntity<RESTError>(new RESTError(3, "Teacher doesn't match or time for change expired."), HttpStatus.FORBIDDEN);
 				}
 				logger.info("Teacher identified.");
-				if (student == grade.getStudent() && grade.getTeacher_subject_department().getStatus() == 1 && teacher == grade.getTeacher_subject_department().getTeachingTeacher() && subject == grade.getTeacher_subject_department().getTeachingSubject() && grade.getSemester().equals(ESemester.valueOf(newGrade.getSemester())) && updateDate.before(grade.getGradeMadeDate()) && !newGrade.getGradeValue().equals(grade.getGradeValue()))				
+				if (student == grade.getStudent() && /*grade.getTeacher_subject_department().getStatus() == 1 &&*/ teacher == grade.getTeacher_subject_department().getTeachingTeacher() && subject == grade.getTeacher_subject_department().getTeachingSubject() && grade.getSemester().equals(ESemester.valueOf(newGrade.getSemester())) && updateDate.before(grade.getGradeMadeDate()) && !newGrade.getGradeValue().equals(grade.getGradeValue()))				
 					ge = gradeDao.modifyGrade(loggedUser, grade, newGrade.getGradeValue());
 				else {
 					logger.info("---------------- Semester, teacher, subject adn/or student doesn't match or time for change expired.");
-					return new ResponseEntity<>("Semester, teacher, subject adn/or student doesn't match or time for change expired.", HttpStatus.FORBIDDEN);
+					return new ResponseEntity<RESTError>(new RESTError(3, "Semester, teacher, subject adn/or student doesn't match or time for change expired."), HttpStatus.FORBIDDEN);
 				}
 				if (ge != null) {
 					for (ParentEntity p : student.getParents()) 
@@ -1019,18 +1028,18 @@ public class GradeController {
 		logger.info("Logged user: " + principal.getName());
 		if (id == null) {
 			logger.info("---------------- Grade is null.");
-	        return new ResponseEntity<>("Grade is null.", HttpStatus.BAD_REQUEST);
+	        return new ResponseEntity<RESTError>(new RESTError(5, "Grade is null."), HttpStatus.BAD_REQUEST);
 	      }
 		if (value == null || value < 1 || value > 5) {
 			logger.info("---------------- Grade value is null or out of range.");
-	        return new ResponseEntity<>(" Grade value is null or out of range.", HttpStatus.BAD_REQUEST);
+	        return new ResponseEntity<RESTError>(new RESTError(5, " Grade value is null or out of range."), HttpStatus.BAD_REQUEST);
 	      }
 		GradeEntity ge = new GradeEntity();
 		try {
 			GradeEntity grade = gradeRepository.findByIdAndStatusLike(id, 1);
 			if (grade==null) {
 				logger.info("---------------- Grade not found.");
-				return new ResponseEntity<>("Grade not found.", HttpStatus.NOT_FOUND);
+				return new ResponseEntity<RESTError>(new RESTError(4, "Grade not found."), HttpStatus.NOT_FOUND);
 			}			
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
@@ -1048,18 +1057,20 @@ public class GradeController {
 			}
 			if (teacher==null) {
 				logger.info("---------------- Teacher not found.");
-				return new ResponseEntity<>("Teacher not found.", HttpStatus.NOT_FOUND);
+				return new ResponseEntity<RESTError>(new RESTError(4, "Teacher not found."), HttpStatus.NOT_FOUND);
 			}
 			if (teacher != grade.getTeacher_subject_department().getTeachingTeacher() || !updateDate.before(grade.getGradeMadeDate())) {
 				logger.info("---------------- Teacher doesn't match or time for change expired.");
-				return new ResponseEntity<>("Teacher doesn't match or time for change expired.", HttpStatus.FORBIDDEN);
+				return new ResponseEntity<RESTError>(new RESTError(3, "Teacher doesn't match or time for change expired."), HttpStatus.FORBIDDEN);
+				//return new ResponseEntity<RESTError>(new RESTError(3, "Teacher doesn't match or time for change expired."), HttpStatus.FORBIDDEN);
 			}
 			logger.info("Teacher identified.");
-			if (grade.getTeacher_subject_department().getStatus() == 1 && teacher == grade.getTeacher_subject_department().getTeachingTeacher() && updateDate.before(grade.getGradeMadeDate()) && !value.equals(grade.getGradeValue()))
+			if (/*grade.getTeacher_subject_department().getStatus() == 1 &&*/ teacher == grade.getTeacher_subject_department().getTeachingTeacher() && updateDate.before(grade.getGradeMadeDate()) && !value.equals(grade.getGradeValue()))
 				ge = gradeDao.modifyGrade(loggedUser, grade, value);
 			else {
-				logger.info("---------------- Teacher doesn't match or time for change expired.");
-				return new ResponseEntity<>("Teacher doesn't match or time for change expired.", HttpStatus.FORBIDDEN);
+				logger.info("---------------- Teacher doesn't match, same grade or time for change expired.");
+				return new ResponseEntity<RESTError>(new RESTError(3, "Teacher doesn't match or time for change expired."), HttpStatus.FORBIDDEN);
+				//return new ResponseEntity<RESTError>(new RESTError(3, "Teacher doesn't match or time for change expired."), HttpStatus.FORBIDDEN);
 			}
 			if (ge != null) {
 				for (ParentEntity p : grade.getStudent().getParents()) 
@@ -1078,20 +1089,20 @@ public class GradeController {
 
 	@SuppressWarnings("deprecation")
 	@Secured({"ROLE_TEACHER", "ROLE_ADMIN"})
-	@JsonView(Views.Admin.class)
+	@JsonView(Views.Teacher.class)
 	@RequestMapping(method = RequestMethod.PUT, value = "/undelete/{id}")
 	public ResponseEntity<?> unDelete(@PathVariable Integer id, Principal principal) {
 		logger.info("################ /project/grades/undelete/{id}/unDelete started.");
 		logger.info("Logged user: " + principal.getName());
 		if (id == null) {
 			logger.info("---------------- Grade is null.");
-	        return new ResponseEntity<>("Grade is null.", HttpStatus.BAD_REQUEST);
+	        return new ResponseEntity<RESTError>(new RESTError(5, "Grade is null."), HttpStatus.BAD_REQUEST);
 	      }
 		try {
 			GradeEntity grade = gradeRepository.findByIdAndStatusLike(id, 0);
 			if (grade==null || grade.getStatus()!=0) {
 				logger.info("---------------- Grade not found.");
-				return new ResponseEntity<>("Grade not found.", HttpStatus.NOT_FOUND);
+				return new ResponseEntity<RESTError>(new RESTError(4, "Grade not found."), HttpStatus.NOT_FOUND);
 			}
 			logger.info("Grade identified.");
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
@@ -1110,11 +1121,11 @@ public class GradeController {
 			}
 			if (teacher==null) {
 				logger.info("---------------- Teacher not found.");
-				return new ResponseEntity<>("Teacher not found.", HttpStatus.NOT_FOUND);
+				return new ResponseEntity<RESTError>(new RESTError(4, "Teacher not found."), HttpStatus.NOT_FOUND);
 			}
 			if (grade.getTeacher_subject_department().getStatus() != 1 || teacher != grade.getTeacher_subject_department().getTeachingTeacher() || !updateDate.before(grade.getGradeMadeDate())) {
 				logger.info("---------------- Teacher doesn't match or time for undelete expired.");
-				return new ResponseEntity<>("Teacher doesn't match or time for undelete expired.", HttpStatus.FORBIDDEN);
+				return new ResponseEntity<RESTError>(new RESTError(3, "Teacher doesn't match or time for undelete expired."), HttpStatus.FORBIDDEN);
 			}
 			logger.info("Teacher identified.");
 			gradeDao.setStatusActive(loggedUser, grade);
@@ -1142,13 +1153,13 @@ public class GradeController {
 		logger.info("Logged user: " + principal.getName());
 		if (id == null) {
 			logger.info("---------------- Grade is null.");
-	        return new ResponseEntity<>("Grade is null.", HttpStatus.BAD_REQUEST);
+	        return new ResponseEntity<RESTError>(new RESTError(5, "Grade is null."), HttpStatus.BAD_REQUEST);
 	      }
 		try {
 			GradeEntity grade = gradeRepository.getById(id);
 			if (grade==null || grade.getStatus()==-1) {
 				logger.info("---------------- Grade not found.");
-				return new ResponseEntity<>("Grade not found.", HttpStatus.NOT_FOUND);
+				return new ResponseEntity<RESTError>(new RESTError(4, "Grade not found."), HttpStatus.NOT_FOUND);
 			}
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
@@ -1166,20 +1177,20 @@ public class GradeController {
 
 	@SuppressWarnings("deprecation")
 	@Secured({"ROLE_TEACHER", "ROLE_ADMIN"})
-	@JsonView(Views.Admin.class)
+	@JsonView(Views.Teacher.class)
 	@RequestMapping(method = RequestMethod.DELETE, value = "/{id}")
 	public ResponseEntity<?> delete(@PathVariable Integer id, Principal principal) {
 		logger.info("################ /project/grades/{id}/delete started.");
 		logger.info("Logged user: " + principal.getName());
 		if (id == null) {
 			logger.info("---------------- Grade is null.");
-	        return new ResponseEntity<>("Grade is null.", HttpStatus.BAD_REQUEST);
+	        return new ResponseEntity<RESTError>(new RESTError(5, "Grade is null."), HttpStatus.BAD_REQUEST);
 	      }
 		try {
 			GradeEntity grade = gradeRepository.findByIdAndStatusLike(id, 1);
 			if (grade==null || grade.getStatus()!=1) {
 				logger.info("---------------- Grade not found.");
-				return new ResponseEntity<Object>("Grade not found.", HttpStatus.NOT_FOUND);
+				return new ResponseEntity<RESTError>(new RESTError(4, "Grade not found."), HttpStatus.NOT_FOUND);
 			}
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
@@ -1197,11 +1208,12 @@ public class GradeController {
 			}
 			if (teacher==null) {
 				logger.info("---------------- Teacher not found.");
-				return new ResponseEntity<>("Teacher not found.", HttpStatus.NOT_FOUND);
+				return new ResponseEntity<RESTError>(new RESTError(4, "Teacher not found."), HttpStatus.NOT_FOUND);
 			}
-			if (grade.getTeacher_subject_department().getStatus() != 1 || teacher != grade.getTeacher_subject_department().getTeachingTeacher() || !updateDate.before(grade.getGradeMadeDate())) {
+			if (/*grade.getTeacher_subject_department().getStatus() != 1 ||*/ teacher != grade.getTeacher_subject_department().getTeachingTeacher() || !updateDate.before(grade.getGradeMadeDate())) {
 				logger.info("---------------- Teacher doesn't match or time for delete expired.");
-				return new ResponseEntity<>("Teacher doesn't match or time for delete expired.", HttpStatus.FORBIDDEN);
+				//return new ResponseEntity<RESTError>(new RESTError(3, "Teacher doesn't match or time for delete expired."), HttpStatus.FORBIDDEN);
+				return new ResponseEntity<RESTError>(new RESTError(3, "Teacher doesn't match or time for delete expired."), HttpStatus.FORBIDDEN);
 			}
 			logger.info("Teacher identified.");
 			gradeDao.setStatusDeleted(loggedUser, grade);

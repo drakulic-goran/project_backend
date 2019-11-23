@@ -18,7 +18,12 @@ public interface UserAccountRepository extends CrudRepository<UserAccountEntity,
 	public UserAccountEntity getByUser(UserEntity user);
 	@Query("select ua.user from UserAccountEntity ua where ua.username=:username and ua.status=:status")
 	public UserEntity findUserByUsernameAndStatusLike(String username, Integer status);
+	@Query("select ua.user from UserAccountEntity ua where ua.username=:username and ua.status=:status")
+	public TeacherEntity findTeacherByUsernameAndStatusLike(String username, Integer status);
 	public UserAccountEntity findByUserAndAccessRoleLikeAndStatusLike(UserEntity user, EUserRole eUserRole, Integer status);
+	@Query("select ua from UserAccountEntity ua join ua.user us where us.id=:userId and ua.accessRole=:eUserRole and ua.status=:status")
+	public UserAccountEntity findByUserIdAndAccessRoleLikeAndStatusLike(Integer userId, EUserRole eUserRole, Integer status);
+	public Iterable<UserAccountEntity> findByAccessRoleLikeAndStatusLike(EUserRole eUserRole, Integer status);
 	public Iterable<UserAccountEntity> findByStatusLike(Integer status);
 	public UserAccountEntity findByIdAndStatusLike(Integer id, Integer status);
 	public UserAccountEntity findByUserAndAccessRoleAndStatusLike(UserEntity user, EUserRole role, Integer status);

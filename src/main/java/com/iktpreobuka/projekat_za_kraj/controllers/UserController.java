@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.annotation.JsonView;
 import com.iktpreobuka.projekat_za_kraj.controllers.util.RESTError;
+import com.iktpreobuka.projekat_za_kraj.entities.UserAccountEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.UserEntity;
 import com.iktpreobuka.projekat_za_kraj.repositories.UserAccountRepository;
 import com.iktpreobuka.projekat_za_kraj.repositories.UserRepository;
@@ -56,10 +57,12 @@ public class UserController {
 			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}		
-
 	
+	//@Secured("ROLE_STUDENT")
+	@JsonView(Views.Student.class)
 	@RequestMapping(method = RequestMethod.GET, value = "/LogIn")
-	public boolean LogIn(Principal principal) {
+	//public boolean LogIn(Principal principal) {
+	public ResponseEntity<?> LogIn(Principal principal) {
 		logger.info("################ /project/users/LogIn started.");
 		logger.info("Logged username: " + principal.getName());
 		try {
@@ -69,10 +72,17 @@ public class UserController {
 			userLogged.setPassword(loggedUser.getPassword());
 			logger.info("---------------- Finished OK.");
 			return new ResponseEntity<UserAccountDto>(userLogged, HttpStatus.OK);*/
-			return true;
+			//return true;
+			UserAccountEntity loggedUser= userAccountRepository.findByUsernameAndStatusLike(principal.getName(), 1);
+			if (loggedUser == null) {
+				logger.info("---------------- User not found.");
+		        return new ResponseEntity<RESTError>(new RESTError(4, "User not found."), HttpStatus.NOT_FOUND);
+			}
+			logger.info("---------------- LogIn finished OK.");
+			return new ResponseEntity<UserAccountEntity>(loggedUser, HttpStatus.OK);
 		} catch(Exception e) {
 			logger.error("---------------- This is an exception message:" + e.getMessage());
-			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR) != null;
+			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}		
 

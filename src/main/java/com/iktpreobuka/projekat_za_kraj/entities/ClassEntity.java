@@ -47,12 +47,12 @@ public class ClassEntity {
 	private List<DepartmentEntity> departments = new ArrayList<>();
 */
 	
-	@JsonIgnore
+	//@JsonIgnore - Skinuto zbog FE
 	@JsonView(Views.Teacher.class)
 	@OneToMany(mappedBy = "clas", fetch = FetchType.LAZY, cascade = { CascadeType.REFRESH}, orphanRemoval = true)
 	private List<DepartmentClassEntity> departments = new ArrayList<>();
 	
-	@JsonView(Views.Admin.class)
+	@JsonView(Views.Teacher.class)
 	@JsonIgnore
 	@OneToMany(mappedBy = "teachingClass", fetch = FetchType.LAZY, cascade = { CascadeType.REFRESH})
 	private List<TeacherSubjectDepartmentEntity> teachers_subjects_departments = new ArrayList<>();
@@ -60,11 +60,11 @@ public class ClassEntity {
 	
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
-	@JsonView(Views.Admin.class)
+	@JsonView(Views.Student.class)
 	@Column(name="class_id")
 	private Integer id;
 	@JsonView(Views.Student.class)
-	@Column(name="class_label", unique=true, length=4)
+	@Column(name="class_label", length=4)
 	@Enumerated(EnumType.STRING)
 	//@Pattern(regexp = "^(IV|V?I{1,2})$", message="Student class is not valid, must be I, II, III, IV, V, VI, VII or VIII.")
 	@NotNull (message = "Class label must be provided.")

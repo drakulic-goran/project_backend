@@ -12,6 +12,8 @@ import org.springframework.transaction.annotation.Transactional;
 import com.iktpreobuka.projekat_za_kraj.entities.ParentEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.UserEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.dto.ParentDto;
+import com.iktpreobuka.projekat_za_kraj.entities.dto.SearchParentsDto;
+import com.iktpreobuka.projekat_za_kraj.enumerations.EUserRole;
 
 public interface ParentRepository extends CrudRepository<ParentEntity, Integer> {
 
@@ -46,5 +48,8 @@ public interface ParentRepository extends CrudRepository<ParentEntity, Integer> 
     @Modifying
     @Query (value ="INSERT INTO parent (user_id, e_mail, status, created_by) VALUES (:user, :email, 1, :logged)", nativeQuery = true)
 	public void addAdminFromExistUser(String email, Integer user, Integer logged);
+	
+	@Query("select new com.iktpreobuka.projekat_za_kraj.entities.dto.SearchParentsDto(u, ua) from ParentEntity u join u.accounts ua where ua.accessRole=:role and u.status=:status and ua.status=1")
+	public Iterable<SearchParentsDto> findByStatusWithUserAccount(Integer status, EUserRole role);
 
 }

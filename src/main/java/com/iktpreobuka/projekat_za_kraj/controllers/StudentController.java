@@ -38,6 +38,7 @@ import com.iktpreobuka.projekat_za_kraj.entities.StudentDepartmentEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.StudentEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.UserAccountEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.UserEntity;
+import com.iktpreobuka.projekat_za_kraj.entities.dto.SearchStudentsDto;
 import com.iktpreobuka.projekat_za_kraj.entities.dto.StudentDto;
 import com.iktpreobuka.projekat_za_kraj.entities.dto.StudentSubjectTeacherDto;
 import com.iktpreobuka.projekat_za_kraj.entities.dto.SubjectTeacherDto;
@@ -120,9 +121,42 @@ public class StudentController {
 	
 	@Secured("ROLE_ADMIN")
 	@JsonView(Views.Admin.class)
+	@RequestMapping(method = RequestMethod.GET, value = "/withaccount")
+	public ResponseEntity<?> getAllWithUserAccount(Principal principal) {
+		logger.info("################ /project/student/getAllWithUserAccount started.");
+		logger.info("Logged username: " + principal.getName());
+		try {
+			Iterable<SearchStudentsDto> users= studentRepository.findByStatusWithUserAccount(1, EUserRole.ROLE_STUDENT);
+			logger.info("---------------- Finished OK.");
+			return new ResponseEntity<Iterable<SearchStudentsDto>>(users, HttpStatus.OK);
+		} catch(Exception e) {
+			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+	
+	@Secured("ROLE_ADMIN")
+	@JsonView(Views.Admin.class)
+	@RequestMapping(method = RequestMethod.GET, value = "/withaccount/withdepartment")
+	public ResponseEntity<?> getAllWithUserAccountAndDepartmentAndClass(Principal principal) {
+		logger.info("################ /project/student/getAllWithUserAccountAndDepartmentAndClass started.");
+		logger.info("Logged username: " + principal.getName());
+		try {
+			Iterable<SearchStudentsDto> users= studentRepository.findByStatusWithUserAccountAndDepartmentAndClass(1, EUserRole.ROLE_STUDENT);
+			logger.info("---------------- Finished OK.");
+			return new ResponseEntity<Iterable<SearchStudentsDto>>(users, HttpStatus.OK);
+		} catch(Exception e) {
+			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+
+	
+	@Secured("ROLE_ADMIN")
+	@JsonView(Views.Admin.class)
 	@RequestMapping(method = RequestMethod.GET, value = "/{id}")
-	public ResponseEntity<?> getAll(@PathVariable Integer id, Principal principal) {
-		logger.info("################ /project/student/getAll started.");
+	public ResponseEntity<?> getById(@PathVariable Integer id, Principal principal) {
+		logger.info("################ /project/student/getById started.");
 		logger.info("Logged username: " + principal.getName());
 		try {
 			StudentEntity user= studentRepository.findByIdAndStatusLike(id, 1);
@@ -134,7 +168,24 @@ public class StudentController {
 		}
 	}
 
-	
+	@Secured("ROLE_STUDENT")
+	@JsonView(Views.Student.class)
+	@RequestMapping(method = RequestMethod.GET, value = "/logged")
+	public ResponseEntity<?> getLoggedStudent(Principal principal) {
+		logger.info("################ /project/student/getLoggedStudent started.");
+		logger.info("Logged username: " + principal.getName());
+		try {
+			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
+			logger.info("Logged user identified.");
+			StudentEntity user= studentRepository.findByIdAndStatusLike(loggedUser.getId(), 1);
+			logger.info("---------------- Finished OK.");
+			return new ResponseEntity<StudentEntity>(user, HttpStatus.OK);
+		} catch(Exception e) {
+			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+
 	@Secured("ROLE_ADMIN")
 	@JsonView(Views.Admin.class)
 	@RequestMapping(method = RequestMethod.GET, value = "/deleted")
@@ -154,8 +205,8 @@ public class StudentController {
 	@Secured("ROLE_ADMIN")
 	@JsonView(Views.Admin.class)
 	@RequestMapping(method = RequestMethod.GET, value = "/deleted/{id}")
-	public ResponseEntity<?> getAllDeleted(@PathVariable Integer id, Principal principal) {
-		logger.info("################ /project/student/deleted/getAllDeleted started.");
+	public ResponseEntity<?> getDeletedById(@PathVariable Integer id, Principal principal) {
+		logger.info("################ /project/student/deleted/getDeletedById started.");
 		logger.info("Logged username: " + principal.getName());
 		try {
 			StudentEntity user= studentRepository.findByIdAndStatusLike(id, 0);
@@ -186,8 +237,8 @@ public class StudentController {
 	@Secured("ROLE_ADMIN")
 	@JsonView(Views.Admin.class)
 	@RequestMapping(method = RequestMethod.GET, value = "/archived/{id}")
-	public ResponseEntity<?> getAllArchived(@PathVariable Integer id, Principal principal) {
-		logger.info("################ /project/student/archived/getAllArchived started.");
+	public ResponseEntity<?> getArchivedById(@PathVariable Integer id, Principal principal) {
+		logger.info("################ /project/student/archived/getArchivedById started.");
 		logger.info("Logged username: " + principal.getName());
 		try {
 			StudentEntity user= studentRepository.findByIdAndStatusLike(id, -1);
@@ -291,7 +342,7 @@ public class StudentController {
 	@JsonView(Views.Admin.class)
 	@RequestMapping(method = RequestMethod.POST)
 	public ResponseEntity<?> addNewSudent(@Valid @RequestBody StudentDto newStudent, Principal principal, BindingResult result) {
-		logger.info("################ /project/student/addNewAdmin started.");
+		logger.info("################ /project/student/addNewSudent started.");
 		logger.info("Logged user: " + principal.getName());
 		if (result.hasErrors()) { 
 			logger.info("---------------- Validation has errors - " + createErrorMessage(result));
@@ -299,29 +350,29 @@ public class StudentController {
 			}
 		if (newStudent == null) {
 			logger.info("---------------- New student is null.");
-	        return new ResponseEntity<>("New student is null.", HttpStatus.BAD_REQUEST);
+	        return new ResponseEntity<RESTError>(new RESTError(5, "New student is null."), HttpStatus.BAD_REQUEST);
 	      }
 		if (newStudent.getFirstName() == null || newStudent.getLastName() == null || newStudent.getSchoolIdentificationNumber() == null || newStudent.getEnrollmentDate() == null|| newStudent.getGender() == null || newStudent.getjMBG() == null) {
 			logger.info("---------------- Some atributes is null.");
-			return new ResponseEntity<>("Some atributes is null.", HttpStatus.BAD_REQUEST);
+			return new ResponseEntity<RESTError>(new RESTError(5, "Some atributes is null."), HttpStatus.BAD_REQUEST);
 		}
 		UserEntity user = new StudentEntity();
 		try {
 			if (newStudent.getjMBG() != null && studentRepository.getByJMBG(newStudent.getjMBG()) != null) {
 				logger.info("---------------- JMBG already exist.");
-				return new ResponseEntity<>("JMBG already exist.", HttpStatus.NOT_ACCEPTABLE);
+				return new ResponseEntity<RESTError>(new RESTError(2, "JMBG already exist."), HttpStatus.NOT_ACCEPTABLE);
 			}
 			if (newStudent.getSchoolIdentificationNumber() != null && studentRepository.getBySchoolIdentificationNumber(newStudent.getSchoolIdentificationNumber()) != null) {
 				logger.info("---------------- School identification number already exist.");
-				return new ResponseEntity<>("School identification number already exist.", HttpStatus.NOT_ACCEPTABLE);
+				return new ResponseEntity<RESTError>(new RESTError(2, "School identification number already exist."), HttpStatus.NOT_ACCEPTABLE);
 			}
 			if (newStudent.getAccessRole() != null && !newStudent.getAccessRole().equals("ROLE_STUDENT")) {
 				logger.info("---------------- Access role must be ROLE_STUDENT.");
-		        return new ResponseEntity<>("Access role must be ROLE_STUDENT.", HttpStatus.NOT_ACCEPTABLE);
+		        return new ResponseEntity<RESTError>(new RESTError(2, "Access role must be ROLE_STUDENT."), HttpStatus.NOT_ACCEPTABLE);
 			}		
 			if (newStudent.getUsername() != null && userAccountRepository.getByUsername(newStudent.getUsername()) != null) {
 				logger.info("---------------- Username already exist.");
-		        return new ResponseEntity<>("Username already exist.", HttpStatus.NOT_ACCEPTABLE);
+		        return new ResponseEntity<RESTError>(new RESTError(2, "Username already exist."), HttpStatus.NOT_ACCEPTABLE);
 		    }
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
@@ -344,11 +395,11 @@ public class StudentController {
 		}
 	}
 	
-	@Secured("ROLE_ADMIN")
-	@JsonView(Views.Admin.class)
+	@Secured({"ROLE_STUDENT", "ROLE_ADMIN"})
+	@JsonView(Views.Student.class)
 	@RequestMapping(method = RequestMethod.PUT, value = "/{id}")
-	public ResponseEntity<?> modifyAdmin(@PathVariable Integer id, @Valid @RequestBody StudentDto updateStudent, Principal principal, BindingResult result) {
-		logger.info("################ /project/student/{id}/modifyAdmin started.");
+	public ResponseEntity<?> modifyStudent(@PathVariable Integer id, @Valid @RequestBody StudentDto updateStudent, Principal principal, BindingResult result) {
+		logger.info("################ /project/student/{id}/modifyStudent started.");
 		logger.info("Logged user: " + principal.getName());
 		if (result.hasErrors()) { 
 			logger.info("---------------- Validation has errors - " + createErrorMessage(result));
@@ -356,40 +407,52 @@ public class StudentController {
 			}
 		if (updateStudent == null) {
 			logger.info("---------------- New student is null.");
-	        return new ResponseEntity<>("New student is null.", HttpStatus.BAD_REQUEST);
+	        return new ResponseEntity<RESTError>(new RESTError(5, "New student is null."), HttpStatus.BAD_REQUEST);
 	      }
 		StudentEntity user = new StudentEntity();
 		try {
-			if (updateStudent.getjMBG() != null && userRepository.getByJMBG(updateStudent.getjMBG()) != null) {
-				logger.info("---------------- JMBG already exist.");
-		        return new ResponseEntity<>("JMBG already exist.", HttpStatus.NOT_ACCEPTABLE);
-			}
-			if (updateStudent.getSchoolIdentificationNumber() != null && studentRepository.getBySchoolIdentificationNumber(updateStudent.getSchoolIdentificationNumber()) != null) {
-				logger.info("---------------- School identification number already exist.");
-				return new ResponseEntity<>("School identification number already exist.", HttpStatus.NOT_ACCEPTABLE);
-			}
-			if (updateStudent.getAccessRole() != null && !updateStudent.getAccessRole().equals("ROLE_STUDENT")) {
-				logger.info("---------------- Access role must be ROLE_STUDENT.");
-		        return new ResponseEntity<>("Access role must be ROLE_STUDENT.", HttpStatus.NOT_ACCEPTABLE);
-			}		
-			if (updateStudent.getUsername() != null && userAccountRepository.getByUsername(updateStudent.getUsername()) != null) {
-				logger.info("---------------- Username already exist.");
-		        return new ResponseEntity<>("Username already exist.", HttpStatus.NOT_ACCEPTABLE);
-		      }
 			user = studentRepository.findByIdAndStatusLike(id, 1);
 			if (user == null) {
 				logger.info("---------------- Student not found.");
-		        return new ResponseEntity<>("Student not found.", HttpStatus.NOT_FOUND);
+		        return new ResponseEntity<RESTError>(new RESTError(4, "Student not found."), HttpStatus.NOT_FOUND);
 		      }
-			logger.info("Teacher identified.");
+			logger.info("Student identified.");
+			UserAccountEntity account = userAccountRepository.findByUserAndAccessRoleLikeAndStatusLike(user, EUserRole.ROLE_STUDENT, 1);
+			logger.info("Student's user account identified.");
+			if (updateStudent.getjMBG() != null && updateStudent.getjMBG().equals(user.getjMBG()) ) {
+				logger.info("---------------- Same JMBG.");
+		        return new ResponseEntity<RESTError>(new RESTError(2, "Same JMBG."), HttpStatus.NOT_ACCEPTABLE);
+			}
+			if (updateStudent.getSchoolIdentificationNumber() != null && updateStudent.getSchoolIdentificationNumber().equals(user.getSchoolIdentificationNumber()) ) {
+				logger.info("---------------- Same school identification number.");
+				return new ResponseEntity<RESTError>(new RESTError(2, "Same school identification number."), HttpStatus.NOT_ACCEPTABLE);
+			}
+			if (updateStudent.getUsername() != null && updateStudent.getUsername().equals(account.getUsername()) ) {
+				logger.info("---------------- Same username.");
+		        return new ResponseEntity<RESTError>(new RESTError(2, "Same username."), HttpStatus.NOT_ACCEPTABLE);
+			}
+			if (updateStudent.getjMBG() != null && userRepository.getByJMBG(updateStudent.getjMBG()) != null) {
+				logger.info("---------------- JMBG already exist.");
+		        return new ResponseEntity<RESTError>(new RESTError(2, "JMBG already exist."), HttpStatus.NOT_ACCEPTABLE);
+			}
+			if (updateStudent.getSchoolIdentificationNumber() != null && studentRepository.getBySchoolIdentificationNumber(updateStudent.getSchoolIdentificationNumber()) != null) {
+				logger.info("---------------- School identification number already exist.");
+				return new ResponseEntity<RESTError>(new RESTError(2, "School identification number already exist."), HttpStatus.NOT_ACCEPTABLE);
+			}
+			if (updateStudent.getAccessRole() != null && !updateStudent.getAccessRole().equals("ROLE_STUDENT")) {
+				logger.info("---------------- Access role must be ROLE_STUDENT.");
+		        return new ResponseEntity<RESTError>(new RESTError(2, "Access role must be ROLE_STUDENT."), HttpStatus.NOT_ACCEPTABLE);
+			}		
+			if (updateStudent.getUsername() != null && userAccountRepository.getByUsername(updateStudent.getUsername()) != null) {
+				logger.info("---------------- Username already exist.");
+		        return new ResponseEntity<RESTError>(new RESTError(2, "Username already exist."), HttpStatus.NOT_ACCEPTABLE);
+		      }
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
 			if (updateStudent.getFirstName() != null || updateStudent.getLastName() != null || updateStudent.getSchoolIdentificationNumber() != null || updateStudent.getEnrollmentDate() != null|| updateStudent.getGender() != null || updateStudent.getjMBG() != null) {
 				studentDao.modifyStudent(loggedUser, user, updateStudent);
 				logger.info("Student modified.");
 			}
-			UserAccountEntity account = userAccountRepository.findByUserAndAccessRoleLikeAndStatusLike(user, EUserRole.ROLE_STUDENT, 1);
-			logger.info("Admin's user account identified.");
 			if (account != null) {
 				if (updateStudent.getUsername() != null && !updateStudent.getUsername().equals("") && !updateStudent.getUsername().equals(" ") && userAccountRepository.getByUsername(updateStudent.getUsername()) == null) {
 					userAccountDao.modifyAccountUsername(loggedUser, account, updateStudent.getUsername());
@@ -400,6 +463,7 @@ public class StudentController {
 					logger.info("Password modified.");
 				}
 				logger.info("Account modified.");
+				logger.info("---------------- Finished OK.");
 				return new ResponseEntity<>(account, HttpStatus.OK);
 			}
 			logger.info("---------------- Finished OK.");
@@ -421,18 +485,18 @@ public class StudentController {
 			user = studentRepository.findByIdAndStatusLike(id, 1);
 			if (user == null) {
 				logger.info("---------------- Student not found.");
-		        return new ResponseEntity<>("Student not found.", HttpStatus.NOT_FOUND);
+		        return new ResponseEntity<RESTError>(new RESTError(4, "Student not found."), HttpStatus.NOT_FOUND);
 		      }
 			logger.info("Student identified.");
 			ParentEntity parent = parentRepository.findByIdAndStatusLike(p_id, 1);
 			if (parent == null) {
 				logger.info("---------------- Parent not found.");
-		        return new ResponseEntity<>("Parent not found.", HttpStatus.NOT_FOUND);
+		        return new ResponseEntity<RESTError>(new RESTError(4, "Parent not found."), HttpStatus.NOT_FOUND);
 		      }
 			logger.info("Parent identified.");		
 			if (user.getParents().contains(parent)) {
 				logger.info("---------------- Parent already exist.");
-				return new ResponseEntity<>("Parent already exist.", HttpStatus.NOT_ACCEPTABLE);
+				return new ResponseEntity<RESTError>(new RESTError(2, "Parent already exist."), HttpStatus.NOT_ACCEPTABLE);
 			}
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
@@ -459,18 +523,18 @@ public class StudentController {
 			user = studentRepository.findByIdAndStatusLike(id, 1);
 			if (user == null) {
 				logger.info("---------------- Student not found.");
-		        return new ResponseEntity<>("Student not found.", HttpStatus.NOT_FOUND);
+		        return new ResponseEntity<RESTError>(new RESTError(4, "Student not found."), HttpStatus.NOT_FOUND);
 		      }
 			logger.info("Student identified.");
 			ParentEntity parent = parentRepository.findByIdAndStatusLike(p_id, 1);
 			if (parent == null) {
 				logger.info("---------------- Parent not found.");
-		        return new ResponseEntity<>("Parent not found.", HttpStatus.NOT_FOUND);
+		        return new ResponseEntity<RESTError>(new RESTError(4, "Parent not found."), HttpStatus.NOT_FOUND);
 		      }
 			logger.info("Parent identified.");		
 			if (!user.getParents().contains(parent)) {
 				logger.info("---------------- Parent not student parent.");
-				return new ResponseEntity<>("Parent not student parent.", HttpStatus.NOT_FOUND);
+				return new ResponseEntity<RESTError>(new RESTError(4, "Parent not student parent."), HttpStatus.NOT_FOUND);
 			}
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
@@ -494,25 +558,25 @@ public class StudentController {
 		logger.info("Logged user: " + principal.getName());
 		if (id == null || d_id == null || transferdate == null) {
 			logger.info("---------------- Some data is null.");
-	        return new ResponseEntity<>("Some data is null.", HttpStatus.BAD_REQUEST);
+	        return new ResponseEntity<RESTError>(new RESTError(5, "Some data is null."), HttpStatus.BAD_REQUEST);
 	      }
 		StudentDepartmentEntity sde = new StudentDepartmentEntity();
 		try {
 			StudentEntity user = studentRepository.findByIdAndStatusLike(id, 1);
 			if (user == null) {
 				logger.info("---------------- Student not found.");
-		        return new ResponseEntity<>("Student not found.", HttpStatus.NOT_FOUND);
+		        return new ResponseEntity<RESTError>(new RESTError(4, "Student not found."), HttpStatus.NOT_FOUND);
 		      }
 			logger.info("Student identified.");
 			DepartmentEntity department = departmentRepository.findByIdAndStatusLike(d_id, 1);
 			if (department == null) {
 				logger.info("---------------- Department not found.");
-		        return new ResponseEntity<>("Department not found.", HttpStatus.NOT_FOUND);
+		        return new ResponseEntity<RESTError>(new RESTError(4, "Department not found."), HttpStatus.NOT_FOUND);
 		      }
 			logger.info("Department identified.");
 			if (transferdate == null || transferdate.equals(" ") || transferdate.equals("") || studentDepartmentRepository.findByStudentAndDepartmentAndTransferDate(user, department, Date.valueOf(transferdate)) != null) {
 				logger.info("---------------- Transfer date same as last transfer date.");
-		        return new ResponseEntity<>("Transfer date same as last transfer date.", HttpStatus.NOT_ACCEPTABLE);
+		        return new ResponseEntity<RESTError>(new RESTError(2, "Transfer date same as last transfer date."), HttpStatus.NOT_ACCEPTABLE);
 			}
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
@@ -537,20 +601,20 @@ public class StudentController {
 		logger.info("Logged user: " + principal.getName());
 		if (id == null || d_id == null) {
 			logger.info("---------------- Some data is null.");
-	        return new ResponseEntity<>("Some data is null.", HttpStatus.BAD_REQUEST);
+	        return new ResponseEntity<RESTError>(new RESTError(5, "Some data is null."), HttpStatus.BAD_REQUEST);
 	      }
 		StudentDepartmentEntity sde = new StudentDepartmentEntity();
 		try {
 			StudentEntity user = studentRepository.findByIdAndStatusLike(id, 1);
 			if (user == null) {
 				logger.info("---------------- Student not found.");
-		        return new ResponseEntity<>("Student not found.", HttpStatus.NOT_FOUND);
+		        return new ResponseEntity<RESTError>(new RESTError(4, "Student not found."), HttpStatus.NOT_FOUND);
 		      }
 			logger.info("Student identified.");
 			DepartmentEntity department = departmentRepository.findByIdAndStatusLike(d_id, 1);
 			if (department == null) {
 				logger.info("---------------- Department not found.");
-		        return new ResponseEntity<>("Department not found.", HttpStatus.NOT_FOUND);
+		        return new ResponseEntity<RESTError>(new RESTError(4, "Department not found."), HttpStatus.NOT_FOUND);
 		      }
 			logger.info("Department identified.");
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
@@ -579,14 +643,14 @@ public class StudentController {
 			user = studentRepository.getById(id);
 			if (user == null || user.getStatus() == -1) {
 				logger.info("---------------- Student not found.");
-		        return new ResponseEntity<>("Student not found.", HttpStatus.NOT_FOUND);
+		        return new ResponseEntity<RESTError>(new RESTError(4, "Student not found."), HttpStatus.NOT_FOUND);
 		      }
 			logger.info("Student for archiving identified.");
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
 			if (id == loggedUser.getId()) {
 				logger.info("---------------- Selected Id is ID of logged User: Cann't archive yourself.");
-				return new ResponseEntity<>("Selected Id is ID of logged User: Cann't archive yourself.", HttpStatus.FORBIDDEN);
+				return new ResponseEntity<RESTError>(new RESTError(3, "Selected Id is ID of logged User: Cann't archive yourself."), HttpStatus.FORBIDDEN);
 		      }	
 			studentDao.archiveStudent(loggedUser, user);
 			logger.info("Student archived.");
@@ -624,7 +688,7 @@ public class StudentController {
 			user = studentRepository.findByIdAndStatusLike(id, 0);
 			if (user == null) {
 				logger.info("---------------- Student not found.");
-		        return new ResponseEntity<>("Student not found.", HttpStatus.NOT_FOUND);
+		        return new ResponseEntity<RESTError>(new RESTError(4, "Student not found."), HttpStatus.NOT_FOUND);
 		      }
 			logger.info("Student for undeleting identified.");
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
@@ -665,14 +729,14 @@ public class StudentController {
 			user = studentRepository.findByIdAndStatusLike(id, 1);
 			if (user == null) {
 				logger.info("---------------- Student not found.");
-		        return new ResponseEntity<>("Student not found.", HttpStatus.NOT_FOUND);
+		        return new ResponseEntity<RESTError>(new RESTError(4, "Student not found."), HttpStatus.NOT_FOUND);
 		      }
 			logger.info("Student for deleting identified.");
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
 			if (id == loggedUser.getId()) {
 				logger.info("---------------- Selected Id is ID of logged User: Cann't delete yourself.");
-				return new ResponseEntity<>("Selected Id is ID of logged User: Cann't delete yourself.", HttpStatus.FORBIDDEN);
+				return new ResponseEntity<RESTError>(new RESTError(3, "Selected Id is ID of logged User: Cann't delete yourself."), HttpStatus.FORBIDDEN);
 		      }	
 			studentDao.deleteStudent(loggedUser, user);
 			logger.info("Student deleted.");

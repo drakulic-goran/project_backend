@@ -35,11 +35,11 @@ public class StudentDepartmentEntity {
 	
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
-	@JsonView(Views.Admin.class)
+	@JsonView(Views.Student.class)
 	@Column(name="student_department_id")
 	private Integer id;
 		
-	@JsonIgnore
+	//@JsonIgnore -Skinuto zbog FE
 	@JsonView(Views.Student.class)
 	@ManyToOne(cascade = CascadeType.REFRESH, fetch = FetchType.LAZY)
 	@JoinColumn(name = "student_id")
@@ -47,7 +47,7 @@ public class StudentDepartmentEntity {
 	private StudentEntity student;
 
 	@JsonIgnore
-	@JsonView(Views.Admin.class)
+	@JsonView(Views.Student.class)
 	@ManyToOne(cascade = CascadeType.REFRESH, fetch = FetchType.LAZY)
 	@JoinColumn(name = "department_id", nullable=false)
 	@NotNull (message = "Department must be provided.")

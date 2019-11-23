@@ -39,4 +39,8 @@ public interface TeacherDao {
 	
 	public TeacherSubjectDepartmentEntity removeSubjectsInDepartmentsFromTeacher(UserEntity loggedUser, TeacherEntity user, String teachingDepartment, String teachingSubject) throws Exception;
 
+	public List<TeacherSubjectDepartmentEntity> addDepartmentsToSubjectForTeacher(UserEntity loggedUser, TeacherEntity user, List<String> teachingDepartments, String teachingSubject, String schoolYear) throws Exception;
+
+	public List<TeacherSubjectDepartmentEntity> removeDepartmentsFromSubjectForTeacher(UserEntity loggedUser, TeacherEntity user, List<String> teachingDepartments, String teachingSubject) throws Exception;
+
 }

@@ -46,15 +46,15 @@ public class TeacherSubjectEntity {
 	@NotNull (message = "Teacher must be provided.")
 	private TeacherEntity teacher;
 	
-	@JsonIgnore
-	@JsonView(Views.Admin.class)
+	//@JsonIgnore - Skinuto zbog FE
+	@JsonView(Views.Teacher.class)
 	@ManyToOne(cascade = CascadeType.REFRESH, fetch = FetchType.LAZY)
 	@JoinColumn(name = "subject_id", nullable=false)
 	@NotNull (message = "Subject must be provided.")
 	private SubjectEntity subject;
 
 	
-	@JsonView(Views.Admin.class)
+	@JsonView(Views.Teacher.class)
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
 	@NotNull (message = "Assignment date must be provided.")
 	@Column(name="assignment_date")

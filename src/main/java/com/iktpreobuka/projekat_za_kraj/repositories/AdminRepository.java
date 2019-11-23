@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.iktpreobuka.projekat_za_kraj.entities.AdminEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.UserEntity;
+import com.iktpreobuka.projekat_za_kraj.entities.dto.SearchAdminsDto;
 import com.iktpreobuka.projekat_za_kraj.enumerations.EUserRole;
 
 public interface AdminRepository extends CrudRepository<AdminEntity, Integer> {
@@ -27,6 +28,10 @@ public interface AdminRepository extends CrudRepository<AdminEntity, Integer> {
 	
 	public Iterable<AdminEntity> findByStatusLike(Integer i);
 
+	//@Query("select new com.iktpreobuka.projekat_za_kraj.entities.dto.AdminDto(u.firstName, u.lastName, u.jMBG, u.gender.toString(), u.mobilePhoneNumber, u.email, ua.username, ua.accessRole.toString(), ua.password, ua.password) from AdminEntity u join u.accounts ua where ua.accessRole=:role and u.status=:status")
+	@Query("select new com.iktpreobuka.projekat_za_kraj.entities.dto.SearchAdminsDto(u, ua) from AdminEntity u join u.accounts ua where ua.accessRole=:role and u.status=:status and ua.status=1")
+	public Iterable<SearchAdminsDto> findByStatusWithUserAccount(Integer status, EUserRole role);
+	
 	/* public UserEntity findByEmail(String email);
 	public List<UserEntity> findByFirstNameOrderByEmailAsc(String name); */
 	// public List<UserEntity> findByNameStartingWith(String letter);

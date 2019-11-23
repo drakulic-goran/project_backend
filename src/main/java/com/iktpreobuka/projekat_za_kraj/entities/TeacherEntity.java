@@ -32,13 +32,13 @@ public class TeacherEntity extends UserEntity {
 	private static final Integer STATUS_ARCHIVED = -1;
 
 	@JsonView(Views.Teacher.class)
-	@JsonIgnore
+	//@JsonIgnore - Skinuto zbog FE
 	@OneToMany(mappedBy = "teacher", fetch = FetchType.LAZY, cascade = { CascadeType.REFRESH}, orphanRemoval = true)
 	private List<TeacherSubjectEntity> subjects = new ArrayList<>();
 	
 	@JsonView(Views.Teacher.class)
-	@JsonIgnore
-	@OneToMany(mappedBy = "primary_teacher", fetch = FetchType.LAZY, cascade = { CascadeType.REFRESH})
+	//@JsonIgnore - Skinuto zbog FE
+	@OneToMany(mappedBy = "primaryTeacher", fetch = FetchType.LAZY, cascade = { CascadeType.REFRESH})
 	private List<PrimaryTeacherDepartmentEntity> departments = new ArrayList<>();
 	
 	@JsonView(Views.Teacher.class)

@@ -36,7 +36,7 @@ public class StudentEntity extends UserEntity {
 	private static final Integer STATUS_ACTIVE = 1;
 	private static final Integer STATUS_ARCHIVED = -1;
 
-	@JsonView(Views.Teacher.class)
+	@JsonView(Views.Student.class)
 	@JsonIgnore
 	//@ManyToMany(mappedBy = "students", fetch = FetchType.LAZY, cascade = { CascadeType.REFRESH})
 	@ManyToMany(cascade = CascadeType.REFRESH, fetch = FetchType.LAZY)
@@ -54,24 +54,24 @@ public class StudentEntity extends UserEntity {
 	private DepartmentEntity student_department;
 */
 	@JsonIgnore
-	@JsonView(Views.Teacher.class)
+	@JsonView(Views.Student.class)
 	@OneToMany(mappedBy = "student", fetch = FetchType.LAZY, cascade = { CascadeType.REFRESH}, orphanRemoval = true)
 	private List<StudentDepartmentEntity> departments = new ArrayList<>();
 
 
-	@JsonView(Views.Teacher.class)
+	@JsonView(Views.Student.class)
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
 	//@Pattern(regexp = "^([0][1-9]|[1|2][0-9]|[3][0|1])[./-]([0][1-9]|[1][0-2])[./-]([1-2][0-9]{3})$", message="Enrollment date is not valid, must be in dd-MM-yyyy format.")
 	@Column(name="enrollment_date")
 	@NotNull (message = "Enrollment date must be provided.")
 	private Date enrollmentDate;
-	@JsonView(Views.Teacher.class)
+	@JsonView(Views.Student.class)
 	@Column(name="school_identification_number", unique=true, length=50)
 	@Pattern(regexp = "^[0-9]{8,8}$", message="School identification number is not valid, must be 8 only numbers long.")
 	//@Size(min=8, message = "School identification number must be {min} characters long.")
 	@NotNull (message = "School identification number must be provided.")
 	private String schoolIdentificationNumber;
-	@JsonView(Views.Admin.class)
+	@JsonView(Views.Student.class)
 	@Max(1)
     @Min(-1)
     @Column(name = "status", nullable = false)

@@ -30,6 +30,7 @@ import com.iktpreobuka.projekat_za_kraj.entities.AdminEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.UserAccountEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.UserEntity;
 import com.iktpreobuka.projekat_za_kraj.entities.dto.AdminDto;
+import com.iktpreobuka.projekat_za_kraj.entities.dto.SearchAdminsDto;
 import com.iktpreobuka.projekat_za_kraj.enumerations.EUserRole;
 import com.iktpreobuka.projekat_za_kraj.repositories.AdminRepository;
 import com.iktpreobuka.projekat_za_kraj.repositories.UserAccountRepository;
@@ -92,9 +93,26 @@ public class AdminController {
 	
 	@Secured("ROLE_ADMIN")
 	@JsonView(Views.Admin.class)
+	@RequestMapping(method = RequestMethod.GET, value = "/withaccount")
+	public ResponseEntity<?> getAllWithUserAccount(Principal principal) {
+		logger.info("################ /project/admin/getAllWithUserAccount started.");
+		logger.info("Logged username: " + principal.getName());
+		try {
+			//Iterable<AdminEntity> users= adminRepository.findByStatusLike(1);
+			Iterable<SearchAdminsDto> users= adminRepository.findByStatusWithUserAccount(1, EUserRole.ROLE_ADMIN);
+			logger.info("---------------- Finished OK.");
+			return new ResponseEntity<Iterable<SearchAdminsDto>>(users, HttpStatus.OK);
+		} catch(Exception e) {
+			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+	
+	@Secured("ROLE_ADMIN")
+	@JsonView(Views.Admin.class)
 	@RequestMapping(method = RequestMethod.GET, value = "/{id}")
-	public ResponseEntity<?> getAll(@PathVariable Integer id, Principal principal) {
-		logger.info("################ /project/admin/getAll started.");
+	public ResponseEntity<?> getById(@PathVariable Integer id, Principal principal) {
+		logger.info("################ /project/admin/getById started.");
 		logger.info("Logged username: " + principal.getName());
 		try {
 			AdminEntity user= adminRepository.findByIdAndStatusLike(id, 1);
@@ -106,6 +124,23 @@ public class AdminController {
 		}
 	}
 
+	@Secured("ROLE_ADMIN")
+	@JsonView(Views.Admin.class)
+	@RequestMapping(method = RequestMethod.GET, value = "/logged")
+	public ResponseEntity<?> getLoggedAdmin(Principal principal) {
+		logger.info("################ /project/admin/getLoggedAdmin started.");
+		logger.info("Logged username: " + principal.getName());
+		try {
+			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
+			logger.info("Logged user identified.");
+			AdminEntity user= adminRepository.findByIdAndStatusLike(loggedUser.getId(), 1);
+			logger.info("---------------- Finished OK.");
+			return new ResponseEntity<>(user, HttpStatus.OK);
+		} catch(Exception e) {
+			logger.error("++++++++++++++++ Exception occurred: " + e.getMessage());
+			return new ResponseEntity<RESTError>(new RESTError(1, "Exception occurred: "+ e.getLocalizedMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
 	
 	@Secured("ROLE_ADMIN")
 	@JsonView(Views.Admin.class)
@@ -126,8 +161,8 @@ public class AdminController {
 	@Secured("ROLE_ADMIN")
 	@JsonView(Views.Admin.class)
 	@RequestMapping(method = RequestMethod.GET, value = "/deleted/{id}")
-	public ResponseEntity<?> getAllDeleted(@PathVariable Integer id, Principal principal) {
-		logger.info("################ /project/admin/deleted/getAllDeleted started.");
+	public ResponseEntity<?> getDeletedById(@PathVariable Integer id, Principal principal) {
+		logger.info("################ /project/admin/deleted/getDeletedById started.");
 		logger.info("Logged username: " + principal.getName());
 		try {
 			AdminEntity user= adminRepository.findByIdAndStatusLike(id, 0);
@@ -158,8 +193,8 @@ public class AdminController {
 	@Secured("ROLE_ADMIN")
 	@JsonView(Views.Admin.class)
 	@RequestMapping(method = RequestMethod.GET, value = "/archived/{id}")
-	public ResponseEntity<?> getAllArchived(@PathVariable Integer id, Principal principal) {
-		logger.info("################ /project/admin/archived/getAllArchived started.");
+	public ResponseEntity<?> getArchivedById(@PathVariable Integer id, Principal principal) {
+		logger.info("################ /project/admin/archived/getArchivedById started.");
 		logger.info("Logged username: " + principal.getName());
 		try {
 			AdminEntity user= adminRepository.findByIdAndStatusLike(id, -1);
@@ -183,29 +218,29 @@ public class AdminController {
 			}
 		if (newAdmin == null) {
 			logger.info("---------------- New admin is null.");
-	        return new ResponseEntity<>("New admin is null", HttpStatus.BAD_REQUEST);
+	        return new ResponseEntity<RESTError>(new RESTError(5, "New admin is null"), HttpStatus.BAD_REQUEST);
 	      }
 		if (newAdmin.getFirstName() == null || newAdmin.getLastName() == null || newAdmin.getEmail() == null || newAdmin.getMobilePhoneNumber() == null|| newAdmin.getGender() == null || newAdmin.getjMBG() == null ) {
 			logger.info("---------------- Some or all atributes is null.");
-			return new ResponseEntity<>("Some or all atributes is null.", HttpStatus.BAD_REQUEST);
+			return new ResponseEntity<RESTError>(new RESTError(5, "Some or all atributes is null."), HttpStatus.BAD_REQUEST);
 		}
 		UserEntity user = new AdminEntity();
 		try {
 			if (newAdmin.getjMBG() != null && adminRepository.getByJMBG(newAdmin.getjMBG()) != null && userRepository.getByJMBG(newAdmin.getjMBG()) == null) {
 				logger.info("---------------- JMBG already exist.");
-				return new ResponseEntity<>("JMBG already exist.", HttpStatus.NOT_ACCEPTABLE);
+				return new ResponseEntity<RESTError>(new RESTError(2, "JMBG already exist."), HttpStatus.NOT_ACCEPTABLE);
 			}
 			if (newAdmin.getEmail() != null && adminRepository.getByEmail(newAdmin.getEmail()) != null ) {
 				logger.info("---------------- Email already exist.");
-				return new ResponseEntity<>("Email already exist.", HttpStatus.NOT_ACCEPTABLE);
+				return new ResponseEntity<RESTError>(new RESTError(2, "Email already exist."), HttpStatus.NOT_ACCEPTABLE);
 			}
 			if (newAdmin.getAccessRole() != null && !newAdmin.getAccessRole().equals("ROLE_ADMIN")) {
 				logger.info("---------------- Access role must be ROLE_ADMIN.");
-		        return new ResponseEntity<>("Access role must be ROLE_ADMIN.", HttpStatus.NOT_ACCEPTABLE);
+		        return new ResponseEntity<RESTError>(new RESTError(2, "Access role must be ROLE_ADMIN."), HttpStatus.NOT_ACCEPTABLE);
 			}		
 			if (newAdmin.getUsername() != null && userAccountRepository.getByUsername(newAdmin.getUsername()) != null) {
 				logger.info("---------------- Username already exist.");
-		        return new ResponseEntity<>("Username already exist.", HttpStatus.NOT_ACCEPTABLE);
+		        return new ResponseEntity<RESTError>(new RESTError(2, "Username already exist."), HttpStatus.NOT_ACCEPTABLE);
 		    }
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
@@ -240,31 +275,42 @@ public class AdminController {
 			}
 		if (updateAdmin == null) {
 			logger.info("---------------- New data is null.");
-	        return new ResponseEntity<>("New data is null.", HttpStatus.BAD_REQUEST);
+	        return new ResponseEntity<RESTError>(new RESTError(5, "New data is null."), HttpStatus.BAD_REQUEST);
 	      }
 		AdminEntity user = new AdminEntity();
 		try {
 			user = adminRepository.findByIdAndStatusLike(id, 1);
 			if (user == null) {
 				logger.info("---------------- Admin not found.");
-		        return new ResponseEntity<>("Admin not found.", HttpStatus.NOT_FOUND);
+		        return new ResponseEntity<RESTError>(new RESTError(4, "Admin not found."), HttpStatus.NOT_FOUND);
 		      }
 			logger.info("Admin identified.");
+			UserAccountEntity account = userAccountRepository.findByUserAndAccessRoleLikeAndStatusLike(user, EUserRole.ROLE_ADMIN, 1);
+			logger.info("Admin's user account identified.");
+			if (updateAdmin.getjMBG() != null && updateAdmin.getjMBG().equals(user.getjMBG()) ) {
+				updateAdmin.setjMBG(null);
+			}
+			if (updateAdmin.getEmail() != null && updateAdmin.getEmail().equals(user.getEmail()) ) {
+				updateAdmin.setEmail(null);
+			}
+			if (updateAdmin.getUsername() != null && updateAdmin.getUsername().equals(account.getUsername()) ) {
+				updateAdmin.setUsername(null);
+			}
 			if (updateAdmin.getjMBG() != null && userRepository.getByJMBG(updateAdmin.getjMBG()) != null) {
 				logger.info("---------------- JMBG already exist.");
-				return new ResponseEntity<>("JMBG already exist.", HttpStatus.NOT_ACCEPTABLE);
+				return new ResponseEntity<RESTError>(new RESTError(2, "JMBG already exist."), HttpStatus.NOT_ACCEPTABLE);
 			}
 			if (updateAdmin.getEmail() != null && adminRepository.getByEmail(updateAdmin.getEmail()) != null) {
 				logger.info("---------------- Email already exist.");
-				return new ResponseEntity<>("Email already exist.", HttpStatus.NOT_ACCEPTABLE);
+				return new ResponseEntity<RESTError>(new RESTError(2, "Email already exist."), HttpStatus.NOT_ACCEPTABLE);
 			}
 			if (updateAdmin.getAccessRole() != null && !updateAdmin.getAccessRole().equals("ROLE_ADMIN")) {
 				logger.info("---------------- Access role must be ROLE_ADMIN.");
-		        return new ResponseEntity<>("Access role must be ROLE_ADMIN.", HttpStatus.NOT_ACCEPTABLE);
+		        return new ResponseEntity<RESTError>(new RESTError(2, "Access role must be ROLE_ADMIN."), HttpStatus.NOT_ACCEPTABLE);
 			}		
 			if (updateAdmin.getUsername() != null && userAccountRepository.getByUsername(updateAdmin.getUsername()) != null) {
 				logger.info("---------------- Username already exist.");
-		        return new ResponseEntity<>("Username already exist.", HttpStatus.NOT_ACCEPTABLE);
+		        return new ResponseEntity<RESTError>(new RESTError(2, "Username already exist."), HttpStatus.NOT_ACCEPTABLE);
 		    }
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
@@ -272,7 +318,6 @@ public class AdminController {
 				adminDao.modifyAdmin(loggedUser, user, updateAdmin);
 				logger.info("Admin modified.");
 			}
-			UserAccountEntity account = userAccountRepository.findByUserAndAccessRoleLikeAndStatusLike(user, EUserRole.ROLE_ADMIN, 1);
 			if (account != null) {
 				logger.info("Admin's user account identified.");
 				if (updateAdmin.getUsername() != null && !updateAdmin.getUsername().equals("") && !updateAdmin.getUsername().equals(" ") && userAccountRepository.getByUsername(updateAdmin.getUsername()) == null) {
@@ -305,14 +350,14 @@ public class AdminController {
 			user = adminRepository.getById(id);
 			if (user == null || user.getStatus() == -1) {
 				logger.info("---------------- Admin not found.");
-		        return new ResponseEntity<>("Admin not found.", HttpStatus.NOT_FOUND);
+		        return new ResponseEntity<RESTError>(new RESTError(4, "Admin not found."), HttpStatus.NOT_FOUND);
 		      }
 			logger.info("Admin for archiving identified.");
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
 			if (id == loggedUser.getId()) {
 				logger.info("---------------- Selected Id is ID of logged User: Cann't archive yourself.");
-				return new ResponseEntity<>("Selected Id is ID of logged User: Cann't archive yourself.", HttpStatus.BAD_REQUEST);
+				return new ResponseEntity<RESTError>(new RESTError(5, "Selected Id is ID of logged User: Cann't archive yourself."), HttpStatus.BAD_REQUEST);
 		      }	
 			adminDao.archiveAdmin(loggedUser, user);
 			logger.info("Admin archived.");
@@ -350,7 +395,7 @@ public class AdminController {
 			user = adminRepository.findByIdAndStatusLike(id, 0);
 			if (user == null) {
 				logger.info("---------------- Admin not found.");
-		        return new ResponseEntity<>("Admin not found.", HttpStatus.NOT_FOUND);
+		        return new ResponseEntity<RESTError>(new RESTError(4, "Admin not found."), HttpStatus.NOT_FOUND);
 		      }
 			logger.info("Admin for undeleting identified.");
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
@@ -391,14 +436,14 @@ public class AdminController {
 			user = adminRepository.findByIdAndStatusLike(id, 1);
 			if (user == null) {
 				logger.info("---------------- Admin not found.");
-		        return new ResponseEntity<>("Admin not found.", HttpStatus.NOT_FOUND);
+		        return new ResponseEntity<RESTError>(new RESTError(4, "Admin not found."), HttpStatus.NOT_FOUND);
 		      }
 			logger.info("Admin for deleting identified.");
 			UserEntity loggedUser = userAccountRepository.findUserByUsernameAndStatusLike(principal.getName(), 1);
 			logger.info("Logged user identified.");
 			if (id == loggedUser.getId()) {
 				logger.info("---------------- Selected Id is ID of logged User: Cann't delete yourself.");
-				return new ResponseEntity<>("Selected Id is ID of logged User: Cann't delete yourself.", HttpStatus.BAD_REQUEST);
+				return new ResponseEntity<RESTError>(new RESTError(5, "Selected Id is ID of logged User: Cann't delete yourself."), HttpStatus.BAD_REQUEST);
 		      }	
 			adminDao.deleteAdmin(loggedUser, user);
 			logger.info("Admin deleted.");

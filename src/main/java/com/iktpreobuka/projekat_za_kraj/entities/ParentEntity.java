@@ -14,7 +14,6 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonView;
 import com.iktpreobuka.projekat_za_kraj.security.Views;
@@ -30,13 +29,13 @@ public class ParentEntity extends UserEntity {
 	private static final Integer STATUS_ARCHIVED = -1;
 
 	@JsonView(Views.Parent.class)
-	@JsonIgnore
+	//@JsonIgnore - Skinuto zbog FE
 	//@ManyToMany(cascade = CascadeType.REFRESH, fetch = FetchType.LAZY)
     //@JoinTable(name = "parent_student", joinColumns = { @JoinColumn(name = "parent_id") }, inverseJoinColumns = { @JoinColumn(name = "student_id") })
 	@ManyToMany(mappedBy = "parents", fetch = FetchType.LAZY, cascade = { CascadeType.REFRESH})
 	private Set<StudentEntity> students = new HashSet<>();
 
-	@JsonView(Views.Teacher.class)
+	@JsonView(Views.Parent.class)
 	@Column(name="e_mail", unique=true, length=50)
 	@Pattern(regexp = "^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@"+ "[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$", message="Email is not valid.")
 	@NotNull (message = "E-mail must be provided.")

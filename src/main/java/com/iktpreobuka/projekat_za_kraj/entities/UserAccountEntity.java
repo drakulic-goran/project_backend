@@ -34,7 +34,7 @@ public class UserAccountEntity {
 	private static final Integer STATUS_ACTIVE = 1;
 	private static final Integer STATUS_ARCHIVED = -1;
 	
-	@JsonView(Views.Admin.class)
+	@JsonView(Views.Student.class)
 	@ManyToOne(cascade = CascadeType.REFRESH, fetch = FetchType.LAZY)
 	@JoinColumn(name = "user")
 	@NotNull (message = "User must be provided.")
@@ -47,21 +47,22 @@ public class UserAccountEntity {
     protected UserEntity user;*/
 	
 	
-	@JsonView(Views.Admin.class)
+	@JsonView(Views.Student.class)
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	@Column(name="account_id")
 	private Integer id;
 	@Column(name="access_role")
-	@JsonView(Views.Admin.class)
+	@JsonView(Views.Student.class)
 	@Enumerated(EnumType.STRING)
 	@NotNull (message = "User role must be provided.")
 	private EUserRole accessRole;
 	@Column(name="username", unique=true, length=50)
-	@JsonView(Views.Admin.class)
+	@JsonView(Views.Student.class)
 	@NotNull (message = "Username must be provided.")
 	@Size(min=5, max=20, message = "Username must be between {min} and {max} characters long.")
 	private String username;
+	//@JsonView(Views.Student.class)
 	@Column(name="password")
 	@NotNull (message = "Password must be provided.")
 	//@Pattern(regexp = "^[A-Za-z0-9]*$", message="Password is not valid, must contin only letters and numbers.")

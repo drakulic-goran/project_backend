@@ -36,7 +36,7 @@ public class SubjectEntity {
 	private static final Integer STATUS_ACTIVE = 1;
 	private static final Integer STATUS_ARCHIVED = -1;
 	
-	@JsonIgnore
+	//@JsonIgnore - Skinuto zbog FE
 	@JsonView(Views.Teacher.class)
 	@OneToMany(mappedBy = "subject", fetch = FetchType.LAZY, cascade = { CascadeType.REFRESH}, orphanRemoval = true)
 	private List<ClassSubjectEntity> classes = new ArrayList<>();
@@ -46,7 +46,7 @@ public class SubjectEntity {
 	@OneToMany(mappedBy = "subject", fetch = FetchType.LAZY, cascade = { CascadeType.REFRESH}, orphanRemoval = true)
 	private List<TeacherSubjectEntity> teachers = new ArrayList<>();
 
-	@JsonView(Views.Admin.class)
+	@JsonView(Views.Teacher.class)
 	@JsonIgnore
 	@OneToMany(mappedBy = "teachingSubject", fetch = FetchType.LAZY, cascade = { CascadeType.REFRESH})
 	private List<TeacherSubjectDepartmentEntity> teachers_departments = new ArrayList<>();
@@ -54,7 +54,7 @@ public class SubjectEntity {
 	
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
-	@JsonView(Views.Admin.class)
+	@JsonView(Views.Teacher.class)
 	@Column(name="subject_id")
 	private Integer id;
 	@JsonView(Views.Student.class)
